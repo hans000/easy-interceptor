@@ -1,0 +1,44 @@
+{
+    "manifest_version": 2,
+    "name": "Transformer",
+    "version": "1.0",
+    "description": "",
+    "permissions": [
+      "storage",
+      "tabs",
+      "http://*/",
+      "https://*/"
+    ],
+    "background": {
+      "scripts": [
+        "scripts/background/index.js"
+      ],
+      "persistent": true
+    },
+    "content_security_policy" : "script-src 'self'; script-src-elem 'self' data: blob:; worker-src 'self' data: blob:; object-src 'self'",
+    "browser_action": {
+      "default_title": "这是一个示例Chrome插件"
+    },
+    "icons": {
+      "16": "images/128_gray.png",
+      "32": "images/128.png",
+      "48": "images/128.png",
+      "128": "images/128.png"
+    },
+    "content_scripts": [
+      {
+        "matches": ["<all_urls>"],
+        "run_at": "document_start",
+        "all_frames": true,
+        "js": [
+          "scripts/content/utils.js",
+          "scripts/content/index.js"
+        ]
+      }
+    ],
+    "web_accessible_resources": [
+      "scripts/ajaxhook.min.js",
+      "scripts/core.js",
+      "dist/index.html"
+    ]
+  }

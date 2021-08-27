@@ -1,0 +1,31 @@
+.ti {
+    height: 100%;
+    margin-bottom: 8px;
+    &__header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        height: 54px;
+        padding: 0 16px;
+    }
+    &__text {
+        flex: auto;
+    }
+    &__ctrl {
+        flex: 0 0 300px;
+        span {
+            color: #fff;
+        }
+    }
+    &__arrow {
+        flex: 0 0 32px;
+        color: #fff;
+    }
+    &__code {
+        height: calc(100% - 54px);
+    }
+}
+
+.jsoneditor-poweredBy {
+    display: none;
+}
