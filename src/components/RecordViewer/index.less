@@ -1,0 +1,36 @@
+.rv {
+    position: relative;
+    &__title {
+        z-index: 1;
+        position: absolute;
+        top: 0;
+        right: 0;
+        padding: 0 8px;
+        transform: translate(-44px, -4px);
+        background-color: #fff;
+    }
+    &__editor {
+        font-family: consolas;
+        overflow: hidden;
+        &:hover {
+            overflow-y: auto;
+        }
+        
+        .ant-input-focused,
+        &--error.ant-input:focus,
+        &--error {
+            border-color: #ff7875;
+            box-shadow: 0 0 0 2px rgba(255, 77, 79, .2);
+            border-right-width: 1px!important;
+            outline: 0;
+        }
+        &--readonly.ant-input:focus {
+            box-shadow: initial;
+            border-color: #d9d9d9;
+        }
+        &--readonly.ant-input:hover {
+            border-color: #d9d9d9;
+        }
+    }
+    
+}

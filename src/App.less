@@ -4,24 +4,20 @@
 }
 
 @width: 300px;
+@topHeight:  46px;
   
 .app {
+    width: 500px;
+    height: 600px;
     overflow: hidden;
     background-color: #fff;
     position: relative;
-    height: 100vh;
-    &__left {
-        width: @width;
-        position: fixed;
+    &__top {
+        position: absolute;
+        width: 100%;
         top: 0;
         left: 0;
-    }
-    &__right {
-        height: 100%;
-        margin-left: @width;
-    }
-    &__top {
-        height: 40px;
+        height: @topHeight;
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -33,7 +29,7 @@
         }
     }
     &__cont {
-        height: calc(100vh - 40px);
+        margin-top: @topHeight;
         overflow-y: auto;
     }
 }
@@ -68,4 +64,26 @@
     &:hover &-close {
         display: block;
     }
+}
+
+
+/*定义滚动条高宽及背景*/
+::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+    background-color: #F5F5F5;
+}
+
+html::-webkit-scrollbar, body::-webkit-scrollbar, .app::-webkit-scrollbar {
+    width: 0;
+}
+
+  /*定义滚动条轨道*/
+::-webkit-scrollbar-track {
+    background-color: #F5F5F5;
+}
+
+  /*定义滑块*/
+::-webkit-scrollbar-thumb {
+    background-color: #c8c8c8;
 }

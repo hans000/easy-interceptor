@@ -1,41 +1,51 @@
-import { Input, Checkbox } from 'antd'
+import { Collapse, Typography, Tooltip } from 'antd'
 import React, { useEffect, useState } from 'react'
 import JsonEditor from '../JsonEditor'
 import './index.less'
-import { DownOutlined, } from '@ant-design/icons';
+import { SwapOutlined } from '@ant-design/icons';
 import { equal } from '../../utils';
+import RecordViewer from '../RecordViewer';
+import { GeneralSchema, HeaderSchema } from './validator';
 
 export interface TransformResult {
-    type?: boolean
+    url?: string
     enable?: boolean
-    text?: string
-    data?: any
+    delay?: number
+    method?: 'get' | 'post' | 'delete' | 'put' | 'option'
+    response?: any
+    body?: any
+    requestHeader?: Record<string, string>
+    responseHeader?: Record<string, string>
+    id: string
+}
+
+export interface Result {
+    general?: {
+        url?: string
+        method?: 'get' | 'post' | 'delete' | 'put' | 'option'
+    }
+    response?: any
+    body?: any
+    requestHeader?: Record<string, string>
+    responseHeader?: Record<string, string>
 }
 
 interface IProps {
-    value: TransformResult
-    onChange?: (value: TransformResult) => void
-    collapsed?: boolean
+    value: Result
+    onChange?: (value: Result) => void
 }
 
-const defaultData: TransformResult = {
-    type: false,
-    enable: true,
-    text: '',
-    data: {},
-}
-
-enum ColorKind {
-    Enable = '#56d7e3',
-    Disable = '#3b969e',
-    Error = '#9e563b'
+const defaultData: Result = {
+    body: {},
+    general: {},
+    response: {},
+    requestHeader: {},
+    responseHeader: {},
 }
 
 export default function TransformerItem(props: IProps) {
-    const [collapsed, setCollapsed] = useState(false)
-    const [color, setColor] = useState('#56d7e3')
-    const [data, setData] = useState<TransformResult>(defaultData)
-    const [error, setError] = useState(false)
+    const [data, setData] = useState<Result>(defaultData)
+    const [isPro, setPro] = useState(false)
 
     useEffect(
         () => {
@@ -46,66 +56,85 @@ export default function TransformerItem(props: IProps) {
         [props.value]
     )
 
-    useEffect(
-        () => {
-            setCollapsed(() => props.collapsed)
-        },
-        [props.collapsed]
-    )
-
-    useEffect(
-        () => {
-            setColor(() => error ? ColorKind.Error : data.enable ? ColorKind.Enable : ColorKind.Disable)
-        },
-        [data.enable, error]
-    )
-
-    useEffect(
-        () => {
-            if (! equal(data, props.value)) {
-                props?.onChange?.(data)
-            }
-        },
-        [data]
-    )
+    const getTitle = (title: string, val: Record<string, string> = {}) => {
+        const count = Object.keys(val).length
+        return !!count ? `${title} (${count})` : title
+    }
 
     return (
-        <div className='ti' style={{ backgroundColor: color }}>
-            <div className='ti__header'>
-                {/* <div className="ti__arrow">
-                    <DownOutlined rotate={collapsed ? 0 : 180} onClick={() => setCollapsed(collapsed => !collapsed)} />
-                </div> */}
-                <div className="ti__ctrl">
-                    <Checkbox onChange={e => {
-                        setData(value => ({ ...value, enable: e.target.checked }))
-                    }} checked={data.enable}>是否启用</Checkbox>
-                    <Checkbox onChange={e => {
-                        setData(value => ({ ...value, type: e.target.checked }))
-                    }} checked={data.type}>正则匹配</Checkbox>
-                    <Checkbox onChange={e => {
-                        setData(value => ({ ...value, type: e.target.checked }))
-                    }} checked={data.type}>错误</Checkbox>
+        <Collapse className='ti' defaultActiveKey={['1']}>
+            <Collapse.Panel header={getTitle('general', data.general)} key='1'
+                extra={<Typography.Paragraph onClick={e => e.stopPropagation()} copyable={{ text: JSON.stringify(data.general) }}></Typography.Paragraph>}>
+                <RecordViewer validator={GeneralSchema} minRows={6} maxRows={15} value={data.general} onChange={general => {
+                    setData(data => {
+                        const result = { ...data, general }
+                        props?.onChange?.(result)
+                        return result
+                    })
+                }} />
+            </Collapse.Panel>
+            <Collapse.Panel header={getTitle('request header', data.requestHeader)} key='2'
+                extra={<Typography.Paragraph onClick={e => e.stopPropagation()} copyable={{ text: JSON.stringify(data.requestHeader) }}></Typography.Paragraph>}>
+                <RecordViewer validator={HeaderSchema} value={props.value.requestHeader} onChange={requestHeader => {
+                    setData(data => {
+                        const result = { ...data, requestHeader }
+                        props?.onChange?.(result)
+                        return result
+                    })
+                }}/>
+            </Collapse.Panel>
+            <Collapse.Panel header={getTitle('response header', data.responseHeader)} key='3'
+                extra={<Typography.Paragraph onClick={e => e.stopPropagation()} copyable={{ text: JSON.stringify(data.responseHeader) }}></Typography.Paragraph>}>
+                <RecordViewer validator={HeaderSchema} value={props.value.responseHeader} onChange={responseHeader => {
+                    setData(data => {
+                        const result = { ...data, responseHeader }
+                        props?.onChange?.(result)
+                        return result
+                    })
+                }}/>
+            </Collapse.Panel>
+            <Collapse.Panel header={getTitle('body', data.body)} key='4'
+                extra={<Typography.Paragraph onClick={e => e.stopPropagation()} copyable={{ text: JSON.stringify(data.body) }}></Typography.Paragraph>}>
+                <RecordViewer value={props.value.body} onChange={body => {
+                    setData(data => {
+                        const result = { ...data, body }
+                        props?.onChange?.(result)
+                        return result
+                    })
+                }}/>
+            </Collapse.Panel>
+            <Collapse.Panel header='response' key='5' extra={
+                <div className='ti__icon-wrap'>
+                    <Tooltip title='切换视图'>
+                        <SwapOutlined style={{ color: '#1890ff', padding: '0 4px' }} onClick={(e) => {
+                            e.stopPropagation()
+                            setPro(isPro => !isPro)
+                        }} />
+                    </Tooltip>
+                    <Typography.Paragraph onClick={e => e.stopPropagation()} copyable={{ text: JSON.stringify(data.response) }}></Typography.Paragraph>
                 </div>
-                <div className="ti__text">
-                    <Input onKeyDown={e => {
-                        if (e.key === 'Tab') {
-                            setCollapsed(() => false)
-                        }
-                    }} onChange={e => {
-                        setData(value => ({ ...value, text: e.target.value }))
-                    }} maxLength={999} placeholder='请输入要匹配的接口' value={data.text}/>
-                </div>
-            </div>
-            {
-                !collapsed && (
-                    <div className='ti__code'>
-                        <JsonEditor onChange={(data) => {
-                            setError(() => error)
-                            setData(value => ({ ...value, data }))
-                        }} value={data.data}/>
-                    </div>
-                )
-            }
-        </div>
+            }>
+                {
+                    isPro
+                        ? (
+                            <JsonEditor value={data.response} onChange={response => {
+                                setData(value => {
+                                    const result = { ...value, response }
+                                    props?.onChange?.(result)
+                                    return result
+                                })
+                            }}/>
+                        )
+                        : <RecordViewer minRows={6} maxRows={15}
+                            value={data.response} onChange={response => {
+                                setData(value => {
+                                    const result = { ...value, response }
+                                    props?.onChange?.(result)
+                                    return result
+                                })
+                            }} />
+                }
+            </Collapse.Panel>
+        </Collapse>
     )
 }

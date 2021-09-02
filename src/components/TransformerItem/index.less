@@ -1,31 +1,30 @@
 .ti {
     height: 100%;
     margin-bottom: 8px;
-    &__header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        height: 54px;
-        padding: 0 16px;
-    }
-    &__text {
-        flex: auto;
-    }
-    &__ctrl {
-        flex: 0 0 300px;
-        span {
-            color: #fff;
-        }
-    }
-    &__arrow {
-        flex: 0 0 32px;
-        color: #fff;
-    }
-    &__code {
-        height: calc(100% - 54px);
-    }
-}
 
-.jsoneditor-poweredBy {
-    display: none;
+    &__icon-wrap {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    // 覆盖antd样式
+    .ant-typography {
+        margin-bottom: 0;
+    }
+    
+    // 覆盖antd样式
+    .ant-collapse-header.ant-collapse-header.ant-collapse-header {
+        user-select: none;
+        padding: 4px 8px;
+    }
+    
+    // 覆盖antd样式
+    .ant-collapse-content-box {
+        padding: 0;
+    }
+    // 覆盖jsoneditor样式
+    .jsoneditor-poweredBy {
+        display: none;
+    }
 }

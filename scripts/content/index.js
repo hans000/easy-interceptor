@@ -1,6 +1,6 @@
 
 // 加载脚本
-createScript('scripts/ajaxhook.min.js').then(() => {
+createScript('scripts/ajaxhook.js').then(() => {
     // 初始化数据
     createScript('scripts/core.js').then(() => {
         chrome.storage.local.get(['__hs_enable', '__hs_rules'], (result) => {
@@ -17,40 +17,40 @@ createScript('scripts/ajaxhook.min.js').then(() => {
 let iframe, iframeLoaded = false;
 
 // 只在最顶层页面嵌入iframe
-if (window.self === window.top) {
-    document.onreadystatechange = () => {
-        if (document.readyState === 'complete') {
-            iframe = document.createElement('iframe');
-            iframe.className = "api-interceptor";
-            iframe.style.cssText = `
-                height: 100%!important;
-                width: 100%!important;
-                min-width: 1px!important;
-                position: fixed!important;
-                top: 0!important;
-                right: 0!important;
-                left: auto!important;
-                bottom: auto!important;
-                z-index: 9999999999!important;
-                transform: translateX(100%)!important;
-                transition: all .4s!important;
-                box-shadow: 0 0 15px 2px rgba(0,0,0,0.12)!important;
-            `
-            iframe.src = chrome.extension.getURL("dist/index.html")
-            document.body.appendChild(iframe);
-            let show = false;
+// if (window.self === window.top) {
+//     document.onreadystatechange = () => {
+//         if (document.readyState === 'complete') {
+//             iframe = document.createElement('iframe');
+//             iframe.className = "api-interceptor";
+//             iframe.style.cssText = `
+//                 height: 100%!important;
+//                 width: 100%!important;
+//                 min-width: 1px!important;
+//                 position: fixed!important;
+//                 top: 0!important;
+//                 right: 0!important;
+//                 left: auto!important;
+//                 bottom: auto!important;
+//                 z-index: 9999999999!important;
+//                 transform: translateX(100%)!important;
+//                 transition: all .4s!important;
+//                 box-shadow: 0 0 15px 2px rgba(0,0,0,0.12)!important;
+//             `
+//             iframe.src = chrome.extension.getURL("dist/index.html")
+//             document.body.appendChild(iframe);
+//             let show = false;
 
-            chrome.runtime.onMessage.addListener((msg, sender) => {
-                if (msg == 'toggle') {
-                    show = !show;
-                    iframe.style.setProperty('transform', show ? 'translateX(0)' : 'translateX(-100%)', 'important');
-                }
+//             chrome.runtime.onMessage.addListener((msg, sender) => {
+//                 if (msg == 'toggle') {
+//                     show = !show;
+//                     iframe.style.setProperty('transform', show ? 'translateX(0)' : 'translateX(-100%)', 'important');
+//                 }
 
-                return true;
-            });
-        }
-    }
-}
+//                 return true;
+//             });
+//         }
+//     }
+// }
 
 // 接收background.js传来的信息，转发给pageScript
 chrome.runtime.onMessage.addListener(msg => {

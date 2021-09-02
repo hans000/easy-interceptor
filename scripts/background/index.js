@@ -46,3 +46,21 @@ chrome.runtime.onMessage.addListener(msg => {
     }
 })
 
+// chrome.webRequest.onBeforeRequest.addListener(
+//     (details) => {
+//         console.log('details', details);
+//     },
+//     { urls: ["<all_urls>"], types: ["xmlhttprequest"] },
+//     // ["requestHeaders"]
+// )
+
+// chrome.webRequest.onBeforeSendHeaders.addListener(
+//     (details) => {
+//         console.log('details', details);
+//     },
+//     {
+//       urls: ["<all_urls>"],
+//       types: ["xmlhttprequest"]
+//     },
+//     ["requestHeaders"]
+// );
