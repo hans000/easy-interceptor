@@ -11,23 +11,25 @@ export interface TransformResult {
     url?: string
     enable?: boolean
     delay?: number
-    method?: 'get' | 'post' | 'delete' | 'put' | 'option'
+    method?: 'get' | 'post' | 'delete' | 'put' | '*'
     response?: any
     body?: any
-    requestHeader?: Record<string, string>
-    responseHeader?: Record<string, string>
+    params?: Record<string, string>
+    requestHeaders?: Record<string, string>
+    responseHeaders?: Record<string, string>
     id: string
 }
 
 export interface Result {
     general?: {
         url?: string
-        method?: 'get' | 'post' | 'delete' | 'put' | 'option'
+        method?: 'get' | 'post' | 'delete' | 'put' | '*',
+        params?: Record<string, string>
     }
     response?: any
     body?: any
-    requestHeader?: Record<string, string>
-    responseHeader?: Record<string, string>
+    requestHeaders?: Record<string, string>
+    responseHeaders?: Record<string, string>
 }
 
 interface IProps {
@@ -39,8 +41,8 @@ const defaultData: Result = {
     body: {},
     general: {},
     response: {},
-    requestHeader: {},
-    responseHeader: {},
+    requestHeaders: {},
+    responseHeaders: {},
 }
 
 export default function TransformerItem(props: IProps) {
@@ -50,13 +52,14 @@ export default function TransformerItem(props: IProps) {
     useEffect(
         () => {
             if (! equal(props.value, data)) {
+                console.log(props.value);
                 setData((value) => ({ ...defaultData, ...props.value, }))
             }
         },
         [props.value]
     )
 
-    const getTitle = (title: string, val: Record<string, string> = {}) => {
+    const getTitle = (title: string, val: Record<string, any> = {}) => {
         const count = Object.keys(val).length
         return !!count ? `${title} (${count})` : title
     }
@@ -73,9 +76,9 @@ export default function TransformerItem(props: IProps) {
                     })
                 }} />
             </Collapse.Panel>
-            <Collapse.Panel header={getTitle('request header', data.requestHeader)} key='2'
-                extra={<Typography.Paragraph onClick={e => e.stopPropagation()} copyable={{ text: JSON.stringify(data.requestHeader) }}></Typography.Paragraph>}>
-                <RecordViewer validator={HeaderSchema} value={props.value.requestHeader} onChange={requestHeader => {
+            <Collapse.Panel header={getTitle('request header', data.requestHeaders)} key='2'
+                extra={<Typography.Paragraph onClick={e => e.stopPropagation()} copyable={{ text: JSON.stringify(data.requestHeaders) }}></Typography.Paragraph>}>
+                <RecordViewer validator={HeaderSchema} value={data.requestHeaders} onChange={requestHeader => {
                     setData(data => {
                         const result = { ...data, requestHeader }
                         props?.onChange?.(result)
@@ -83,9 +86,9 @@ export default function TransformerItem(props: IProps) {
                     })
                 }}/>
             </Collapse.Panel>
-            <Collapse.Panel header={getTitle('response header', data.responseHeader)} key='3'
-                extra={<Typography.Paragraph onClick={e => e.stopPropagation()} copyable={{ text: JSON.stringify(data.responseHeader) }}></Typography.Paragraph>}>
-                <RecordViewer validator={HeaderSchema} value={props.value.responseHeader} onChange={responseHeader => {
+            <Collapse.Panel header={getTitle('response header', data.responseHeaders)} key='3'
+                extra={<Typography.Paragraph onClick={e => e.stopPropagation()} copyable={{ text: JSON.stringify(data.responseHeaders) }}></Typography.Paragraph>}>
+                <RecordViewer validator={HeaderSchema} value={data.responseHeaders} onChange={responseHeader => {
                     setData(data => {
                         const result = { ...data, responseHeader }
                         props?.onChange?.(result)
@@ -95,7 +98,7 @@ export default function TransformerItem(props: IProps) {
             </Collapse.Panel>
             <Collapse.Panel header={getTitle('body', data.body)} key='4'
                 extra={<Typography.Paragraph onClick={e => e.stopPropagation()} copyable={{ text: JSON.stringify(data.body) }}></Typography.Paragraph>}>
-                <RecordViewer value={props.value.body} onChange={body => {
+                <RecordViewer value={data.body} onChange={body => {
                     setData(data => {
                         const result = { ...data, body }
                         props?.onChange?.(result)
@@ -125,8 +128,8 @@ export default function TransformerItem(props: IProps) {
                                 })
                             }}/>
                         )
-                        : <RecordViewer minRows={6} maxRows={15}
-                            value={data.response} onChange={response => {
+                        : <RecordViewer minRows={6} maxRows={15} value={data.response}
+                            onChange={response => {
                                 setData(value => {
                                     const result = { ...value, response }
                                     props?.onChange?.(result)

@@ -1,56 +1,35 @@
 
 // 加载脚本
-createScript('scripts/ajaxhook.js').then(() => {
-    // 初始化数据
-    createScript('scripts/core.js').then(() => {
-        chrome.storage.local.get(['__hs_enable', '__hs_rules'], (result) => {
-            if (result.hasOwnProperty('__hs_enable')) {
-                postMessage({ type: '__Hs_Transformer__', to: 'pageScript', key: 'enable', value: result.__hs_enable })
-            }
-            if (result.__hs_rules) {
-                postMessage({ type: '__Hs_Transformer__', to: 'pageScript', key: 'rules', value: result.__hs_rules })
-            }
-        })
-    })
-}) 
+async function loadScripts() {
+    await createScript('scripts/injected/ajaxhook.js')
+    // await createScript('scripts/injected/minimatch.js')
+    await createScript('scripts/injected/core.js')
+    initData()
+    // createScript('scripts/injected/ajaxhook.js').then(() => {
+    //     // 初始化数据
+    //     createScript('scripts/injected/core.js').then(() => {
+    //         initData()
+    //         // if (! sessionStorage.getItem('__hs_loaded')) {
+    //         //     sessionStorage.setItem('__hs_loaded', 'true')
+    //         //     chrome.storage.local.set({
+    //         //         __hs_action: 'close'
+    //         //     }, () => {
+    //         //         initData()
+    //         //         chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
+    //         //             chrome.tabs.sendMessage(tabs[0].id, { type: '__Hs_Transformer__', to: 'background', from: 'content' })
+    //         //         })
+    //         //     })
+    //         // } else {
+    //         //     initData()
+    //         // }
+    //     })
+    // })
+}
 
-let iframe, iframeLoaded = false;
 
-// 只在最顶层页面嵌入iframe
-// if (window.self === window.top) {
-//     document.onreadystatechange = () => {
-//         if (document.readyState === 'complete') {
-//             iframe = document.createElement('iframe');
-//             iframe.className = "api-interceptor";
-//             iframe.style.cssText = `
-//                 height: 100%!important;
-//                 width: 100%!important;
-//                 min-width: 1px!important;
-//                 position: fixed!important;
-//                 top: 0!important;
-//                 right: 0!important;
-//                 left: auto!important;
-//                 bottom: auto!important;
-//                 z-index: 9999999999!important;
-//                 transform: translateX(100%)!important;
-//                 transition: all .4s!important;
-//                 box-shadow: 0 0 15px 2px rgba(0,0,0,0.12)!important;
-//             `
-//             iframe.src = chrome.extension.getURL("dist/index.html")
-//             document.body.appendChild(iframe);
-//             let show = false;
+loadScripts()
 
-//             chrome.runtime.onMessage.addListener((msg, sender) => {
-//                 if (msg == 'toggle') {
-//                     show = !show;
-//                     iframe.style.setProperty('transform', show ? 'translateX(0)' : 'translateX(-100%)', 'important');
-//                 }
-
-//                 return true;
-//             });
-//         }
-//     }
-// }
+let iframeLoaded = false;
 
 // 接收background.js传来的信息，转发给pageScript
 chrome.runtime.onMessage.addListener(msg => {
@@ -58,7 +37,11 @@ chrome.runtime.onMessage.addListener(msg => {
         if (msg.hasOwnProperty('iframeScriptLoaded')) {
             if (msg.iframeScriptLoaded) iframeLoaded = true;
         } else {
-            postMessage({ ...msg, to: 'pageScript' });
+            if (msg.from === 'self') {
+                chrome.runtime.sendMessage({  ...msg, type: '__Hs_Transformer__', to: 'iframe' });
+            } else {
+                postMessage({ ...msg, to: 'pageScript' });
+            }
         }
     }
 });
@@ -66,13 +49,13 @@ chrome.runtime.onMessage.addListener(msg => {
 // 接收pageScript传来的信息，转发给iframe
 window.addEventListener("pageScript", function (event) {
     if (iframeLoaded) {
-        chrome.runtime.sendMessage({ type: '__Hs_Transformer__', to: 'iframe', ...event.detail });
+        chrome.runtime.sendMessage({ ...event.detail, type: '__Hs_Transformer__', to: 'iframe' });
     } else {
         let count = 0;
         const checktLoadedInterval = setInterval(() => {
             if (iframeLoaded) {
                 clearInterval(checktLoadedInterval);
-                chrome.runtime.sendMessage({ type: '__Hs_Transformer__', to: 'iframe', ...event.detail });
+                chrome.runtime.sendMessage({ ...event.detail, type: '__Hs_Transformer__', to: 'iframe' });
             }
             if (count++ > 500) {
                 clearInterval(checktLoadedInterval);

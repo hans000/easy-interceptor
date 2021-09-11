@@ -12,6 +12,7 @@
     ],
     "background": {
       "scripts": [
+        "scripts/background/objecthash.js",
         "scripts/background/index.js"
       ],
       "persistent": true
@@ -39,8 +40,9 @@
       }
     ],
     "web_accessible_resources": [
-      "scripts/ajaxhook.js",
-      "scripts/core.js",
+      "scripts/injected/ajaxhook.js",
+      "scripts/injected/minimatch.js",
+      "scripts/injected/core.js",
       "dist/index.html"
     ]
   }

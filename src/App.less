@@ -7,11 +7,22 @@
 @topHeight:  46px;
   
 .app {
-    width: 500px;
+    width: 800px;
     height: 600px;
     overflow: hidden;
     background-color: #fff;
     position: relative;
+    &__resize {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        height: 100%;
+        width: 3px;
+        cursor: ew-resize;
+        &:hover {
+            background-color: #0090f1;
+        }
+    }
     &__top {
         position: absolute;
         width: 100%;

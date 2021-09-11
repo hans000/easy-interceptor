@@ -10,7 +10,18 @@ export const GeneralSchema: JSONSchema7 = {
         method: {
             type: "string",
             required: ["method"],
-            enum: ["get", "post", "option", "put", "delete"]
+            enum: ["get", "post", "put", "delete", "*"]
+        },
+        delay: {
+            type: "number"
+        },
+        params: {
+            type: "object",
+            patternProperties: {
+                "^[A-Za-z_$][A-Za-z0-9_$]*$": {
+                    type: "string"
+                }
+            }
         }
     },
 }
@@ -18,7 +29,7 @@ export const GeneralSchema: JSONSchema7 = {
 export const HeaderSchema: JSONSchema7 = {
     type: "object",
     patternProperties: {
-        "^[A-Za-z_][A-Za-z0-9_]*$": {
+        "^[A-Za-z_$][A-Za-z0-9_$]*$": {
             type: "string"
         }
     }

@@ -83,9 +83,12 @@ export default function RecordViewer(props: IProps) {
             <TextArea bordered={editable} className={cls} readOnly={!editable}
                 value={value}
                 onKeyDown={(e) => {
-                    e.preventDefault()
                     e.stopPropagation()
+                    if (e.key === 'Tab') {
+                        e.preventDefault()
+                    }
                     if (e.key === 'Escape' && !error) {
+                        e.preventDefault()
                         setEditable(false)
                     }
                 }}
