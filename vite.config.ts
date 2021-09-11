@@ -1,8 +1,7 @@
 import { defineConfig } from 'vite'
 import reactRefresh from '@vitejs/plugin-react-refresh'
 import { resolve } from 'path'
-// import copy from 'rollup-plugin-copy'
-// import viteImport from 'vite-plugin-babel-import'
+import styleImport from 'vite-plugin-style-import'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -11,20 +10,29 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
+      },
+      output: {
+        entryFileNames: '[name].js',
       }
+    }
+  },
+  css: {
+    preprocessorOptions: {
+      less: { javascriptEnabled: true }
     }
   },
   plugins: [
     reactRefresh(),
-    // viteImport([
-    //   {
-    //     libraryName: "antd",
-    //     libraryDirectory: "es",
-    //     style(name) {
-    //       return `antd/es/${name}/style/index.css`;
-    //     },
-    //     ignoreStyles: [],
-    //   }
-    // ])
+    styleImport({
+      libs: [
+        {
+          libraryName: 'antd',
+          esModule: true,
+          resolveStyle: (name) => {
+            return `antd/es/${name}/style/index`
+          },
+        },
+      ]
+    })
   ]
 })

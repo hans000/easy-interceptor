@@ -12,15 +12,14 @@
     ],
     "background": {
       "scripts": [
-        "scripts/background/objecthash.js",
-        "scripts/background/index.js"
+        "background/index.js"
       ],
       "persistent": true
     },
     "content_security_policy" : "script-src 'self'; script-src-elem 'self' data: blob:; worker-src 'self' data: blob:; object-src 'self'",
     "browser_action": {
       "default_title": "Interceptor by hans000",
-      "default_popup": "dist/index.html"
+      "default_popup": "index.html"
     },
     "icons": {
       "16": "images/128_gray.png",
@@ -34,15 +33,13 @@
         "run_at": "document_start",
         "all_frames": true,
         "js": [
-          "scripts/content/utils.js",
-          "scripts/content/index.js"
+          "content/utils.js",
+          "content/index.js"
         ]
       }
     ],
     "web_accessible_resources": [
-      "scripts/injected/ajaxhook.js",
-      "scripts/injected/minimatch.js",
-      "scripts/injected/core.js",
-      "dist/index.html"
+      "injected/core.js",
+      "index.html"
     ]
   }

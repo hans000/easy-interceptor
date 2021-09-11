@@ -13,6 +13,7 @@ interface IProps {
     maxRows?: number
     minRows?: number
     validator?: JSONSchema7
+    readonly?: boolean
 }
 
 export default function RecordViewer(props: IProps) {
@@ -45,13 +46,13 @@ export default function RecordViewer(props: IProps) {
         [error, value, editable]
     )
 
-    const update = (value: string) => {
+    const update = (value: string, flag = false) => {
         setValue(value)
         try {
             const obj = JSON.parse(value)
             const result = validator(obj)
             if (result.valid) {
-                props?.onChange?.(obj)
+                flag && props?.onChange?.(obj)
                 setError(false)
             } else {
                 throw result.errors
@@ -84,30 +85,30 @@ export default function RecordViewer(props: IProps) {
                 value={value}
                 onKeyDown={(e) => {
                     e.stopPropagation()
-                    if (e.key === 'Tab') {
+                    if (e.key === 'Tab' || e.key === 'Escape') {
                         e.preventDefault()
                     }
                     if (e.key === 'Escape' && !error) {
-                        e.preventDefault()
                         setEditable(false)
                     }
                 }}
                 onChange={(e) => update(e.target.value)}
                 onBlur={() => {
-                    if (! error) {
+                    try {
+                        // error时尝试修复
+                        const obj = error ? parse(value) : JSON.parse(value)
+                        const val = JSON.stringify(obj, null, 4)
+                        update(val, true)
                         setEditable(false)
-                    } else {
-                        try {
-                            // 尝试修复
-                            const obj = parse(value)
-                            const val = JSON.stringify(obj, null, 4)
-                            update(val)
-                            setEditable(false)
-                        } catch (error) {
-                        }
+                    } catch (error) {
                     }
                 }}
-                autoSize={{ maxRows: props.maxRows, minRows: props.minRows }} onDoubleClick={() => setEditable(true)}
+                autoSize={{ maxRows: props.maxRows, minRows: props.minRows }} onDoubleClick={() => {
+                    if (props.readonly) {
+                        return
+                    }
+                    setEditable(true)
+                }}
                 ></TextArea>
             {
                 error ? <Alert type='error' message={errorMsg} /> : null

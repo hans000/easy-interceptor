@@ -8,23 +8,26 @@ import RecordViewer from '../RecordViewer';
 import { GeneralSchema, HeaderSchema } from './validator';
 
 export interface TransformResult {
+    id: string
     url?: string
     enable?: boolean
+    regexp?: boolean
     delay?: number
-    method?: 'get' | 'post' | 'delete' | 'put' | '*'
+    method?: 'get' | 'post' | 'delete' | 'put' | ''
     response?: any
     body?: any
-    params?: Record<string, string>
+    // params?: Record<string, string>
     requestHeaders?: Record<string, string>
     responseHeaders?: Record<string, string>
-    id: string
 }
 
 export interface Result {
     general?: {
         url?: string
-        method?: 'get' | 'post' | 'delete' | 'put' | '*',
-        params?: Record<string, string>
+        delay?: number
+        regexp?: boolean
+        method?: 'get' | 'post' | 'delete' | 'put' | '',
+        // params?: Record<string, string>
     }
     response?: any
     body?: any
@@ -52,7 +55,6 @@ export default function TransformerItem(props: IProps) {
     useEffect(
         () => {
             if (! equal(props.value, data)) {
-                console.log(props.value);
                 setData((value) => ({ ...defaultData, ...props.value, }))
             }
         },
@@ -66,8 +68,8 @@ export default function TransformerItem(props: IProps) {
 
     return (
         <Collapse className='ti' defaultActiveKey={['1']}>
-            <Collapse.Panel header={getTitle('general', data.general)} key='1'
-                extra={<Typography.Paragraph onClick={e => e.stopPropagation()} copyable={{ text: JSON.stringify(data.general) }}></Typography.Paragraph>}>
+            <Collapse.Panel header={'general'} key='1'
+                extra={<Typography.Paragraph onClick={e => e.stopPropagation()} copyable={{ text: JSON.stringify(data.general, null, 2) }}></Typography.Paragraph>}>
                 <RecordViewer validator={GeneralSchema} minRows={6} maxRows={15} value={data.general} onChange={general => {
                     setData(data => {
                         const result = { ...data, general }
@@ -77,8 +79,8 @@ export default function TransformerItem(props: IProps) {
                 }} />
             </Collapse.Panel>
             <Collapse.Panel header={getTitle('request header', data.requestHeaders)} key='2'
-                extra={<Typography.Paragraph onClick={e => e.stopPropagation()} copyable={{ text: JSON.stringify(data.requestHeaders) }}></Typography.Paragraph>}>
-                <RecordViewer validator={HeaderSchema} value={data.requestHeaders} onChange={requestHeader => {
+                extra={<Typography.Paragraph onClick={e => e.stopPropagation()} copyable={{ text: JSON.stringify(data.requestHeaders, null, 2) }}></Typography.Paragraph>}>
+                <RecordViewer readonly validator={HeaderSchema} value={data.requestHeaders} onChange={requestHeader => {
                     setData(data => {
                         const result = { ...data, requestHeader }
                         props?.onChange?.(result)
@@ -87,8 +89,8 @@ export default function TransformerItem(props: IProps) {
                 }}/>
             </Collapse.Panel>
             <Collapse.Panel header={getTitle('response header', data.responseHeaders)} key='3'
-                extra={<Typography.Paragraph onClick={e => e.stopPropagation()} copyable={{ text: JSON.stringify(data.responseHeaders) }}></Typography.Paragraph>}>
-                <RecordViewer validator={HeaderSchema} value={data.responseHeaders} onChange={responseHeader => {
+                extra={<Typography.Paragraph onClick={e => e.stopPropagation()} copyable={{ text: JSON.stringify(data.responseHeaders, null, 2) }}></Typography.Paragraph>}>
+                <RecordViewer readonly validator={HeaderSchema} value={data.responseHeaders} onChange={responseHeader => {
                     setData(data => {
                         const result = { ...data, responseHeader }
                         props?.onChange?.(result)
@@ -97,8 +99,8 @@ export default function TransformerItem(props: IProps) {
                 }}/>
             </Collapse.Panel>
             <Collapse.Panel header={getTitle('body', data.body)} key='4'
-                extra={<Typography.Paragraph onClick={e => e.stopPropagation()} copyable={{ text: JSON.stringify(data.body) }}></Typography.Paragraph>}>
-                <RecordViewer value={data.body} onChange={body => {
+                extra={<Typography.Paragraph onClick={e => e.stopPropagation()} copyable={{ text: JSON.stringify(data.body, null, 2) }}></Typography.Paragraph>}>
+                <RecordViewer readonly value={data.body} onChange={body => {
                     setData(data => {
                         const result = { ...data, body }
                         props?.onChange?.(result)
@@ -114,7 +116,7 @@ export default function TransformerItem(props: IProps) {
                             setPro(isPro => !isPro)
                         }} />
                     </Tooltip>
-                    <Typography.Paragraph onClick={e => e.stopPropagation()} copyable={{ text: JSON.stringify(data.response) }}></Typography.Paragraph>
+                    <Typography.Paragraph onClick={e => e.stopPropagation()} copyable={{ text: JSON.stringify(data.response, null, 2) }}></Typography.Paragraph>
                 </div>
             }>
                 {

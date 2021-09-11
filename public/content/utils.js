@@ -12,12 +12,12 @@ function createScript(path) {
 
 /** 初始化数据 */
 function initData() {
-    chrome.storage.local.get(['__hs_action', '__hs_rules'], (result) => {
-        if (result.hasOwnProperty('__hs_action')) {
-            postMessage({ type: '__Hs_Transformer__', to: 'pageScript', key: 'action', value: result.__hs_action })
+    chrome.storage.local.get(['__hs_action__', '__hs_rules__'], (result) => {
+        if (result.hasOwnProperty('__hs_action__')) {
+            postMessage({ type: '__hs_storage__', to: 'pagescript', key: 'action', value: result.__hs_action__ })
         }
-        if (result.__hs_rules) {
-            postMessage({ type: '__Hs_Transformer__', to: 'pageScript', key: 'rules', value: result.__hs_rules })
+        if (result.__hs_rules__) {
+            postMessage({ type: '__hs_storage__', to: 'pagescript', key: 'rules', value: result.__hs_rules__ })
         }
     })
 }
