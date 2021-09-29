@@ -1,45 +1,46 @@
 {
-    "manifest_version": 2,
-    "name": "Interceptor",
-    "version": "1.0",
-    "description": "Interceptor",
-    "permissions": [
-      "storage",
-      "webRequest",
-      "tabs",
-      "http://*/",
-      "https://*/"
+  "manifest_version": 2,
+  "name": "Interceptor",
+  "version": "1.0",
+  "description": "Interceptor",
+  "permissions": [
+    "storage",
+    "webRequest",
+    "tabs",
+    "http://*/",
+    "https://*/"
+  ],
+  "background": {
+    "scripts": [
+      "background/index.js"
     ],
-    "background": {
-      "scripts": [
-        "background/index.js"
-      ],
-      "persistent": true
-    },
-    "content_security_policy" : "script-src 'self'; script-src-elem 'self' data: blob:; worker-src 'self' data: blob:; object-src 'self'",
-    "browser_action": {
-      "default_title": "Interceptor by hans000",
-      "default_popup": "index.html"
-    },
-    "icons": {
-      "16": "images/128_gray.png",
-      "32": "images/128.png",
-      "48": "images/128.png",
-      "128": "images/128.png"
-    },
-    "content_scripts": [
-      {
-        "matches": ["<all_urls>"],
-        "run_at": "document_start",
-        "all_frames": true,
-        "js": [
-          "content/utils.js",
-          "content/index.js"
-        ]
-      }
-    ],
-    "web_accessible_resources": [
-      "injected/core.js",
-      "index.html"
-    ]
-  }
+    "persistent": true
+  },
+  "content_security_policy" : "script-src 'self'; script-src-elem 'self' data: blob:; worker-src 'self' data: blob:; object-src 'self'",
+  "browser_action": {
+    "default_title": "Interceptor by hans000",
+    "default_popup": "index.html",
+    "default_icon": "images/48-gray.png"
+  },
+  "icons": {
+    "16": "images/16.png",
+    "32": "images/32.png",
+    "48": "images/48.png",
+    "128": "images/128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "run_at": "document_start",
+      "all_frames": true,
+      "js": [
+        "content/utils.js",
+        "content/index.js"
+      ]
+    }
+  ],
+  "web_accessible_resources": [
+    "injected/core.js",
+    "index.html"
+  ]
+}

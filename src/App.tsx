@@ -48,7 +48,7 @@ function App() {
         chrome.storage.local.get(['__hs_action__', '__hs_rules__'], (result: any) => {
             setSelectedRowKeys([])
             setExpandedRowKeys([])
-            setData(result.__hs_rules__)
+            setData(result.__hs_rules__ || [])
             setConfigText(getConfigText(result.__hs_action__ || 'close'))
         })
     }
