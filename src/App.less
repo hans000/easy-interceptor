@@ -3,9 +3,10 @@
     padding: 0;
 }
 
+
 @width: 300px;
 @topHeight:  46px;
-  
+
 .app {
     width: 800px;
     height: 600px;
@@ -97,4 +98,8 @@ html::-webkit-scrollbar, body::-webkit-scrollbar, .app::-webkit-scrollbar {
   /*定义滑块*/
 ::-webkit-scrollbar-thumb {
     background-color: #c8c8c8;
+}
+
+html.theme--dark {
+    filter: invert(1) hue-rotate(180deg);
 }

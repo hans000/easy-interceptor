@@ -21,6 +21,7 @@ function App() {
     const [selectedRowKeys, setSelectedRowKeys] = useState([])
     const [configText, setConfigText] = useState('关闭')
     const [loading, setLoading] = useState(false)
+    const [dark, setDark] = useState(false)
     const originRef = useRef('')
 
     useEffect(
@@ -44,8 +45,23 @@ function App() {
         [data]
     )
 
+    useEffect(
+        () => {
+            const html = document.querySelector('html')
+            const cls = 'theme--dark'
+            if (dark && !html.classList.contains(cls)) {
+                html.classList.add(cls)
+            } else {
+                html.classList.remove(cls)
+            }
+        },
+        [dark]
+    )
+
     const reload = () => {
+        setLoading(true)
         chrome.storage.local.get(['__hs_action__', '__hs_rules__'], (result: any) => {
+            setLoading(false)
             setSelectedRowKeys([])
             setExpandedRowKeys([])
             setData(result.__hs_rules__ || [])
@@ -276,6 +292,11 @@ function App() {
                                 if (! __DEV__) {
                                     reload()
                                 }
+                            }}></Button>
+                        </Tooltip>
+                        <Tooltip title='切换主题'>
+                            <Button icon={<span>{ dark ? '🌑' : '🌞'}</span>} onClick={() => {
+                                setDark(dark => !dark)
                             }}></Button>
                         </Tooltip>
                     </Button.Group>
