@@ -1,4 +1,4 @@
-(function() {
+(function(chrome) {
     function setBadgeText(rules, action) {
         if (action === 'interceptor') {
             const count = rules.filter(item => item.enable).length
@@ -21,11 +21,19 @@
     function setIcon(value) {
         if (value) {
             chrome.browserAction.setIcon({
-                path: './images/128.png'
+                path: {
+                    16: '/images/16.png',
+                    32: '/images/32.png',
+                    48: '/images/48.png',
+                },
             })
         } else {
             chrome.browserAction.setIcon({
-                path: './images/128_gray.png'
+                path: {
+                    16: '/images/16-gray.png',
+                    32: '/images/32-gray.png',
+                    48: '/images/48-gray.png',
+                }
             })
         }
     }
@@ -33,7 +41,7 @@
     function update(props = ['__hs_action__', '__hs_rules__']) {
         chrome.storage.local.get(props, (result) => {
             if (result.hasOwnProperty('__hs_action__')) {
-                setIcon(result.__hs_action__)
+                setIcon(result.__hs_action__ !== 'close')
             }
             if (result.hasOwnProperty('__hs_rules__')) {
                 setBadgeText(result.__hs_rules__, result.__hs_action__)
@@ -178,5 +186,5 @@
         },
         ["responseHeaders"]
     )
-})()
+})(chrome)
 

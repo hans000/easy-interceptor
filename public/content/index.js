@@ -1,4 +1,4 @@
-(function() {
+(function(chrome) {
     // 加载脚本
     async function loadScripts() {
         await createScript('injected/core.js')
@@ -28,11 +28,11 @@
             const rules = result.__hs_rules__
             const rule = rules.find(rule => rule.url === data.url)
             if (rule) {
-                rule.response = JSON.parse(data.response)
+                rule.response = data.response
                 chrome.storage.local.set({
                     __hs_rules__: rules
                 })
             }
         })
     }, false)
-})()
+})(chrome)
