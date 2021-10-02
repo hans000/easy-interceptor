@@ -4,7 +4,7 @@
             const count = rules.filter(item => item.enable).length
             const text = count > 99 ? '99+' : count === 0 ? '' : count + ''
             chrome.browserAction.setBadgeText({ text })
-            chrome.browserAction.setBadgeBackgroundColor({ color: [24, 144, 255, 255] })
+            chrome.browserAction.setBadgeBackgroundColor({ color: [136, 20, 127, 255] })
         } else if (action === 'watch') {
             const count = rules.length
             const text = count > 99 ? '99+' : count === 0 ? '' : count + ''
@@ -19,29 +19,24 @@
     }
     
     function setIcon(value) {
-        if (value) {
-            chrome.browserAction.setIcon({
-                path: {
-                    16: '/images/16.png',
-                    32: '/images/32.png',
-                    48: '/images/48.png',
-                },
-            })
-        } else {
-            chrome.browserAction.setIcon({
-                path: {
-                    16: '/images/16-gray.png',
-                    32: '/images/32-gray.png',
-                    48: '/images/48-gray.png',
-                }
-            })
-        }
+        const suffix = value === 'watch'
+            ? '-red'
+            : value === 'close'
+                ? '-gray'
+                : ''
+        chrome.browserAction.setIcon({
+            path: {
+                16: `/images/16${suffix}.png`,
+                32: `/images/32${suffix}.png`,
+                48: `/images/48${suffix}.png`,
+            }
+        })
     }
     
     function update(props = ['__hs_action__', '__hs_rules__']) {
         chrome.storage.local.get(props, (result) => {
             if (result.hasOwnProperty('__hs_action__')) {
-                setIcon(result.__hs_action__ !== 'close')
+                setIcon(result.__hs_action__)
             }
             if (result.hasOwnProperty('__hs_rules__')) {
                 setBadgeText(result.__hs_rules__, result.__hs_action__)
@@ -59,8 +54,23 @@
     chrome.tabs.onActivated.addListener((info) => {
         __result = {}
         chrome.tabs.query({ windowId: info.windowId, active: true }, (tabs) => {
-            const [, a, b] = tabs[0].url.match(/^(https?:\/\/)?(.+?)(\/|$)/)
-            __origin = a + b
+            try {
+                const [, a, b] = tabs[0].url.match(/^(https?:\/\/)?(.+?)(\/|$)/)
+                __origin = a + b
+            } catch (error) {}
+        })
+
+        chrome.storage.local.get(['__hs_action__'], (result) => {
+            __action = result.__hs_action__
+        })
+    })
+    chrome.tabs.onUpdated.addListener((_, __, info) => {
+        __result = {}
+        chrome.tabs.query({ windowId: info.windowId, active: true }, (tabs) => {
+            try {
+                const [, a, b] = tabs[0].url.match(/^(https?:\/\/)?(.+?)(\/|$)/)
+                __origin = a + b
+            } catch (error) {}
         })
 
         chrome.storage.local.get(['__hs_action__'], (result) => {
