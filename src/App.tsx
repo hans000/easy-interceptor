@@ -71,9 +71,11 @@ function App() {
 
     const updateOrigin = () => {
         chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
-            const [, a, b] = tabs[0].url.match(/^(https?:\/\/)?(.+?)(\/|$)/)
-            const origin = a + b
-            originRef.current = origin
+            try {
+                const [, a, b] = tabs[0].url.match(/^(https?:\/\/)?(.+?)(\/|$)/)
+                const origin = a + b
+                originRef.current = origin
+            } catch (error) {}
         })
     }
 

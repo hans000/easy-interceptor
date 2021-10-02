@@ -26,13 +26,18 @@
         const data = event.detail.data
         chrome.storage.local.get(['__hs_rules__'], (result) => {
             const rules = result.__hs_rules__
-            const rule = rules.find(rule => rule.url === data.url)
+            const rule = rules.reverse().find(rule => rule.url === data.url)
             if (rule) {
                 rule.response = data.response
                 chrome.storage.local.set({
                     __hs_rules__: rules
+                }, () => {
+                    chrome.storage.local.get(['__hs_rules__'], (result) => {
+                        console.log(result);
+                    })
                 })
             }
         })
     }, false)
+    console.log(1);
 })(chrome)
