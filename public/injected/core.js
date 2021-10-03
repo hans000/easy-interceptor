@@ -2,7 +2,7 @@
     const __Hs_Interceptor__ = {
         rules: [],
         action: 'close', // close | watch | interceptor,
-        OriginalXHR: window.XMLHttpRequest.bind(window),
+        OriginalXHR: window.XMLHttpRequest,
         proxy() {
             window.XMLHttpRequest = __Hs_Interceptor__.XMLHttpRequest
         },

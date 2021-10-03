@@ -39,5 +39,4 @@
             }
         })
     }, false)
-    console.log(1);
 })(chrome)
