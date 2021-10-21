@@ -3,7 +3,7 @@ import { Button, Dropdown, Input, Menu, message, Modal, Spin, Table, Tag, Toolti
 import Checkbox from 'antd/lib/checkbox/Checkbox'
 import React, { useEffect, useRef, useState } from 'react'
 import TransformerItem, { Result, TransformResult } from './components/TransformerItem'
-import { FontSizeOutlined, TagOutlined, ControlOutlined, DeleteOutlined, PlusOutlined, CaretRightOutlined, SearchOutlined, DownOutlined, ArrowsAltOutlined, VerticalAlignTopOutlined, VerticalAlignBottomOutlined, UploadOutlined, SyncOutlined } from '@ant-design/icons'
+import { FontSizeOutlined, TagOutlined, ControlOutlined, DeleteOutlined, PlusOutlined, CaretRightOutlined, SearchOutlined, DownOutlined, VerticalAlignBottomOutlined, UploadOutlined, SyncOutlined } from '@ant-design/icons'
 import { ColumnsType } from 'antd/lib/table'
 import minimatch from 'minimatch'
 import { randID } from './utils'
@@ -12,24 +12,26 @@ import { download } from './tools/download'
 import { buildStorageMsg } from './tools/message'
 import jsonschema from 'json-schema'
 import { TransformResultSchema } from './components/TransformerItem/validator'
+import getStorage from './tools/getStorage'
+import useStorage from './hooks/useStorage'
+import { useDebounce } from './hooks/useDebounce'
 
 const __DEV__ = import.meta.env.DEV
 
 function App() {
-    const [data, setData] = useState<TransformResult[]>([])
-    const [expandedRowKeys, setExpandedRowKeys] = useState([])
-    const [selectedRowKeys, setSelectedRowKeys] = useState([])
-    const [configText, setConfigText] = useState('关闭')
+    const [dark, setDark] = useStorage('dark', false)
+    const [action, setAction] = useStorage('action', 'close')
+    const [data, setData] = useStorage<TransformResult[]>('rules', [])
+    const [expandedRowKeys, setExpandedRowKeys] = useStorage('expandedRowKeys', [])
+    const [selectedRowKeys, setSelectedRowKeys] = useStorage('selectedRowKeys', [])
+    const [scrollTop, setScrollTop] = useStorage('scrollTop', 0)
     const [loading, setLoading] = useState(false)
-    const [dark, setDark] = useState(false)
     const originRef = useRef('')
 
     useEffect(
         () => {
-            if (! __DEV__) {
-                reload()
-                updateOrigin()
-            }
+            reload()
+            updateOrigin()
         },
         []
     )
@@ -38,7 +40,6 @@ function App() {
     useEffect(
         () => {
             if (! __DEV__) {
-                chrome.storage.local.set({ __hs_rules__: data })
                 chrome.runtime.sendMessage(chrome.runtime.id, buildStorageMsg('rules', data))
             }
         },
@@ -58,25 +59,55 @@ function App() {
         [dark]
     )
 
-    const reload = () => {
+    const handle = useDebounce((event: any) => {
+        setScrollTop(event.target.scrollTop)
+    })
+
+    useEffect(
+        () => {
+            const container = document.querySelector('.ant-table-body')
+            container.addEventListener('scroll', handle)
+            getStorage(['scrollTop']).then(result => {
+                setTimeout(() => {
+                    container.scrollTo({
+                        top: result.scrollTop,
+                        behavior: 'smooth',
+                    })
+                }, 500)
+            })
+        },
+        []
+    )
+
+    const reload = (clean = false) => {
         setLoading(true)
-        chrome.storage.local.get(['__hs_action__', '__hs_rules__'], (result: any) => {
+        getStorage([
+            'action', 'rules', 'selectedRowKeys', 'expandedRowKeys', 'dark',
+        ]).then(result => {
             setLoading(false)
-            setSelectedRowKeys([])
-            setExpandedRowKeys([])
-            setData(result.__hs_rules__ || [])
-            setConfigText(getConfigText(result.__hs_action__ || 'close'))
+            setDark(result.dark)
+            setData(result.rules)
+            setAction(result.action)
+            if (clean) {
+                setSelectedRowKeys([])
+                setExpandedRowKeys([])
+            } else {
+                setSelectedRowKeys(result.selectedRowKeys)
+                setExpandedRowKeys(result.expandedRowKeys)
+            }
         })
     }
 
     const updateOrigin = () => {
-        chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
-            try {
-                const [, a, b] = tabs[0].url.match(/^(https?:\/\/)?(.+?)(\/|$)/)
-                const origin = a + b
-                originRef.current = origin
-            } catch (error) {}
-        })
+        if (! __DEV__) {
+            chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
+                try {
+                    const [, a, b] = tabs[0].url.match(/^(https?:\/\/)?(.+?)(\/|$)/)
+                    const origin = a + b
+                    originRef.current = origin
+                } catch (error) {}
+            })
+        }
     }
 
     const columns = React.useMemo<ColumnsType<any>>(
@@ -123,18 +154,18 @@ function App() {
                 },
                 {
                     dataIndex: 'method', key: 'method', width: 50, align: 'center' as any,
-                    filters: [
-                        { text: 'get', value: 'get' },
-                        { text: 'post', value: 'post' },
-                        { text: 'put', value: 'put' },
-                        { text: 'delete', value: 'delete' },
-                    ],
+                    // filters: [
+                    //     { text: 'get', value: 'get' },
+                    //     { text: 'post', value: 'post' },
+                    //     { text: 'put', value: 'put' },
+                    //     { text: 'delete', value: 'delete' },
+                    // ],
+                    // onFilter: (value, record) => record.method.includes(value),
                     title: (
                         <Tooltip title='请求类型'>
                             <TagOutlined />
                         </Tooltip>
                     ),
-                    onFilter: (value, record) => record.method.includes(value),
                     render: value => value !== '*' ? <Tag color={getMethodColor(value)}>{value}</Tag> : null
                 },
                 {
@@ -154,16 +185,16 @@ function App() {
                 },
                 {
                     dataIndex: 'enable', key: 'enable', width: 50, align: 'center' as any,
-                    filters: [
-                        { text: '启用', value: true },
-                        { text: '停用', value: false },
-                    ],
+                    // filters: [
+                    //     { text: '启用', value: true },
+                    //     { text: '停用', value: false },
+                    // ],
+                    // onFilter: (value, record) => record.enable === value,
                     title: (
                         <Tooltip title='启用拦截'>
                             <ControlOutlined />
                         </Tooltip>
                     ),
-                    onFilter: (value, record) => record.enable === value,
                     render: (value, record, index) => <Checkbox checked={value} onChange={(e) => {
                         setData(data => {
                             const result = [...data]
@@ -290,11 +321,7 @@ function App() {
                             </Upload>
                         </Tooltip>
                         <Tooltip title='刷新数据'>
-                            <Button icon={<SyncOutlined />} onClick={() => {
-                                if (! __DEV__) {
-                                    reload()
-                                }
-                            }}></Button>
+                            <Button icon={<SyncOutlined />} onClick={() => reload(true)}></Button>
                         </Tooltip>
                         <Tooltip title='切换主题'>
                             <Button icon={<span>{ dark ? '🌑' : '🌞'}</span>} onClick={() => {
@@ -304,12 +331,11 @@ function App() {
                     </Button.Group>
                     <div>
                         <Dropdown trigger={['click']} overlay={
-                            <Menu activeKey='close' onClick={(info) => {
+                            <Menu activeKey={action} onClick={(info) => {
                                 if (! __DEV__) {
-                                    chrome.storage.local.set({ __hs_action__: info.key })
                                     chrome.runtime.sendMessage(chrome.runtime.id, buildStorageMsg('action', info.key))
                                 }
-                                setConfigText(getConfigText(info.key as ActionType))
+                                setAction(info.key)
                             }}>
                                 <Menu.Item key='close'>
                                     <span>关闭</span>
@@ -323,7 +349,7 @@ function App() {
                             </Menu>
                         }>
                             <a className="ant-dropdown-link" onClick={e => e.preventDefault()}>
-                                <span>{configText}</span> <DownOutlined />
+                                <span>{getConfigText(action as ActionType)}</span> <DownOutlined />
                             </a>
                         </Dropdown>
                     </div>
@@ -341,6 +367,7 @@ function App() {
                                 setSelectedRowKeys(keys)
                             },
                         }}
+                        defaultExpandedRowKeys={expandedRowKeys}
                         expandable={{
                             expandedRowKeys,
                             expandIcon: props => (

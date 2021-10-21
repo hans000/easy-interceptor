@@ -31,10 +31,6 @@
                 rule.response = data.response
                 chrome.storage.local.set({
                     __hs_rules__: rules
-                }, () => {
-                    chrome.storage.local.get(['__hs_rules__'], (result) => {
-                        console.log(result);
-                    })
                 })
             }
         })

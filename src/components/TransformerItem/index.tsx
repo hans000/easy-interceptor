@@ -6,6 +6,8 @@ import { SwapOutlined } from '@ant-design/icons';
 import { equal } from '../../utils';
 import RecordViewer from '../RecordViewer';
 import { GeneralSchema, HeaderSchema } from './validator';
+import useStorage from '../../hooks/useStorage';
+import getStorage from '../../tools/getStorage';
 
 export interface TransformResult {
     id: string
@@ -51,6 +53,7 @@ const defaultData: Result = {
 export default function TransformerItem(props: IProps) {
     const [data, setData] = useState<Result>(defaultData)
     const [isPro, setPro] = useState(false)
+    const [activeKey, setActiveKey] = useStorage('activeKey', [])
 
     useEffect(
         () => {
@@ -61,13 +64,22 @@ export default function TransformerItem(props: IProps) {
         [props.value]
     )
 
+    useEffect(
+        () => {
+            getStorage(['activeKey']).then(result => {
+                setActiveKey(result.activeKey)
+            })
+        },
+        []
+    )
+
     const getTitle = (title: string, val: Record<string, any> = {}) => {
         const count = Object.keys(val).length
         return !!count ? `${title} (${count})` : title
     }
 
     return (
-        <Collapse className='ti' defaultActiveKey={['1']}>
+        <Collapse className='ti' defaultActiveKey={activeKey} activeKey={activeKey} onChange={ keys => setActiveKey(keys as string[])}>
             <Collapse.Panel header={'general'} key='1'
                 extra={<Typography.Paragraph onClick={e => e.stopPropagation()} copyable={{ text: JSON.stringify(data.general, null, 2) }}></Typography.Paragraph>}>
                 <RecordViewer validator={GeneralSchema} minRows={6} maxRows={15} value={data.general} onChange={general => {
@@ -121,15 +133,13 @@ export default function TransformerItem(props: IProps) {
             }>
                 {
                     isPro
-                        ? (
-                            <JsonEditor value={data.response} onChange={response => {
-                                setData(value => {
-                                    const result = { ...value, response }
-                                    props?.onChange?.(result)
-                                    return result
-                                })
-                            }}/>
-                        )
+                        ? <JsonEditor value={data.response} onChange={response => {
+                            setData(value => {
+                                const result = { ...value, response }
+                                props?.onChange?.(result)
+                                return result
+                            })
+                        }}/>
                         : <RecordViewer minRows={6} maxRows={15} value={data.response}
                             onChange={response => {
                                 setData(value => {

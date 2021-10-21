@@ -1,5 +1,5 @@
 import TextArea from 'antd/lib/input/TextArea'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { equal } from '../../utils'
 import parse from '../../utils/toJson'
 import jsonschema, { JSONSchema7 } from 'json-schema'
@@ -22,6 +22,7 @@ export default function RecordViewer(props: IProps) {
     const [error, setError] = useState(false)
     const [value, setValue] = useState(null)
     const [errorMsg, setErrorMsg] = useState('')
+    const codeRef = useRef<HTMLPreElement>()
 
     useEffect(
         () => {
@@ -34,12 +35,13 @@ export default function RecordViewer(props: IProps) {
 
     const cls = React.useMemo(
         () => {
-            const list = ['rv__editor']
+            const list = ['rv__editor', 'ant-input']
             if (error) {
                 list.push('rv__editor--error')
             }
             if (! editable) {
                 list.push('rv__editor--readonly')
+            } else {
             }
             return list.join(' ')
         },
@@ -103,7 +105,8 @@ export default function RecordViewer(props: IProps) {
                     } catch (error) {
                     }
                 }}
-                autoSize={{ maxRows: props.maxRows, minRows: props.minRows }} onDoubleClick={() => {
+                autoSize={{ maxRows: props.maxRows, minRows: props.minRows }}
+                onDoubleClick={() => {
                     if (props.readonly) {
                         return
                     }

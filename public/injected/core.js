@@ -47,7 +47,7 @@
                 } else {
                     if (action === 'watch') {
                         try {
-                            const json = shorten(JSON.parse(xhr.responseText))
+                            const json = xhr.responseText.length > 50000 ? shorten(JSON.parse(xhr.responseText)) : JSON.parse(xhr.responseText)
                             window.dispatchEvent(new CustomEvent('pagescript', {
                                 detail: {
                                     type: '__hs_response__',
