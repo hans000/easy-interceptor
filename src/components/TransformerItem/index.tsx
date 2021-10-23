@@ -11,6 +11,7 @@ import getStorage from '../../tools/getStorage';
 
 export interface TransformResult {
     id: string
+    count: number
     url?: string
     enable?: boolean
     regexp?: boolean

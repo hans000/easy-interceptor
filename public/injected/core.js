@@ -33,16 +33,25 @@
                 const match = matching()
                 if (match) {
                     this.responseText = this.response = match.response || {}
-                    setTimeout(callback, match.delay || 0)
+                    setTimeout(callback.bind(null, match.id), match.delay || 0)
                 } else {
-                    callback()
+                    callback(match.id)
                 }
             }
     
             const handle = (fn, args) => {
                 if (action === 'interceptor') {
-                    modify(() => {
+                    modify((id) => {
                         fn && fn.apply(this, args)
+                        window.dispatchEvent(new CustomEvent('pagescript', {
+                            detail: {
+                                type: '__hs_count__',
+                                from: '__hs_pagescript__',
+                                data: {
+                                    id
+                                }
+                            }
+                        }))
                     })
                 } else {
                     if (action === 'watch') {

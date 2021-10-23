@@ -23,15 +23,28 @@
 
     // 接收pagescript传来的信息
     window.addEventListener("pagescript", function (event) {
-        const data = event.detail.data
+        const { data, type } = event.detail
         chrome.storage.local.get(['__hs_rules__'], (result) => {
             const rules = result.__hs_rules__
-            const rule = rules.reverse().find(rule => rule.url === data.url)
-            if (rule) {
-                rule.response = data.response
-                chrome.storage.local.set({
-                    __hs_rules__: rules
-                })
+            // 监听时拼接数据
+            if (type === '__hs_response__') {
+                const rule = rules.reverse().find(rule => rule.url === data.url)
+                if (rule) {
+                    rule.response = data.response
+                    chrome.storage.local.set({
+                        __hs_rules__: rules
+                    })
+                }
+            }
+            // 拦截时计数
+            if (type === '__hs_count__') {
+                const rule = rules.find(rule => rule.id === data.id)
+                if (rule) {
+                    rule.count = rule.count + 1
+                    chrome.storage.local.set({
+                        __hs_rules__: rules
+                    })
+                }
             }
         })
     }, false)

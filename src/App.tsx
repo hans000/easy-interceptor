@@ -86,14 +86,15 @@ function App() {
         ]).then(result => {
             setLoading(false)
             setDark(result.dark)
-            setData(result.rules)
             setAction(result.action)
             if (clean) {
                 setSelectedRowKeys([])
                 setExpandedRowKeys([])
+                setData(result.rules.map(item => ({ ...item, count: 0 })))
             } else {
                 setSelectedRowKeys(result.selectedRowKeys)
                 setExpandedRowKeys(result.expandedRowKeys)
+                setData(result.rules)
             }
         })
     }
@@ -151,6 +152,11 @@ function App() {
                             </Tooltip>
                         )
                     }
+                },
+                {
+                    dataIndex: 'count', key: 'count', width: 100, align: 'center' as any,
+                    title: '拦截次数',
+                    render: value => value ? value : null
                 },
                 {
                     dataIndex: 'method', key: 'method', width: 50, align: 'center' as any,
@@ -242,7 +248,7 @@ function App() {
                         <Tooltip title={'添加'}>
                             <Button icon={<PlusOutlined />} onClick={() => {
                                 setData(data => {
-                                    const result = [...data, { url: '/api-' + data.length, id: randID(), method: 'get' as any }]
+                                    const result = [...data, { url: '/api-' + data.length, id: randID(), count: 0, method: 'get' as any }]
                                     return result
                                 })
                             }}></Button>

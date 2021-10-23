@@ -29,4 +29,4 @@ Easy Interceptor is a Chrome extension that intercepts HTTP requests in the form
 
 ## tips
 - Just keep running in development
-- Because the storage is only 5M, the extension uses the shorten function to simplify the data. (rules: 1. Retain the first 10 items of the array. 2. Retain the first 200 characters of the string)
+- Because the storage is only 5M, the extension uses the shorten function to simplify the data. (rules: Enable algorithm when data exceeds 50,000 characters. Refine data by recursive halving when an array of more than 10 items or a string of more than 200 characters is satisfied)

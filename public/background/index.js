@@ -180,6 +180,7 @@
                         ...result.__hs_rules__,
                         {
                             id: Math.random().toString(36).slice(2),
+                            count: 0,
                             url: details.url,
                             method: details.method.toLowerCase(),
                             ...data,
