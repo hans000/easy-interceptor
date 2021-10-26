@@ -383,7 +383,7 @@ function App() {
                                 </span>
                             ),
                             expandedRowRender: (record: TransformResult, index: number) => {
-                                const { id, enable, regexp,
+                                const { id, enable, regexp, count,
                                     body, requestHeaders, response, responseHeaders, ...general } = record
                                 const value = {
                                     body,

@@ -119,20 +119,37 @@
 
     // 精简数据
     function shorten(data, config = { stringLength: 200, arrayLength: 10 }) {
-        if (! data) return data
-
-        if (Array.isArray(data)) {
-            return data.slice(0, config.arrayLength).reduce((acc, item) => (acc.push(shorten(item, config)), acc), [])
+        const { stringLength, arrayLength } = config
+        let modified = false
+    
+        function halfString(value) {
+            if (value.length > stringLength) {
+                modified = true
+                return value.slice(0, value.length / 2 | 0)
+            }
+            return value
         }
-
-        if (typeof data === 'object') {
-            return Object.keys(data).reduce((acc, key) => (acc[key] = shorten(data[key], config), acc), {})
+    
+        function halfArray(value) {
+            if (value.length > arrayLength) {
+                modified = true
+                return value.slice(0, value.length / 2 | 0)
+            }
+            return value.map(item => handle(item))
         }
-
-        if (typeof data === 'string') {
-            return data.slice(0, config.stringLength)
+    
+        function handle(data) {
+            if (typeof data === 'string') return halfString(data)
+            if (Array.isArray(data)) return halfArray(data)
+            if (data && typeof data === 'object') return Object.keys(data).reduce((acc, key) => (acc[key] = handle(data[key]), acc), {})
+            return data
         }
-        
-        return data
+    
+        let result = handle(data)
+        while(modified) {
+            modified = false
+            result = handle(result)
+        }
+        return result
     }
 })(window)
