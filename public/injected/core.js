@@ -35,23 +35,27 @@
                     this.responseText = this.response = match.response || {}
                     setTimeout(callback.bind(null, match.id), match.delay || 0)
                 } else {
-                    callback(match.id)
+                    callback()
                 }
             }
     
             const handle = (fn, args) => {
                 if (action === 'interceptor') {
                     modify((id) => {
-                        fn && fn.apply(this, args)
-                        window.dispatchEvent(new CustomEvent('pagescript', {
-                            detail: {
-                                type: '__hs_count__',
-                                from: '__hs_pagescript__',
-                                data: {
-                                    id
+                        if (fn) {
+                            fn.apply(this, args)
+                        }
+                        if (id) {
+                            window.dispatchEvent(new CustomEvent('pagescript', {
+                                detail: {
+                                    type: '__hs_count__',
+                                    from: '__hs_pagescript__',
+                                    data: {
+                                        id
+                                    }
                                 }
-                            }
-                        }))
+                            }))
+                        }
                     })
                 } else {
                     if (action === 'watch') {
@@ -69,7 +73,9 @@
                             }))
                         } catch (error) {}
                     }
-                    fn && fn.apply(this, args)
+                    if (fn) {
+                        fn.apply(this, args)
+                    }
                 }
             }
     
