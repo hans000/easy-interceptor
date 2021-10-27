@@ -7,7 +7,7 @@ Easy Interceptor是一个chrome插件，它可以拦截XMLHttpRequest数据请�
 
 > 注意：它并不会修改原始的请求，因此devtool-network的信息不会改变
 
-![演示](./assets/demo.gif)
+<img src="./assets/demo.gif" alt="演示" style="zoom:80%;" />
 
 ## 使用说明
 
@@ -28,7 +28,23 @@ Easy Interceptor是一个chrome插件，它可以拦截XMLHttpRequest数据请�
 - 监听功能：监听请求（仅对Content-Type为json类型的请求有效）
 - 拦截功能：自定义responseText
 
+### 如何使用
+
+**方式1**：新建一个数据然后手动填写general和response选项，如下
+
+<img src="./assets/demo-add.gif" alt="演示" style="zoom:80%;" />
+
+**方式2**：使用监听形式，重新请求接口，然后修改数据
+
+<img src="./assets/demo-watch.gif" alt="演示2" style="zoom: 80%;" />
+
+**方式3**：使用监听形式，控制台replay，然后修改数据（注意：使用此方式无法获取response，需要手动填写）
+
+<img src="./assets/demo-replay.gif" alt="演示" style="zoom:80%;" />
+
 ### 注意事项
 - 仅在开发时使用，不使用时请关闭
 - 因为存储仅有5M，插件使用shorten函数对单条数据做精简（规则：数据超过50000字符时启用，当满足数组超过10项或字符串超过200字符时会通过递归折半精简数据）
--
+- 你可以书写js对象，程序会尝试修复，如下
+
+<img src="./assets/demo-repair.gif" alt="演示" style="zoom:80%;" />
