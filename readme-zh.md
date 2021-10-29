@@ -1,15 +1,30 @@
 # Easy Interceptor
 
-中文 | [English](./readme.md)
+中文 | [**English**](./readme.md)
 
 ## 摘要
-Easy Interceptor是一个chrome插件，它可以拦截XMLHttpRequest数据请求方式的http请求，通过覆盖response，responseText字段达到对数据的拦截和修改，多用于调试web页面。
+相信多数前端都会遇到这类问题：明明是要验证一个很简单的东西，但是这个问题复现的前置条件实在**太难**完成了，导致自己很痛苦。这里的太难完成可能是：
 
-> 注意：它并不会修改原始的请求，因此devtool-network的信息不会改变
+- 业务流程太长（不熟悉流程或懒的重走一遍）
+- 要验证的是测试环境，不能通过前端硬编码解决
+- 修改数据库困难（没有条件改、不会改或者不想麻烦后端改）
+- 不想使用代理软件（没必要、没用过或者安装、配置麻烦等）
 
-<img src="./assets/demo.gif" alt="演示" style="zoom:80%;" />
+如何解决上述问题呢？如果可以在客户端接收数据前拦截并加以修改再返回，就可以达到mock数据的目的。Easy Interceptor就是利用上述思路，作为一个chrome插件，它对使用者的心智负担极小，它可以拦截XMLHttpRequest数据请求方式的http请求，通过覆盖response，responseText字段，从而达到对数据的修改。
+
+> 注意：它是通过代理xhr的方法、属性，覆盖特定的字段，因此需要保证接口正常，devtool-network的信息并不会改变
+
+## 特点
+
+- 免费，无广告
+- 监听当前请求，省略填写的麻烦
+- 集成了Json Editor，更方便的编辑json
+- 自动将js对象修复为json格式
+- 导入导出，工程序列化
 
 ## 使用说明
+
+<img src="./assets/demo.png" alt="演示" style="width:80%;padding-left:10%" />
 
 ### 图标状态
 - 灰色：关闭状态
@@ -32,19 +47,19 @@ Easy Interceptor是一个chrome插件，它可以拦截XMLHttpRequest数据请�
 
 **方式1**：新建一个数据然后手动填写general和response选项，如下
 
-<img src="./assets/demo-add.gif" alt="演示" style="zoom:80%;" />
+<img src="./assets/demo-add.gif" alt="演示" style="width:80%;padding-left:10%" />
 
 **方式2**：使用监听形式，重新请求接口，然后修改数据
 
-<img src="./assets/demo-watch.gif" alt="演示2" style="zoom: 80%;" />
+<img src="./assets/demo-watch.gif" alt="演示2" style="width:80%;padding-left:10%" />
 
 **方式3**：使用监听形式，控制台replay，然后修改数据（注意：使用此方式无法获取response，需要手动填写）
 
-<img src="./assets/demo-replay.gif" alt="演示" style="zoom:80%;" />
+<img src="./assets/demo-replay.gif" alt="演示3" style="width:80%;padding-left:10%" />
 
 ### 注意事项
 - 仅在开发时使用，不使用时请关闭
 - 因为存储仅有5M，插件使用shorten函数对单条数据做精简（规则：数据超过50000字符时启用，当满足数组超过10项或字符串超过200字符时会通过递归折半精简数据）
 - 你可以书写js对象，程序会尝试修复，如下
 
-<img src="./assets/demo-repair.gif" alt="演示" style="zoom:80%;" />
+<img src="./assets/demo-repair.gif" alt="演示4" style="width:80%;padding-left:10%" />
