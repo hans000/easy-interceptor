@@ -1,7 +1,7 @@
 (function(window) {
     const __Hs_Interceptor__ = {
         rules: [],
-        action: 'close', // close | watch | interceptor,
+        action: 'close', // close | watch | intercept,
         OriginalXHR: window.XMLHttpRequest,
         proxy() {
             window.XMLHttpRequest = __Hs_Interceptor__.XMLHttpRequest
@@ -40,7 +40,7 @@
             }
     
             const handle = (fn, args) => {
-                if (action === 'interceptor') {
+                if (action === 'intercept') {
                     modify((id) => {
                         if (fn) {
                             fn.apply(this, args)

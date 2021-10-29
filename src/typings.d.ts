@@ -1,4 +1,4 @@
-declare type ActionType = 'close' | 'watch' | 'interceptor'
+declare type ActionType = 'close' | 'watch' | 'intercept'
 
 interface Window {
     setting: {

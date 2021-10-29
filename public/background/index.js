@@ -1,6 +1,6 @@
 (function(chrome) {
     function setBadgeText(rules, action) {
-        if (action === 'interceptor') {
+        if (action === 'intercept') {
             const count = rules.filter(item => item.enable).length
             const text = count > 99 ? '99+' : count === 0 ? '' : count + ''
             chrome.browserAction.setBadgeText({ text })

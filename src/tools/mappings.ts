@@ -10,7 +10,7 @@ export function getMethodColor(method: string) {
 
 export function getConfigText(action: ActionType) {
 	return {
-		interceptor: '启用拦截',
+		intercept: '启用拦截',
 		watch: '启用监听',
 		close: '关闭',
 	}[action]

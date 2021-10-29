@@ -24,7 +24,7 @@
     // 接收pagescript传来的信息
     window.addEventListener("pagescript", function (event) {
         const { data, type } = event.detail
-        chrome.storage.local.get(['__hs_rules__'], (result) => {
+        chrome.storage.local.get(['__hs_rules__', '__hs_update__'], (result) => {
             const rules = result.__hs_rules__
             // 监听时拼接数据
             if (type === '__hs_response__') {
@@ -32,7 +32,8 @@
                 if (rule) {
                     rule.response = data.response
                     chrome.storage.local.set({
-                        __hs_rules__: rules
+                        __hs_rules__: rules,
+                        __hs_update__: !result.__hs_update__,
                     })
                 }
             }
@@ -42,7 +43,8 @@
                 if (rule) {
                     rule.count = rule.count + 1
                     chrome.storage.local.set({
-                        __hs_rules__: rules
+                        __hs_rules__: rules,
+                        __hs_update__: !result.__hs_update__,
                     })
                 }
             }

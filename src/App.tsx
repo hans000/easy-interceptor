@@ -21,7 +21,7 @@ const __DEV__ = import.meta.env.DEV
 function App() {
     const [dark, setDark] = useStorage('dark', false)
     const [action, setAction] = useStorage('action', 'close')
-    const [data, setData] = useStorage<TransformResult[]>('rules', [])
+    const [rules, setRules] = useStorage<TransformResult[]>('rules', [])
     const [expandedRowKeys, setExpandedRowKeys] = useStorage('expandedRowKeys', [])
     const [selectedRowKeys, setSelectedRowKeys] = useStorage('selectedRowKeys', [])
     const [scrollTop, setScrollTop] = useStorage('scrollTop', 0)
@@ -32,18 +32,39 @@ function App() {
         () => {
             reload()
             updateOrigin()
+            watchRules()
         },
         []
     )
+
+    const watchRules = () => {
+        if (! __DEV__) {
+            // @ts-ignore
+            chrome.storage.local.onChanged.addListener((result) => {
+                if (result.__hs_update__ !== undefined) {
+                    reload()
+                }
+            })
+        }
+    }
 
     // 数据改变后通知background，并保存chrome.storage
     useEffect(
         () => {
             if (! __DEV__) {
-                chrome.runtime.sendMessage(chrome.runtime.id, buildStorageMsg('rules', data))
+                chrome.runtime.sendMessage(chrome.runtime.id, buildStorageMsg('rules', rules))
             }
         },
-        [data]
+        [rules]
+    )
+
+    useEffect(
+        () => {
+            if (! __DEV__) {
+                chrome.runtime.sendMessage(chrome.runtime.id, buildStorageMsg('action', action))
+            }
+        },
+        [action]
     )
 
     useEffect(
@@ -90,11 +111,11 @@ function App() {
             if (clean) {
                 setSelectedRowKeys([])
                 setExpandedRowKeys([])
-                setData(result.rules.map(item => ({ ...item, count: 0 })))
+                setRules(result.rules.map(item => ({ ...item, count: 0 })))
             } else {
                 setSelectedRowKeys(result.selectedRowKeys)
                 setExpandedRowKeys(result.expandedRowKeys)
-                setData(result.rules)
+                setRules(result.rules)
             }
         })
     }
@@ -182,7 +203,7 @@ function App() {
                         </Tooltip>
                     ),
                     render: (value, record, index) => <Checkbox checked={value} onChange={(e) => {
-                        setData(data => {
+                        setRules(data => {
                             const result = [...data]
                             result[index].regexp = e.target.checked
                             return result
@@ -202,7 +223,10 @@ function App() {
                         </Tooltip>
                     ),
                     render: (value, record, index) => <Checkbox checked={value} onChange={(e) => {
-                        setData(data => {
+                        if (! value) {
+                            setAction('intercept')
+                        }
+                        setRules(data => {
                             const result = [...data]
                             result[index].enable = e.target.checked
                             return result
@@ -215,7 +239,7 @@ function App() {
     )
 
     const update = (value: Result, index: number) => {
-        setData(data => {
+        setRules(data => {
             const result = [...data]
             const obj = result[index]
             obj.url = value.general.url
@@ -234,10 +258,10 @@ function App() {
     const getActionText = React.useCallback(
         (type: string) => {
             const count = selectedRowKeys.length
-            const total = data.length
+            const total = rules.length
             return count ? `${type}${count}项` : total ? `${type}所有，共${total}项` : ''
         },
-        [selectedRowKeys.length, data.length]
+        [selectedRowKeys.length, rules.length]
     )
 
     return (
@@ -247,7 +271,7 @@ function App() {
                     <Button.Group style={{ paddingRight: 8 }}>
                         <Tooltip title={'添加'}>
                             <Button icon={<PlusOutlined />} onClick={() => {
-                                setData(data => {
+                                setRules(data => {
                                     const result = [...data, { url: '/api-' + data.length, id: randID(), count: 0, method: 'get' as any }]
                                     return result
                                 })
@@ -256,15 +280,15 @@ function App() {
                         <Tooltip title={getActionText('删除')}>
                             <Button icon={<DeleteOutlined />} onClick={() => {
                                 if (! selectedRowKeys.length) {
-                                    return setData([])
+                                    return setRules([])
                                 }
-                                setData(data.filter(item => !selectedRowKeys.find(id => id === item.id)))
+                                setRules(rules.filter(item => !selectedRowKeys.find(id => id === item.id)))
                                 setSelectedRowKeys([])
                             }}></Button>
                         </Tooltip>
                         <Tooltip title={getActionText('下载')}>
                             <Button icon={<VerticalAlignBottomOutlined />} onClick={() => {
-                                const sel = selectedRowKeys.length ? data.filter(item => !selectedRowKeys.find(id => id === item.id)) : data
+                                const sel = selectedRowKeys.length ? rules.filter(item => !selectedRowKeys.find(id => id === item.id)) : rules
                                 const origin = originRef.current || 'interceptor-data'
                                 download(origin + '.json', JSON.stringify(sel, null, 2))
                                 setSelectedRowKeys([])
@@ -290,14 +314,14 @@ function App() {
                                             closable: true,
                                             onCancel: (close) => {
                                                 if (typeof close === 'function') {
-                                                    setData(arr)
+                                                    setRules(arr)
                                                     close()
                                                 }
                                             },
                                             okText: '追加',
                                             onOk: () => {
                                                 let count = 0
-                                                setData((data) => {
+                                                setRules((data) => {
                                                     return arr.reduce(
                                                         (acc, s) => {
                                                             if (acc.find(el => el.id === s.id)) {
@@ -338,9 +362,6 @@ function App() {
                     <div>
                         <Dropdown trigger={['click']} overlay={
                             <Menu activeKey={action} onClick={(info) => {
-                                if (! __DEV__) {
-                                    chrome.runtime.sendMessage(chrome.runtime.id, buildStorageMsg('action', info.key))
-                                }
                                 setAction(info.key)
                             }}>
                                 <Menu.Item key='close'>
@@ -349,7 +370,7 @@ function App() {
                                 <Menu.Item key='watch'>
                                     <span>启用监听</span>
                                 </Menu.Item>
-                                <Menu.Item key='interceptor'>
+                                <Menu.Item key='intercept'>
                                     <span>启用拦截</span>
                                 </Menu.Item>
                             </Menu>
@@ -397,7 +418,7 @@ function App() {
                                 )
                             },
                         }}
-                        dataSource={data}
+                        dataSource={rules}
                     />
                 </div>
             </div>
