@@ -193,7 +193,7 @@ export default function TransformerItem(props: IProps) {
                     }}/>
                 </Tooltip>
             }>
-                <TextArea value={data.code} placeholder='e => e.map(el => el.id)' onChange={e => {
+                <TextArea value={data.code} autoSize placeholder='e => e.map(el => el.id)' onChange={e => {
                     setData(data => {
                         const result = { ...data, code: e.target.value }
                         return result
