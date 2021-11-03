@@ -22,7 +22,6 @@ export default function RecordViewer(props: IProps) {
     const [error, setError] = useState(false)
     const [value, setValue] = useState(null)
     const [errorMsg, setErrorMsg] = useState('')
-    const codeRef = useRef<HTMLPreElement>()
 
     useEffect(
         () => {

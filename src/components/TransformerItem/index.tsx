@@ -1,13 +1,14 @@
-import { Collapse, Typography, Tooltip } from 'antd'
+import { Collapse, Typography, Tooltip, message } from 'antd'
 import React, { useEffect, useState } from 'react'
 import JsonEditor from '../JsonEditor'
 import './index.less'
-import { SwapOutlined } from '@ant-design/icons';
+import { CodeOutlined, SwapOutlined } from '@ant-design/icons';
 import { equal } from '../../utils';
 import RecordViewer from '../RecordViewer';
 import { GeneralSchema, HeaderSchema } from './validator';
 import useStorage from '../../hooks/useStorage';
 import getStorage from '../../tools/getStorage';
+import TextArea from 'antd/lib/input/TextArea'
 
 export interface TransformResult {
     id: string
@@ -22,6 +23,7 @@ export interface TransformResult {
     // params?: Record<string, string>
     requestHeaders?: Record<string, string>
     responseHeaders?: Record<string, string>
+    code?: string
 }
 
 export interface Result {
@@ -36,6 +38,7 @@ export interface Result {
     body?: any
     requestHeaders?: Record<string, string>
     responseHeaders?: Record<string, string>
+    code?: string
 }
 
 interface IProps {
@@ -49,6 +52,7 @@ const defaultData: Result = {
     response: {},
     requestHeaders: {},
     responseHeaders: {},
+    code: '',
 }
 
 export default function TransformerItem(props: IProps) {
@@ -150,6 +154,28 @@ export default function TransformerItem(props: IProps) {
                                 })
                             }} />
                 }
+            </Collapse.Panel>
+            <Collapse.Panel header='code' key='6' extra={
+                <CodeOutlined style={{ color: '#1890ff' }} onClick={e => {
+                    e.stopPropagation()
+                    if (data.code) {
+                        try {
+                            console.log(eval(`;(${data.code})(${JSON.stringify(data.response)})`))
+                        } catch (error) {
+                            console.error(error)
+                        }
+                    }
+                }}/>
+            }>
+                <TextArea value={data.code} onChange={code => {
+                    console.log(code.target.value);
+                    
+                    setData(data => {
+                        const result = { ...data, code: code.target.value }
+                        props?.onChange?.(result)
+                        return result
+                    })
+                }} />
             </Collapse.Panel>
         </Collapse>
     )

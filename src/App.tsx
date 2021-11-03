@@ -250,6 +250,7 @@ function App() {
             obj.responseHeaders = value.responseHeaders || {}
             obj.response = value.response || {}
             obj.body = value.body || {}
+            obj.code = value.code || ''
             // obj.params = value.general.params || {}
             return result
         })
@@ -405,13 +406,14 @@ function App() {
                             ),
                             expandedRowRender: (record: TransformResult, index: number) => {
                                 const { id, enable, regexp, count,
-                                    body, requestHeaders, response, responseHeaders, ...general } = record
+                                    body, requestHeaders, response, responseHeaders, code, ...general } = record
                                 const value = {
                                     body,
                                     general,
                                     response,
                                     requestHeaders,
                                     responseHeaders,
+                                    code,
                                 }
                                 return (
                                     <TransformerItem key={index} value={value} onChange={value => update(value, index)}/>
