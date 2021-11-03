@@ -39,12 +39,12 @@
                                 ? this.responseText || this.response
                                 : match.response
                             const dataStr = JSON.stringify(match)
-                            result = eval(`;(${match.code})(${responseStr}, ${dataStr})`)
+                            result = JSON.stringify(eval(`;(${match.code})(${responseStr}, ${dataStr})`))
                         } catch (error) {
                             console.error(error)
                         }
                     }
-                    this.responseText = this.response = JSON.stringify(result)
+                    this.responseText = this.response = result
                     setTimeout(callback.bind(null, match.id), match.delay || 0)
                 } else {
                     callback()
