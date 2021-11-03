@@ -19,6 +19,11 @@
             postMessage({ ...msg })
             return
         }
+
+        if (msg.type === '__hs_log__') {
+            console.log('[EI]', msg.value)
+            return
+        }
     })
 
     // 接收pagescript传来的信息

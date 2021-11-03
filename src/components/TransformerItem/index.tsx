@@ -55,6 +55,8 @@ const defaultData: Result = {
     code: '',
 }
 
+const __DEV__ = import.meta.env.DEV
+
 export default function TransformerItem(props: IProps) {
     const [data, setData] = useState<Result>(defaultData)
     const [isPro, setPro] = useState(false)
@@ -128,7 +130,7 @@ export default function TransformerItem(props: IProps) {
             <Collapse.Panel header='response' key='5' extra={
                 <div className='ti__icon-wrap'>
                     <Tooltip title='切换视图'>
-                        <SwapOutlined style={{ color: '#1890ff', padding: '0 4px' }} onClick={(e) => {
+                        <SwapOutlined style={{ color: '#1890ff', padding: '0 8px' }} onClick={(e) => {
                             e.stopPropagation()
                             setPro(isPro => !isPro)
                         }} />
@@ -145,7 +147,7 @@ export default function TransformerItem(props: IProps) {
                                 return result
                             })
                         }}/>
-                        : <RecordViewer minRows={6} maxRows={15} value={data.response}
+                        : <RecordViewer minRows={6} maxRows={15} value={data.response} defaultValue={null}
                             onChange={response => {
                                 setData(value => {
                                     const result = { ...value, response }
@@ -156,25 +158,48 @@ export default function TransformerItem(props: IProps) {
                 }
             </Collapse.Panel>
             <Collapse.Panel header='code' key='6' extra={
-                <CodeOutlined style={{ color: '#1890ff' }} onClick={e => {
-                    e.stopPropagation()
-                    if (data.code) {
-                        try {
-                            console.log(eval(`;(${data.code})(${JSON.stringify(data.response)})`))
-                        } catch (error) {
-                            console.error(error)
+                <Tooltip title='测试代码'>
+                    <CodeOutlined style={{ color: data.code && data.response !== null ? '#1890ff' : 'gray' }}
+                    onClick={e => {
+                        e.stopPropagation()
+                        if (data.code && data.response !== null) {
+                            try {
+                                const responseStr = JSON.stringify(data.response)
+                                const dataStr = JSON.stringify(data)
+                                const msg = eval(`;(${data.code})(${responseStr}, ${dataStr})`)
+                                if (__DEV__) {
+                                    console.log('[EI]', msg)
+                                } else {
+                                    chrome.runtime.sendMessage(chrome.runtime.id, {
+                                        type: '__hs_log__',
+                                        from: '__hs_iframe__',
+                                        key: 'log',
+                                        value: msg,
+                                    })
+                                }
+                            } catch (error) {
+                                if (__DEV__) {
+                                    console.error(error)
+                                } else {
+                                    chrome.runtime.sendMessage(chrome.runtime.id, {
+                                        type: '__hs_log__',
+                                        from: '__hs_iframe__',
+                                        key: 'log',
+                                        value: error,
+                                    })
+                                }
+                            }
                         }
-                    }
-                }}/>
+                    }}/>
+                </Tooltip>
             }>
-                <TextArea value={data.code} onChange={code => {
-                    console.log(code.target.value);
-                    
+                <TextArea value={data.code} placeholder='e => e.map(el => el.id)' onChange={e => {
                     setData(data => {
-                        const result = { ...data, code: code.target.value }
-                        props?.onChange?.(result)
+                        const result = { ...data, code: e.target.value }
                         return result
                     })
+                }} onBlur={e => {
+                    props?.onChange?.(data)
                 }} />
             </Collapse.Panel>
         </Collapse>

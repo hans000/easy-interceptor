@@ -248,7 +248,7 @@ function App() {
             obj.method = value.general.method || ''
             obj.requestHeaders = value.requestHeaders || {}
             obj.responseHeaders = value.responseHeaders || {}
-            obj.response = value.response || {}
+            obj.response = value.response
             obj.body = value.body || {}
             obj.code = value.code || ''
             // obj.params = value.general.params || {}

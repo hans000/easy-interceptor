@@ -9,6 +9,7 @@ import { Alert } from 'antd'
 interface IProps {
     style?: React.CSSProperties
     value: any
+    defaultValue?: any
     onChange?: (value: any) => void
     maxRows?: number
     minRows?: number
@@ -26,7 +27,12 @@ export default function RecordViewer(props: IProps) {
     useEffect(
         () => {
             if (! equal(props.value, value)) {
-                setValue(JSON.stringify(props.value || {}, null, 4))
+                const result = props.value
+                    ? props.value
+                    : props.defaultValue !== undefined
+                        ? props.defaultValue
+                        : {}
+                setValue(JSON.stringify(result, null, 4))
             }
         },
         [props.value]
@@ -54,6 +60,7 @@ export default function RecordViewer(props: IProps) {
             const result = validator(obj)
             if (result.valid) {
                 flag && props?.onChange?.(obj)
+                console.log(obj)
                 setError(false)
             } else {
                 throw result.errors
@@ -93,7 +100,7 @@ export default function RecordViewer(props: IProps) {
                         setEditable(false)
                     }
                 }}
-                onChange={(e) => update(e.target.value)}
+                onChange={e => update(e.target.value)}
                 onBlur={() => {
                     try {
                         // error时尝试修复

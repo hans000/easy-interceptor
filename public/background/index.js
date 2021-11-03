@@ -86,9 +86,11 @@
         update()
         
         if (msg.from === '__hs_iframe__') {
+            // 重置result
             if (msg.type === '__hs_storage__') {
                 __result = {}
             }
+            // 更新action
             if (msg.key === 'action') {
                 __action = msg.value
             }
