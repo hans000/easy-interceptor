@@ -32,7 +32,19 @@
             const modify = (callback) => {
                 const match = matching()
                 if (match) {
-                    this.responseText = this.response = match.response || {}
+                    let result = match.response
+                    if (match.code) {
+                        try {
+                            const responseStr = match.response === 'null'
+                                ? this.responseText || this.response
+                                : match.response
+                            const dataStr = JSON.stringify(match)
+                            result = eval(`;(${match.code})(${responseStr}, ${dataStr})`)
+                        } catch (error) {
+                            console.error(error)
+                        }
+                    }
+                    this.responseText = this.response = JSON.stringify(result)
                     setTimeout(callback.bind(null, match.id), match.delay || 0)
                 } else {
                     callback()

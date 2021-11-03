@@ -57,6 +57,10 @@
 
 <img src="./assets/demo-replay.gif" alt="演示3" style="width:80%;padding-left:10%" />
 
+**方式4**：可以在code面板中定义一个匿名函数用于转换数据，(response, config) => response
+
+<img src="./assets/demo-code.gif" alt="演示4" style="width:80%;padding-left:10%" />
+
 ### 注意事项
 - 仅在开发时使用，不使用时请关闭
 - 因为存储仅有5M，插件使用shorten函数对单条数据做精简（规则：数据超过50000字符时启用，当满足数组超过10项或字符串超过200字符时会通过递归折半精简数据）

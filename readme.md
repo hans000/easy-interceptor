@@ -43,6 +43,10 @@ Easy Interceptor is a Chrome extension that intercepts HTTP requests in the form
 
 <img src="./assets/demo-replay.gif" alt="demo3" style="width:80%;padding-left:10%" />
 
+**方式4**：You can define an anonymous function in the Code panel to transform data，(response, config) => response
+
+<img src="./assets/demo-code.gif" alt="demo4" style="width:80%;padding-left:10%" />
+
 ## tips
 - Just keep running in development
 - Because the storage is only 5M, the extension uses the shorten function to simplify the data. (rules: Enable algorithm when data exceeds 50,000 characters. Refine data by recursive halving when an array of more than 10 items or a string of more than 200 characters is satisfied)

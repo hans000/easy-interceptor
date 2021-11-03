@@ -1,13 +1,14 @@
-import { Collapse, Typography, Tooltip } from 'antd'
+import { Collapse, Typography, Tooltip, message } from 'antd'
 import React, { useEffect, useState } from 'react'
 import JsonEditor from '../JsonEditor'
 import './index.less'
-import { SwapOutlined } from '@ant-design/icons';
+import { CodeOutlined, SwapOutlined } from '@ant-design/icons';
 import { equal } from '../../utils';
 import RecordViewer from '../RecordViewer';
 import { GeneralSchema, HeaderSchema } from './validator';
 import useStorage from '../../hooks/useStorage';
 import getStorage from '../../tools/getStorage';
+import TextArea from 'antd/lib/input/TextArea'
 
 export interface TransformResult {
     id: string
@@ -22,6 +23,7 @@ export interface TransformResult {
     // params?: Record<string, string>
     requestHeaders?: Record<string, string>
     responseHeaders?: Record<string, string>
+    code?: string
 }
 
 export interface Result {
@@ -36,6 +38,7 @@ export interface Result {
     body?: any
     requestHeaders?: Record<string, string>
     responseHeaders?: Record<string, string>
+    code?: string
 }
 
 interface IProps {
@@ -49,7 +52,10 @@ const defaultData: Result = {
     response: {},
     requestHeaders: {},
     responseHeaders: {},
+    code: '',
 }
+
+const __DEV__ = import.meta.env.DEV
 
 export default function TransformerItem(props: IProps) {
     const [data, setData] = useState<Result>(defaultData)
@@ -124,7 +130,7 @@ export default function TransformerItem(props: IProps) {
             <Collapse.Panel header='response' key='5' extra={
                 <div className='ti__icon-wrap'>
                     <Tooltip title='切换视图'>
-                        <SwapOutlined style={{ color: '#1890ff', padding: '0 4px' }} onClick={(e) => {
+                        <SwapOutlined style={{ color: '#1890ff', padding: '0 8px' }} onClick={(e) => {
                             e.stopPropagation()
                             setPro(isPro => !isPro)
                         }} />
@@ -141,7 +147,7 @@ export default function TransformerItem(props: IProps) {
                                 return result
                             })
                         }}/>
-                        : <RecordViewer minRows={6} maxRows={15} value={data.response}
+                        : <RecordViewer minRows={6} maxRows={15} value={data.response} defaultValue={null}
                             onChange={response => {
                                 setData(value => {
                                     const result = { ...value, response }
@@ -150,6 +156,51 @@ export default function TransformerItem(props: IProps) {
                                 })
                             }} />
                 }
+            </Collapse.Panel>
+            <Collapse.Panel header='code' key='6' extra={
+                <Tooltip title='测试代码'>
+                    <CodeOutlined style={{ color: data.code && data.response !== null ? '#1890ff' : 'gray' }}
+                    onClick={e => {
+                        e.stopPropagation()
+                        if (data.code && data.response !== null) {
+                            try {
+                                const responseStr = JSON.stringify(data.response)
+                                const dataStr = JSON.stringify(data)
+                                const msg = eval(`;(${data.code})(${responseStr}, ${dataStr})`)
+                                if (__DEV__) {
+                                    console.log('[EI]', msg)
+                                } else {
+                                    chrome.runtime.sendMessage(chrome.runtime.id, {
+                                        type: '__hs_log__',
+                                        from: '__hs_iframe__',
+                                        key: 'log',
+                                        value: msg,
+                                    })
+                                }
+                            } catch (error) {
+                                if (__DEV__) {
+                                    console.error(error)
+                                } else {
+                                    chrome.runtime.sendMessage(chrome.runtime.id, {
+                                        type: '__hs_log__',
+                                        from: '__hs_iframe__',
+                                        key: 'log',
+                                        value: error,
+                                    })
+                                }
+                            }
+                        }
+                    }}/>
+                </Tooltip>
+            }>
+                <TextArea value={data.code} autoSize placeholder='e => e.map(el => el.id)' onChange={e => {
+                    setData(data => {
+                        const result = { ...data, code: e.target.value }
+                        return result
+                    })
+                }} onBlur={e => {
+                    props?.onChange?.(data)
+                }} />
             </Collapse.Panel>
         </Collapse>
     )
