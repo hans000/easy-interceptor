@@ -248,7 +248,7 @@ function App() {
             obj.method = value.general.method || ''
             obj.requestHeaders = value.requestHeaders || {}
             obj.responseHeaders = value.responseHeaders || {}
-            obj.response = value.response
+            obj.response = value.response || null
             obj.body = value.body || {}
             obj.code = value.code || ''
             // obj.params = value.general.params || {}
@@ -355,7 +355,7 @@ function App() {
                             <Button icon={<SyncOutlined />} onClick={() => reload(true)}></Button>
                         </Tooltip>
                         <Tooltip title='切换主题'>
-                            <Button icon={<span>{ dark ? '🌑' : '🌞'}</span>} onClick={() => {
+                            <Button icon={<span>{ dark ? '🌜' : '🌞'}</span>} onClick={() => {
                                 setDark(dark => !dark)
                             }}></Button>
                         </Tooltip>

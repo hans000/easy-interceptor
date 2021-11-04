@@ -21,12 +21,12 @@ export default function RecordViewer(props: IProps) {
 
     const [editable, setEditable] = useState(false)
     const [error, setError] = useState(false)
-    const [value, setValue] = useState(null)
+    const [value, setValue] = useState<string>(null)
     const [errorMsg, setErrorMsg] = useState('')
 
     useEffect(
         () => {
-            if (! equal(props.value, value)) {
+            if (JSON.stringify(props.value) !== value) {
                 const result = props.value
                     ? props.value
                     : props.defaultValue !== undefined

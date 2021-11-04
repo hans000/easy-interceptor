@@ -9,6 +9,7 @@ import { GeneralSchema, HeaderSchema } from './validator';
 import useStorage from '../../hooks/useStorage';
 import getStorage from '../../tools/getStorage';
 import TextArea from 'antd/lib/input/TextArea'
+import { beautify } from '../../utils/beautify';
 
 export interface TransformResult {
     id: string
@@ -49,7 +50,7 @@ interface IProps {
 const defaultData: Result = {
     body: {},
     general: {},
-    response: {},
+    response: null,
     requestHeaders: {},
     responseHeaders: {},
     code: '',
@@ -65,7 +66,7 @@ export default function TransformerItem(props: IProps) {
     useEffect(
         () => {
             if (! equal(props.value, data)) {
-                setData((value) => ({ ...defaultData, ...props.value, }))
+                setData(() => ({ ...defaultData, ...props.value, }))
             }
         },
         [props.value]
@@ -83,6 +84,18 @@ export default function TransformerItem(props: IProps) {
     const getTitle = (title: string, val: Record<string, any> = {}) => {
         const count = Object.keys(val).length
         return !!count ? `${title} (${count})` : title
+    }
+
+    const beautifyHandle = () => {
+        try {
+            setData(data => {
+                const result = { ...data, code: beautify(data.code) }
+                props?.onChange?.(result)
+                return result
+            })
+        } catch (error) {
+            console.log(error);
+        }
     }
 
     return (
@@ -193,14 +206,26 @@ export default function TransformerItem(props: IProps) {
                     }}/>
                 </Tooltip>
             }>
-                <TextArea value={data.code} autoSize placeholder='e => e.map(el => el.id)' onChange={e => {
-                    setData(data => {
-                        const result = { ...data, code: e.target.value }
-                        return result
-                    })
-                }} onBlur={e => {
-                    props?.onChange?.(data)
-                }} />
+                <TextArea value={data.code} autoSize placeholder='e => e.map(el => el.id)'
+                    onChange={e => {
+                        setData(data => {
+                            const result = { ...data, code: e.target.value }
+                            props?.onChange?.(result)
+                            return result
+                        })
+                    }} onKeyDown={(e) => {
+                        e.stopPropagation()
+                        
+                        if (e.key === 'Tab' || e.key === 'Escape') {
+                            e.preventDefault()
+                        }
+
+                        if (e.key === 'Escape') {
+                            beautifyHandle()
+                        }
+                    }} onBlur={() => {
+                        beautifyHandle()
+                    }} />
             </Collapse.Panel>
         </Collapse>
     )
