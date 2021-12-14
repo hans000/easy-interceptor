@@ -12,7 +12,7 @@
 
 如何解决上述问题呢？如果可以在客户端接收数据前拦截并加以修改再返回，就可以达到mock数据的目的。Easy Interceptor就是利用上述思路，作为一个chrome插件，它对使用者的心智负担极小，它可以拦截XMLHttpRequest数据请求方式的http请求，通过覆盖response，responseText字段，从而达到对数据的修改。
 
-> 注意：它是通过代理xhr的方法、属性，覆盖特定的字段，因此需要保证接口正常，devtool-network的信息并不会改变
+> 注意：它是通过代理XMLHttpRequest, fetch的方法、属性，覆盖特定的字段，因此需要保证接口正常，devtool-network的信息并不会改变
 
 ## 特点
 
