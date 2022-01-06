@@ -1,4 +1,4 @@
-export function beautify(code: string, indent = 4) {
+export function beautify(code = '', indent = 4) {
     const list = code.split('\n').map(line => line.trim())
     let count = 0
     const startChars = ['(', '[', '{']
