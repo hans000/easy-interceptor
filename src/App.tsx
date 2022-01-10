@@ -1,32 +1,53 @@
 import './App.less'
-import { Button, Dropdown, Input, Menu, message, Modal, Spin, Table, Tag, Tooltip, Upload } from 'antd'
+import { Badge, BadgeProps, Button, Dropdown, Input, Menu, message, Modal, Spin, Table, Tag, Tooltip, Upload } from 'antd'
 import Checkbox from 'antd/lib/checkbox/Checkbox'
 import React, { useEffect, useRef, useState } from 'react'
-import TransformerItem, { Result, TransformResult } from './components/TransformerItem'
-import { FontSizeOutlined, TagOutlined, ControlOutlined, DeleteOutlined, PlusOutlined, CaretRightOutlined, SearchOutlined, DownOutlined, VerticalAlignBottomOutlined, UploadOutlined, SyncOutlined } from '@ant-design/icons'
+import { FontSizeOutlined, TagOutlined, ControlOutlined, CodeOutlined, DeleteOutlined, PlusOutlined, SearchOutlined, DownOutlined, VerticalAlignBottomOutlined, UploadOutlined, SyncOutlined, RollbackOutlined } from '@ant-design/icons'
 import { ColumnsType } from 'antd/lib/table'
 import minimatch from 'minimatch'
-import { randID } from './utils'
+import { randID, renderSize } from './utils'
 import { getConfigText, getMethodColor } from './tools/mappings'
 import { download } from './tools/download'
 import { buildStorageMsg } from './tools/message'
 import jsonschema from 'json-schema'
-import { TransformResultSchema } from './components/TransformerItem/validator'
+import { TransformResultSchema } from './components/MainEditor/validator'
 import getStorage from './tools/getStorage'
 import useStorage from './hooks/useStorage'
-import { useDebounce } from './hooks/useDebounce'
+import MainEditor from './components/MainEditor'
+import { FileType } from './components/MainEditor/config'
+import { sizeof } from './tools/sizeof'
+import Quote from './components/Quote'
+import { runCode } from './tools/runCode'
+
+export interface TransformResult {
+    id: string
+    count: number
+    url?: string
+    enable?: boolean
+    regexp?: boolean
+    status?: number
+    delay?: number
+    method?: 'get' | 'post' | 'delete' | 'put' | ''
+    response?: any
+    body?: any
+    // params?: Record<string, string>
+    requestHeaders?: Record<string, string>
+    responseHeaders?: Record<string, string>
+    code?: string
+}
 
 const __DEV__ = import.meta.env.DEV
 
 function App() {
+    const originRef = useRef('')
     const [dark, setDark] = useStorage('dark', false)
     const [action, setAction] = useStorage('action', 'close')
     const [rules, setRules] = useStorage<TransformResult[]>('rules', [])
-    const [expandedRowKeys, setExpandedRowKeys] = useStorage('expandedRowKeys', [])
     const [selectedRowKeys, setSelectedRowKeys] = useStorage('selectedRowKeys', [])
-    const [scrollTop, setScrollTop] = useStorage('scrollTop', 0)
     const [loading, setLoading] = useState(false)
-    const originRef = useRef('')
+    const [activeIndex, setActiveIndex] = useStorage('index', -1)
+    const [invalid, setInvalid] = useState(false)
+    const editorRef = useRef()
 
     useEffect(
         () => {
@@ -80,42 +101,22 @@ function App() {
         [dark]
     )
 
-    const handle = useDebounce((event: any) => {
-        setScrollTop(event.target.scrollTop)
-    })
-
-    useEffect(
-        () => {
-            const container = document.querySelector('.ant-table-body')
-            container.addEventListener('scroll', handle)
-            getStorage(['scrollTop']).then(result => {
-                setTimeout(() => {
-                    container.scrollTo({
-                        top: result.scrollTop,
-                        behavior: 'smooth',
-                    })
-                }, 500)
-            })
-        },
-        []
-    )
-
     const reload = (clean = false) => {
         setLoading(true)
         getStorage([
-            'action', 'rules', 'selectedRowKeys', 'expandedRowKeys', 'dark',
+            'action', 'rules', 'selectedRowKeys', 'dark',  'index',
         ]).then(result => {
             setLoading(false)
             setDark(result.dark)
             setAction(result.action)
             if (clean) {
                 setSelectedRowKeys([])
-                setExpandedRowKeys([])
                 setRules(result.rules.map(item => ({ ...item, count: 0 })))
+                setActiveIndex(-1)
             } else {
                 setSelectedRowKeys(result.selectedRowKeys)
-                setExpandedRowKeys(result.expandedRowKeys)
                 setRules(result.rules)
+                setActiveIndex(result.index)
             }
         })
     }
@@ -132,7 +133,9 @@ function App() {
         }
     }
 
-    const columns = React.useMemo<ColumnsType<any>>(
+    const size = React.useMemo(() => sizeof(rules), [rules])
+
+    const columns = React.useMemo<ColumnsType<TransformResult>>(
         () => {
             return [
                 {
@@ -164,23 +167,56 @@ function App() {
                         const exclude = e ? e.split(',').some(el => minimatch(record.url, el)) : false
                         return record.url ? (include && !exclude) : true
                     },
-                    render: (value: string) => {
+                    render: (value, record, index) => {
                         const origin = originRef.current
                         const shortText = !!origin && value.startsWith(origin) ? '~' + value.slice(origin.length) : value
+                        const status = record.code
+                            ? 'default'
+                            : (['lime', 'lime', 'success', 'success', 'warning', 'error'][(record.status || 200) / 100 | 0] || 'default') as BadgeProps['status']
                         return (
                             <Tooltip placement="topLeft" title={value}>
-                                <span>{shortText}</span>
+                                <Badge status={status} text={
+                                    <span style={{ cursor: 'pointer' }} onClick={() => {
+                                        setActiveIndex(index)
+                                    }}>{shortText}</span>}></Badge>
                             </Tooltip>
                         )
                     }
                 },
                 {
-                    dataIndex: 'count', key: 'count', width: 100, align: 'center' as any,
-                    title: '拦截次数',
-                    render: value => value ? value : null
+                    dataIndex: 'count', key: 'count', width: 100, align: 'center',
+                    title: '大小',
+                    sorter: {
+                        compare: (a, b) => sizeof(a) - sizeof(b),
+                    },
+                    render: (_, record) => {
+                        // <-262.144kb 1MB 4MB 4MB->
+                        //      18     20  22
+                        const map = ['lime', 'green', 'orange', 'red']
+                        const size = sizeof(record)
+                        const r = Math.log2(size)
+                        const index = r < 18 ? 0 : ((r - 18) / 2 + 1 | 0)
+                        return <Badge status={index === 3 ? 'processing' : 'default'} color={map[index]} text={renderSize(size)} />
+                    }
                 },
                 {
-                    dataIndex: 'method', key: 'method', width: 50, align: 'center' as any,
+                    dataIndex: 'count', key: 'count', width: 100, align: 'center',
+                    title: '拦截•次数',
+                    render: (value, record) => (
+                        <>
+                            { !!record.code ? <CodeOutlined onClick={() => {
+                                runCode(record.code, {
+                                    status: record.status,
+                                    response: record.response,
+                                    delay: record.delay,
+                                })
+                            }} /> : null } 
+                            <span style={{ paddingLeft: 4 }}>{ value ? value : null }</span>
+                        </>
+                    )
+                },
+                {
+                    dataIndex: 'method', key: 'method', width: 50, align: 'center',
                     // filters: [
                     //     { text: 'get', value: 'get' },
                     //     { text: 'post', value: 'post' },
@@ -196,7 +232,7 @@ function App() {
                     render: value => value !== '*' ? <Tag color={getMethodColor(value)}>{value}</Tag> : null
                 },
                 {
-                    dataIndex: 'regexp', key: 'regexp', width: 50, align: 'center' as any,
+                    dataIndex: 'regexp', key: 'regexp', width: 50, align: 'center',
                     title: (
                         <Tooltip title='启用正则匹配'>
                             <FontSizeOutlined />
@@ -211,7 +247,7 @@ function App() {
                     }}></Checkbox>
                 },
                 {
-                    dataIndex: 'enable', key: 'enable', width: 50, align: 'center' as any,
+                    dataIndex: 'enable', key: 'enable', width: 50, align: 'center',
                     // filters: [
                     //     { text: '启用', value: true },
                     //     { text: '停用', value: false },
@@ -238,18 +274,26 @@ function App() {
         []
     )
 
-    const update = (value: Result, index: number) => {
+    const update = (value: Record<FileType, string>, index: number) => {
         setRules(data => {
             const result = [...data]
             const obj = result[index]
-            obj.url = value.general.url
-            obj.regexp = value.general.regexp
-            obj.delay = value.general.delay
-            obj.method = value.general.method || ''
-            obj.requestHeaders = value.requestHeaders || {}
-            obj.responseHeaders = value.responseHeaders || {}
-            obj.response = value.response || null
-            obj.body = value.body || {}
+
+            const general = JSON.parse(value.general)
+            const requestHeaders = JSON.parse(value.requestHeaders) || {}
+            const responseHeaders = JSON.parse(value.responseHeaders) || {}
+            const response = JSON.parse(value.response) || null
+            const body = JSON.parse(value.body) || {}
+
+            obj.url = general.url
+            obj.regexp = general.regexp
+            obj.delay = general.delay || 0
+            obj.status = general.status || 200
+            obj.method = general.method || ''
+            obj.requestHeaders = requestHeaders
+            obj.responseHeaders = responseHeaders
+            obj.response = response || null
+            obj.body = body
             obj.code = value.code || ''
             // obj.params = value.general.params || {}
             return result
@@ -265,13 +309,36 @@ function App() {
         [selectedRowKeys.length, rules.length]
     )
 
+    const back = () => {
+        if (invalid) {
+            (editorRef.current as any).sendMsg()
+            return
+        }
+        setActiveIndex(-1)
+    }
+
+    const editable = React.useMemo(() => activeIndex !== -1, [activeIndex])
+
+    const formatResult = (record: TransformResult) => {
+        const { id, enable, regexp, count,
+            body, requestHeaders, response, responseHeaders, code, ...general } = record
+        return {
+            body: JSON.stringify(body || {}, null, 4),
+            general: JSON.stringify(general || {}, null, 4),
+            response: JSON.stringify(response || null, null, 4),
+            requestHeaders: JSON.stringify(requestHeaders || {}, null, 4),
+            responseHeaders: JSON.stringify(responseHeaders || {}, null, 4),
+            code,
+        }
+    }
+
     return (
         <Spin spinning={loading}>
             <div className="app">
                 <div className={'app__top'}>
                     <Button.Group style={{ paddingRight: 8 }}>
                         <Tooltip title={'添加'}>
-                            <Button icon={<PlusOutlined />} onClick={() => {
+                            <Button disabled={editable} icon={<PlusOutlined />} onClick={() => {
                                 setRules(data => {
                                     const result = [...data, { url: '/api-' + data.length, id: randID(), count: 0, method: 'get' as any }]
                                     return result
@@ -279,7 +346,7 @@ function App() {
                             }}></Button>
                         </Tooltip>
                         <Tooltip title={getActionText('删除')}>
-                            <Button icon={<DeleteOutlined />} onClick={() => {
+                            <Button disabled={editable} icon={<DeleteOutlined />} onClick={() => {
                                 if (! selectedRowKeys.length) {
                                     return setRules([])
                                 }
@@ -288,7 +355,7 @@ function App() {
                             }}></Button>
                         </Tooltip>
                         <Tooltip title={getActionText('下载')}>
-                            <Button icon={<VerticalAlignBottomOutlined />} onClick={() => {
+                            <Button disabled={editable} icon={<VerticalAlignBottomOutlined />} onClick={() => {
                                 const sel = selectedRowKeys.length ? rules.filter(item => !selectedRowKeys.find(id => id === item.id)) : rules
                                 const origin = originRef.current || 'interceptor-data'
                                 download(origin + '.json', JSON.stringify(sel, null, 2))
@@ -296,7 +363,7 @@ function App() {
                             }}></Button>
                         </Tooltip>
                         <Tooltip title='导入'>
-                            <Upload showUploadList={false} beforeUpload={(file) => {
+                            <Upload disabled={editable} showUploadList={false} beforeUpload={(file) => {
                                 setLoading(true)
                                 if (! ['application/json', 'text/plain'].includes(file.type)) {
                                     message.error('文件格式错误！仅支持txt, json')
@@ -315,7 +382,7 @@ function App() {
                                             closable: true,
                                             onCancel: (close) => {
                                                 if (typeof close === 'function') {
-                                                    setRules(arr)
+                                                    setRules(arr.map(item => ({ ...item, count: 0 })))
                                                     close()
                                                 }
                                             },
@@ -328,6 +395,7 @@ function App() {
                                                             if (acc.find(el => el.id === s.id)) {
                                                                 count++
                                                             } else {
+                                                                s.count = 0
                                                                 acc.push(s)
                                                             }
                                                             return acc
@@ -348,17 +416,24 @@ function App() {
                                 }
                                 return false
                             }}>
-                                <Button icon={<UploadOutlined />}></Button>
+                                <Button disabled={editable} icon={<UploadOutlined />}></Button>
                             </Upload>
                         </Tooltip>
                         <Tooltip title='刷新数据'>
-                            <Button icon={<SyncOutlined />} onClick={() => reload(true)}></Button>
+                            <Button disabled={editable} icon={<SyncOutlined />} onClick={() => reload(true)}></Button>
                         </Tooltip>
                         <Tooltip title='切换主题'>
                             <Button icon={<span>{ dark ? '🌜' : '🌞'}</span>} onClick={() => {
                                 setDark(dark => !dark)
                             }}></Button>
                         </Tooltip>
+                        {
+                            editable && (
+                                <Tooltip title='返回'>
+                                    <Button icon={<RollbackOutlined />} onClick={back}></Button>
+                                </Tooltip>
+                            )
+                        }
                     </Button.Group>
                     <div>
                         <Dropdown trigger={['click']} overlay={
@@ -366,13 +441,13 @@ function App() {
                                 setAction(info.key)
                             }}>
                                 <Menu.Item key='close'>
-                                    <span>关闭</span>
+                                    <Badge status='default' text='关闭'></Badge>
                                 </Menu.Item>
                                 <Menu.Item key='watch'>
-                                    <span>启用监听</span>
+                                    <Badge color={'orange'} status='default' text='启用监听'></Badge>
                                 </Menu.Item>
                                 <Menu.Item key='intercept'>
-                                    <span>启用拦截</span>
+                                    <Badge color={'purple'} status='default' text='启用拦截'></Badge>
                                 </Menu.Item>
                             </Menu>
                         }>
@@ -382,6 +457,9 @@ function App() {
                         </Dropdown>
                     </div>
                 </div>
+                <div className='app__quote'>
+                    <Quote size={size}/>
+                </div>
                 <div className="app__cont">
                     <Table
                         rowKey='id'
@@ -389,40 +467,25 @@ function App() {
                         pagination={false}
                         columns={columns}
                         scroll={{ y: 512 }}
+                        dataSource={rules}
                         rowSelection={{
                             selectedRowKeys,
                             onChange: (keys) => {
                                 setSelectedRowKeys(keys)
                             },
                         }}
-                        defaultExpandedRowKeys={expandedRowKeys}
-                        expandable={{
-                            expandedRowKeys,
-                            expandIcon: props => (
-                                <span style={{ padding: 8 }} onClick={() => {
-                                    setExpandedRowKeys(() => props.expanded ? [] : [props.record.id]) }}>
-                                    <CaretRightOutlined style={{ transition: '.35s ease', transform: `rotate(${props.expanded ? '90deg' : '0'})` }}/>
-                                </span>
-                            ),
-                            expandedRowRender: (record: TransformResult, index: number) => {
-                                const { id, enable, regexp, count,
-                                    body, requestHeaders, response, responseHeaders, code, ...general } = record
-                                const value = {
-                                    body,
-                                    general,
-                                    response,
-                                    requestHeaders,
-                                    responseHeaders,
-                                    code,
-                                }
-                                return (
-                                    <TransformerItem key={index} value={value} onChange={value => update(value, index)}/>
-                                )
-                            },
-                        }}
-                        dataSource={rules}
                     />
                 </div>
+                {
+                    editable && (
+                        <div className='app__editor'>
+                            <MainEditor ref={editorRef} value={formatResult(rules[activeIndex])} onChange={(value, invalid) => {
+                                update(value, activeIndex)
+                                setInvalid(invalid)
+                            }} />
+                        </div>
+                    )
+                }
             </div>
         </Spin>
     )

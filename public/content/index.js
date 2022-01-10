@@ -26,33 +26,57 @@
         }
     })
 
-    // 接收pagescript传来的信息
-    window.addEventListener("pagescript", function (event) {
-        const { data, type } = event.detail
+    // 消息处理
+    let timer;
+    const queue = new Map()
+
+    function handle() {
         chrome.storage.local.get(['__hs_rules__', '__hs_update__'], (result) => {
             const rules = result.__hs_rules__
-            // 监听时拼接数据
-            if (type === '__hs_response__') {
-                const rule = rules.reverse().find(rule => rule.url === data.url)
-                if (rule) {
-                    rule.response = data.response
-                    chrome.storage.local.set({
-                        __hs_rules__: rules,
-                        __hs_update__: !result.__hs_update__,
-                    })
+            // 取出队列中的数据
+            for (const [data, type] of queue) {
+                // 监听时 拼接数据
+                if (type === '__hs_response__') {
+                    for (let i = rules.length - 1; i >= 0; i--) {
+                        const rule = rules[i]
+                        if (rule.url === data.url) {
+                            rule.response = data.response
+                            chrome.storage.local.set({
+                                __hs_rules__: rules,
+                                __hs_update__: !result.__hs_update__,
+                            })
+                            // 移除队列中的此条数据
+                            queue.delete(data)
+                            break
+                        }
+                    }
+                }
+                // 拦截时计数
+                if (type === '__hs_count__') {
+                    const rule = rules.find(rule => rule.id === data.id)
+                    if (rule) {
+                        rule.count = rule.count + 1
+                        chrome.storage.local.set({
+                            __hs_rules__: rules,
+                            __hs_update__: !result.__hs_update__,
+                        })
+                        // 移除队列中的此条数据
+                        queue.delete(data)
+                    }
                 }
             }
-            // 拦截时计数
-            if (type === '__hs_count__') {
-                const rule = rules.find(rule => rule.id === data.id)
-                if (rule) {
-                    rule.count = rule.count + 1
-                    chrome.storage.local.set({
-                        __hs_rules__: rules,
-                        __hs_update__: !result.__hs_update__,
-                    })
-                }
+
+            if (! queue.size) {
+                clearInterval(timer)
             }
         })
+    }
+
+    // 接收pagescript传来的信息
+    window.addEventListener("pagescript", (event) => {
+        const { data, type } = event.detail
+        queue.set(data, type)
+        clearInterval(timer)
+        timer = setInterval(() => handle(event), 300)
     }, false)
 })(chrome)

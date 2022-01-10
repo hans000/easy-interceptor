@@ -154,6 +154,7 @@
         details => {
             if (__action !== 'watch') return;
     
+            // 要求id匹配，域名相同，
             if (!__result[details.requestId] || !__origin || !details.url.startsWith(__origin)) {
                 delete __result[details.requestId]
                 return
@@ -200,4 +201,3 @@
         ["responseHeaders"]
     )
 })(chrome)
-

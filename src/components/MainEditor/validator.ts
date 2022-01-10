@@ -2,6 +2,7 @@ import { JSONSchema7 } from "json-schema";
 
 export const GeneralSchema: JSONSchema7 = {
     type: "object",
+    additionalProperties: false,
     properties: {
         url: {
             type: "string",
@@ -14,6 +15,9 @@ export const GeneralSchema: JSONSchema7 = {
         delay: {
             type: "number"
         },
+        status: {
+            type: "number"
+        },
         // params: {
         //     type: "object",
         //     patternProperties: {
@@ -22,6 +26,22 @@ export const GeneralSchema: JSONSchema7 = {
         //         }
         //     }
         // },
+    },
+}
+
+export const CodeResultSchema: JSONSchema7 = {
+    type: "object",
+    additionalProperties: false,
+    properties: {
+        delay: {
+            type: "number"
+        },
+        status: {
+            type: "number"
+        },
+        response: {
+            required: ["response"],
+        },
     },
 }
 
@@ -38,10 +58,15 @@ export const TransformResultSchema: JSONSchema7 = {
     type: "array",
     items: {
         type: "object",
+        additionalProperties: false,
         properties: {
             id: {
                 type: "string",
                 required: ["id"],
+            },
+            url: {
+                type: "string",
+                required: ["url"],
             },
             enable: {
                 type: "boolean",
@@ -52,9 +77,8 @@ export const TransformResultSchema: JSONSchema7 = {
             delay: {
                 type: "number",
             },
-            url: {
-                type: "string",
-                required: ["url"],
+            status: {
+                type: "number",
             },
             method: {
                 type: "string",
@@ -88,7 +112,10 @@ export const TransformResultSchema: JSONSchema7 = {
                 type: "object",
             },
             response: {
-                type: "object",
+                type: ["object", "null"],
+            },
+            code: {
+                type: "string",
             },
         },
     }
