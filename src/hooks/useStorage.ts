@@ -14,15 +14,19 @@ export default function useStorage<T>(key: string, value: T): [T, React.Dispatch
         map[name] = true
         localStorage.setItem(mapKey, JSON.stringify(map))
         if (__DEV__) {
-            if (typeof val === 'function') {
-                setVal(v => {
-                    const result = val(v)
-                    localStorage.setItem(name, JSON.stringify(result))
-                    return result
-                })
-            } else {
-                localStorage.setItem(name, JSON.stringify(val))
-                setVal(val)
+            try {
+                if (typeof val === 'function') {
+                    setVal(v => {
+                        const result = val(v)
+                        localStorage.setItem(name, JSON.stringify(result))
+                        return result
+                    })
+                } else {
+                    localStorage.setItem(name, JSON.stringify(val))
+                    setVal(val)
+                }
+            } catch (error) {
+                
             }
         } else {
             if (typeof val === 'function') {

@@ -3,16 +3,47 @@
     padding: 0;
 }
 
+#editor { 
+    margin: 0;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
 
 @width: 300px;
 @topHeight:  46px;
+@GWidth: 800px;
+@GHeight: 600px;
 
 .app {
-    width: 800px;
-    height: 600px;
+    width: @GWidth;
+    height: @GHeight;
     overflow: hidden;
     background-color: #fff;
     position: relative;
+    box-shadow: #0090f1 0 0 1px;
+
+    .ant-table-thead th.ant-table-column-has-sorters {
+        transition: none;
+    }
+
+    &__quote {
+        position: absolute;
+        width: 100%;
+        z-index: 2;
+        top: 43px;
+        line-height: 0;
+    }
+    &__editor {
+        z-index: 1;
+        position: absolute;
+        top: @topHeight;
+        width: 100%;
+        height: @GHeight - @topHeight;
+        background-color: #fff;
+    }
     &__resize {
         position: absolute;
         bottom: 0;
@@ -38,6 +69,9 @@
         box-shadow: #ccc 1px 1px 4px;
         &.active {
             background-color: #fefefe;
+        }
+        .ant-btn {
+            transition: none;
         }
     }
     &__cont {
