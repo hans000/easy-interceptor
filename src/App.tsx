@@ -373,7 +373,11 @@ function App() {
                                         const arr = JSON.parse(text) as TransformResult[]
                                         const result = jsonschema.validate(arr, TransformResultSchema)
                                         if (! result.valid) {
-                                            throw new Error()
+                                            throw result.errors
+                                        }
+                                        if (! rules.length) {
+                                            setRules(arr.map(item => ({ ...item, count: 0 })))
+                                            return
                                         }
                                         Modal.confirm({
                                             title: '导入说明',
@@ -408,8 +412,9 @@ function App() {
                                                 }
                                             },
                                         })
-                                    }).catch(() => {
-                                        message.error('内容格式错误！')
+                                    }).catch((err: jsonschema.ValidationError[] | string) => {
+                                        const msg = Array.isArray(err) ? `${err[0].property} ${err[0].message}` : err
+                                        message.error(msg)
                                     }).finally(() => {
                                         setLoading(false)
                                     })
@@ -439,6 +444,13 @@ function App() {
                         <Dropdown trigger={['click']} overlay={
                             <Menu activeKey={action} onClick={(info) => {
                                 setAction(info.key)
+                                if (info.key === 'intercept' && activeIndex !== -1) {
+                                    setRules(rules => {
+                                        const newRules = [...rules]
+                                        newRules[activeIndex].enable = true
+                                        return newRules
+                                    })
+                                }
                             }}>
                                 <Menu.Item key='close'>
                                     <Badge status='default' text='关闭'></Badge>

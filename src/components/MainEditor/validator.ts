@@ -80,6 +80,9 @@ export const TransformResultSchema: JSONSchema7 = {
             status: {
                 type: "number",
             },
+            count: {
+                type: "number",
+            },
             method: {
                 type: "string",
                 enum: ["get", "post", "put", "delete", ""]

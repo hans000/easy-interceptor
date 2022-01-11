@@ -24,6 +24,10 @@ function sendMsg(msg: any) {
 
 export function runCode(code: string, data: CodeResult) {
     try {
+        if (data.response === null) {
+            sendMsg('cannot run code in this environment')
+            return
+        }
         const dataStr = JSON.stringify(data)
         const msg = eval(`;(${code})(${dataStr})`)
         const validateResult = jsonschema.validate(msg, CodeResultSchema)
