@@ -9,7 +9,7 @@
             // 规则启用且text有值
             if (rule.enable && rule.url) {
                 // 请求类型存在且一致
-                if (rule.method && rule.method.toLowerCase() !== method.toLowerCase()) {
+                if (rule.method && method && rule.method.toLowerCase() !== method.toLowerCase()) {
                     return false
                 }
                 // regexp匹配 true 正则 false 字符串匹配
@@ -101,7 +101,10 @@
                             triggerCountEvent(data.id)
                         }
                     } else {
-                        triggerResponseEvent(JSON.parse(xhr.responseText), xhr.responseURL)
+                        try {
+                            const obj = JSON.parse(xhr.responseText)
+                            triggerResponseEvent(obj, xhr.responseURL)
+                        } catch (error) {}
                     }
                 }
                 return {
