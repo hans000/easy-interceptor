@@ -1,5 +1,5 @@
 (function (window) {
-    var af=function(t){"use strict";var e=function(){return e=Object.assign||function(t){for(var e,n=1,r=arguments.length;r>n;n++)for(var o in e=arguments[n])Object.prototype.hasOwnProperty.call(e,o)&&(t[o]=e[o]);return t},e.apply(this,arguments)};function n(t){var e="$$"+t;return window.Symbol?Symbol.for(e):e}function r(){}var o,i=n("matchItem"),s=n("xhr"),a=n("requestHeaders"),h=n("responseHeaders"),u=n("events"),c=n("hook"),d={UNSENT:0,OPENED:1,HEADERS_RECEIVED:2,LOADING:3,DONE:4},l=["onabort","onerror","onload","onloadend","onloadstart","onprogress","onreadystatechange","ontimeout"],p=l.map((function(t){return t.slice(2)})),f=["readyState","responseURL","status","statusText","response","responseText","responseXML","responseType"],v=["timeout","withCredentials"],y={100:"Continue",101:"Switching Protocols",200:"OK",201:"Created",202:"Accepted",203:"Non-Authoritative Information",204:"No Content",205:"Reset Content",206:"Partial Content",300:"Multiple Choice",301:"Moved Permanently",302:"Found",303:"See Other",304:"Not Modified",305:"Use Proxy",307:"Temporary Redirect",400:"Bad Request",401:"Unauthorized",402:"Payment Required",403:"Forbidden",404:"Not Found",405:"Method Not Allowed",406:"Not Acceptable",407:"Proxy Authentication Required",408:"Request Timeout",409:"Conflict",410:"Gone",411:"Length Required",412:"Precondition Failed",413:"Request Entity Too Large",414:"Request-URI Too Long",415:"Unsupported Media Type",416:"Requested Range Not Satisfiable",417:"Expectation Failed",422:"Unprocessable Entity",500:"Internal Server Error",501:"Not Implemented",502:"Bad Gateway",503:"Service Unavailable",504:"Gateway Timeout",505:"HTTP Version Not Supported"},E={addEventListener:function(t,e){(this[u][t]||(this[u][t]=[])).push(e)},removeEventListener:function(t,e){for(var n=this[u][t]||[],r=n.length-1;r>=0;)n[r]===e&&n.splice(r,1),r--},dispatchEvent:function(t){for(var e=this[u][t.type]||[],n=0;e.length>n;n++)e[n].call(this,t);var r="on"+t.type;this[r]&&this[r](t)}};function w(t,e){if(void 0===e&&(e={}),t)for(var r in t)"function"==typeof t[r]?this[r]=o(r):Object.defineProperty(this,r,{get:s(r),set:i(r),enumerable:!0});function o(n){return function(){for(var r=[],o=0;arguments.length>o;o++)r[o]=arguments[o];if(e[n]){var i=e[n].call(this,r,t);if(i)return i}return t[n].apply(t,r)}}function i(r){return function(o){var i,s=this,a=e[r],h=n(r);if(r.startsWith("on"))this[h]=o,t[r]=function(e){(e=function(t,e){var n={};for(var r in t)n[r]=t[r];return n.target=n.currentTarget=e,n}(e,s),a)?a.call(s,t,e)||o.call(s,e):o.call(s,e)};else{var u=null===(i=a)||void 0===i?void 0:i.setter;o=u&&u(o,this)||o,this[h]=o;try{t[r]=o}catch(t){}}}}function s(r){return function(){var o,i=n(r),s=this.hasOwnProperty(i)?this[i]:t[r],a=null===(o=e[r])||void 0===o?void 0:o.getter;return a&&a(s,this)||s}}}var R={matched:!1,response:"",sendRealXhr:!1,delay:0,status:200},m=function(){var t=this;l.forEach((function(e){return t[e]=null})),this.readyState=d.UNSENT,this.response="",this.responseText="",this.responseType="",this.responseURL="",this.responseXML=null,this.status=0,this.statusText="",this.timeout=0,this.withCredentials=!1,this.upload=Object.create(E),this[s]=null,this[u]={},this[a]={},this[h]={},this[i]=R,this[c]=w};function b(){return null!=o?o:window.XMLHttpRequest}function g(){return new(b())}function N(){o&&(Object.defineProperty(window,"XMLHttpRequest",{value:o,enumerable:!0,writable:!0}),o=null)}return t.FakeXMLHttpRequest=m,t.createXhr=g,t.fake=function(t){void 0===t&&(t={onHandle:r,onMatch:r}),N();var n=e(e({},d),{open:function(n,r,o,a,h){var u,l=this;this.readyState=d.OPENED,this.dispatchEvent(new Event("readystatechange"));"boolean"!=typeof o&&(o=!0);var y={url:r,method:n};if(t.onMatch&&"function"!=typeof t.onMatch)throw"expect `onMatch` to be a function";var E=null===(u=t.onMatch)||void 0===u?void 0:u.call(t,y),w=E;return E&&"function"==typeof t.onHandle&&(w=t.onHandle(E,y)),w?(this[i]=e(e(e({},this[i]),w),{matched:!0}),void(this[i].sendRealXhr&&(this[s]=g(),t.onIntercept&&this[c](this[s],t.onIntercept(E)),this[s].open(n,r,o,a,h)))):(this[s]=g(),t.onIntercept?(this[c](this[s],t.onIntercept(E)),void this[s].open(n,r,o,a,h)):(p.forEach((function(t){l[s].addEventListener(t,(function(t){!function(t,e){for(var n=0;8>n;n++)try{l[f[n]]=e[f[n]]}catch(t){}l.dispatchEvent(new Event(t.type))}(t,this)}))}),this),v.forEach((function(t){try{l[s][t]=l[t]}catch(t){}})),void this[s].open(n,r,o,a,h)))},send:function(t){var e=this,n=this[i],r=n.response,o=n.sendRealXhr,a=n.delay,h=n.status;n.matched?(this.dispatchEvent(new Event("loadstart")),this.readyState=d.HEADERS_RECEIVED,this.dispatchEvent(new Event("readystatechange")),this.readyState=d.LOADING,this.dispatchEvent(new Event("readystatechange")),o&&this[s].send(t),setTimeout((function(){var t;e.status=y[h]?h:200,e.statusText=null!==(t=y[h])&&void 0!==t?t:y[200],e.responseText=e.response="object"==typeof r?JSON.stringify(r):r,e.readyState=d.DONE,e.dispatchEvent(new Event("readystatechange")),e.dispatchEvent(new Event("load")),e.dispatchEvent(new Event("loadend"))}),"number"==typeof a?a:500*Math.random()+500|0)):this[s].send(t)},abort:function(){this[i].matched?(this.readyState=d.UNSENT,this.dispatchEvent(new Event("abort")),this.dispatchEvent(new Event("error"))):this[s].abort()},overrideMimeType:r,setRequestHeader:function(t,e){if(this[i].matched&&!this[i].sendRealXhr){var n=this[a];n[t]?n[t]+=","+e:n[t]=e}else this[s].setRequestHeader(t,e)},getResponseHeader:function(t){return this[i].matched?this[h][t.toLowerCase()]:this[s].getResponseHeader(t)},getAllResponseHeaders:function(){if(!this[i].matched)return this[s].getAllResponseHeaders();var t=this[h],e="";for(var n in t)t.hasOwnProperty(n)&&(e+=n+": "+t[n]+"\r\n");return e}});Object.setPrototypeOf(n,E),m.prototype=n,o=window.XMLHttpRequest,"boolean"==typeof t.force&&t.force?Object.defineProperty(window,"XMLHttpRequest",{value:m,enumerable:!0,writable:!1}):window.XMLHttpRequest=m},t.getOriginXHR=b,t.unfake=N,Object.defineProperty(t,"__esModule",{value:!0}),t}({});
+    var fr=function(e){"use strict";function t(e,t,n,s){return new(n||(n=Promise))((function(o,i){function r(e){try{c(s.next(e))}catch(e){i(e)}}function a(e){try{c(s.throw(e))}catch(e){i(e)}}function c(e){var t;e.done?o(e.value):(t=e.value,t instanceof n?t:new n((function(e){e(t)}))).then(r,a)}c((s=s.apply(e,t||[])).next())}))}function n(e={}){return Object.keys(e).reduce(((t,n)=>(t[n.toLowerCase()]=e[n],t)),{})}function s(e){let t=[];return e instanceof Headers?e.forEach(((e,n)=>{t.push([n,e])})):Array.isArray(e)?t=e:"object"==typeof e&&Object.keys(e).forEach((n=>{t.push([n,e[n]])})),t.map((([e,t])=>`${e.toLowerCase()}: ${t}`)).join("\r\n")}function o(e){const t="$$"+e;return window.Symbol?Symbol.for(t):t}function i(){}function r(e,t,n={}){if(t)for(const n in t)"function"==typeof t[n]?e[n]=s(n):Object.defineProperty(e,n,{get:r(n),set:i(n),enumerable:!0});function s(s){return function(...o){if(n[s]){const i=n[s].call(e,...o,t);if(i)return i}return t[s].apply(t,o)}}function i(s){return function(i){const r=n[s],a=o(s);if(s.startsWith("on"))e[a]=i,t[s]=n=>{if(n=function(e,t){const n={};for(const t in e)n[t]=e[t];return n.target=n.currentTarget=t,n}(n,e),r){r.call(e,t,n)||i.call(e,n)}else i.call(e,n)};else{const n=r&&r.setter;i=n&&n(i,e)||i,e[a]=i;try{t[s]=i}catch(e){}}}}function r(s){return function(){const i=o(s),r=e.hasOwnProperty(i)?e[i]:t[s],a=(n[s]||{}).getter;return a&&a(r,e)||r}}}function a(e){if(!e||"function"!=typeof e)throw"expect `onMatch` to be a function"}function c(e,n){return t(this,void 0,void 0,(function*(){const{options:t,OriginFetch:s}=T;a(t.onMatch);const o=t.onMatch({url:""+e,method:(n||{}).method||"get"});if(o){const i=o.responseInit||{};if(o.sendReal){const a=yield s(e,n),c=new Response(i.response,Object.assign({},a));if(t.onIntercept){const e={};return r(e,c,t.onIntercept(o)),e}return c}const a=new Response(o.response,{status:i.status||200,statusText:i.statusText,headers:i.headers});if(t.onIntercept){const e={};return r(e,a,t.onIntercept(o)),e}return a}return s(e,n)}))}const h=o("match-item"),d=o("xhr"),u=o("request-headers"),l=o("response-headers"),p=o("events"),f={UNSENT:0,OPENED:1,HEADERS_RECEIVED:2,LOADING:3,DONE:4},y=["onabort","onerror","onload","onloadend","onloadstart","onprogress","onreadystatechange","ontimeout"],E=y.map((e=>e.slice(2))),v=["readyState","responseURL","status","statusText","response","responseText","responseXML","responseType"],w=["timeout","withCredentials"],R={100:"Continue",101:"Switching Protocols",200:"OK",201:"Created",202:"Accepted",203:"Non-Authoritative Information",204:"No Content",205:"Reset Content",206:"Partial Content",300:"Multiple Choice",301:"Moved Permanently",302:"Found",303:"See Other",304:"Not Modified",305:"Use Proxy",307:"Temporary Redirect",400:"Bad Request",401:"Unauthorized",402:"Payment Required",403:"Forbidden",404:"Not Found",405:"Method Not Allowed",406:"Not Acceptable",407:"Proxy Authentication Required",408:"Request Timeout",409:"Conflict",410:"Gone",411:"Length Required",412:"Precondition Failed",413:"Request Entity Too Large",414:"Request-URI Too Long",415:"Unsupported Media Type",416:"Requested Range Not Satisfiable",417:"Expectation Failed",422:"Unprocessable Entity",500:"Internal Server Error",501:"Not Implemented",502:"Bad Gateway",503:"Service Unavailable",504:"Gateway Timeout",505:"HTTP Version Not Supported"};class g{addEventListener(e,t){(this[p][e]||(this[p][e]=[])).push(t)}removeEventListener(e,t){const n=this[p][e]||[];let s=n.length-1;for(;s>=0;)n[s]===t&&n.splice(s,1),s--}dispatchEvent(e){const t=this[p][e.type]||[];for(let n=0;t.length>n;n++)t[n].call(this,e);const n="on"+e.type;this[n]&&this[n](e)}}const m={matched:!1,sendReal:!1,delay:0};function O(){return new(T.OriginXhr||window.XMLHttpRequest)}class b extends g{constructor(){super(),this.readyState=f.UNSENT,this.response="",this.responseText="",this.responseType="",this.responseURL="",this.responseXML=null,this.status=0,this.statusText=void 0,this.timeout=0,this.withCredentials=!1,this.upload=Object.create(g),this.overrideMimeType=i,y.forEach((e=>this[e]=null)),Object.keys(f).forEach((e=>this[e]=f[e])),this[d]=null,this[p]={},this[u]={},this[l]={},this[h]=m}open(e,t,n,s,o){const i=T.options;this.readyState=f.OPENED,this.dispatchEvent(new Event("readystatechange"));const c=(e,t)=>{for(let e=0;8>e;e++)try{this[v[e]]=t[v[e]]}catch(e){}this.dispatchEvent(new Event(e.type))};"boolean"!=typeof n&&(n=!0);const u={url:t,method:e};a(i.onMatch);const l=i.onMatch(u);return l?(this[h]=Object.assign(Object.assign(Object.assign({},this[h]),l),{matched:!0}),void(this[h].sendReal&&(this[d]=O(),i.onIntercept&&r(this,this[d],i.onIntercept(l)),this[d].open(e,t,n,s,o)))):(this[d]=O(),i.onIntercept?(r(this,this[d],i.onIntercept(l)),void this[d].open(e,t,n,s,o)):(E.forEach((e=>{this[d].addEventListener(e,(function(e){c(e,this)}))}),this),w.forEach((e=>{try{this[d][e]=this[e]}catch(e){}})),void this[d].open(e,t,n,s,o)))}send(e){const{matched:t,sendReal:s,delay:o,requestInit:i={},responseInit:r={}}=this[h];if(t){if(this[l]=n(r.headers),this[u]=n(i.headers),this.dispatchEvent(new Event("loadstart")),this.readyState=f.HEADERS_RECEIVED,this.dispatchEvent(new Event("readystatechange")),this.readyState=f.LOADING,this.dispatchEvent(new Event("readystatechange")),s){const t=i.headers||{};t instanceof Headers?t.forEach(((e,t)=>{this.setRequestHeader(t,e)})):Array.isArray(t)?t.forEach((([e,t])=>{this.setRequestHeader(e,t)})):"object"==typeof t&&Object.keys(t).forEach((e=>{this.setRequestHeader(e,t[e])})),this[d].send(e)}setTimeout((()=>{var e,t;const n=r.status,s=r.response;this.status=R[n]?n:200,this.statusText=null!==(t=null!==(e=R[n])&&void 0!==e?e:r.statusText)&&void 0!==t?t:R[200],this.responseText=this.response="object"==typeof s?JSON.stringify(s):s,this.readyState=f.DONE,this.dispatchEvent(new Event("readystatechange")),this.dispatchEvent(new Event("load")),this.dispatchEvent(new Event("loadend"))}),"number"==typeof o?o:300)}else this[d].send(e)}abort(){this[h].matched?(this.readyState=f.UNSENT,this.dispatchEvent(new Event("abort")),this.dispatchEvent(new Event("error"))):this[d].abort()}setRequestHeader(e,t){const{matched:n,sendReal:s}=this[h];if(!n||s)return void this[d].setRequestHeader(e,t);const o=this[u];o[e]?o[e]+=","+t:o[e]=t}getResponseHeader(e){e=e.toLowerCase();const{matched:t,sendReal:n}=this[h];return t?n?this[l][e]||this[d].getResponseHeader(e):this[l][e]:this[d].getResponseHeader(e)}getAllResponseHeaders(){const{matched:e,sendReal:t}=this[h];return e?s(t?Object.assign(Object.assign({},this[d].getAllResponseHeaders().split("\n").filter(Boolean).reduce(((e,t)=>{t=t.trim();const[n,...s]=t.trim().split(": ");return e[n.toLowerCase()]=s.join(": "),e}),{})),this[l]):this[l]):this[d].getAllResponseHeaders()}}const T={OriginXhr:null,OriginFetch:null,options:null};var M;function N(){const{OriginXhr:e,OriginFetch:t}=T;e&&(window.XMLHttpRequest=e,T.OriginXhr=null),t&&(window.fetch=t,T.OriginFetch=null)}return e.FakeMode=void 0,(M=e.FakeMode||(e.FakeMode={}))[M.xhr=1]="xhr",M[M.fetch=2]="fetch",e.__Fake_Request__=T,e.fake=function(t={onMatch:i}){N(),Object.defineProperty(T,"options",{value:t,writable:!1});const n=t.mode||3;n&e.FakeMode.xhr&&(T.OriginXhr=window.XMLHttpRequest,window.XMLHttpRequest=b),n&e.FakeMode.fetch&&(T.OriginFetch=window.fetch,window.fetch=c)},e.unfake=N,Object.defineProperty(e,"__esModule",{value:!0}),e}({});
 
     const matching = (url, method, rules) => {
         url = url.split('?')[0]
@@ -20,13 +20,6 @@
             return false
         })
     }
-
-    const createStream = (text) => new ReadableStream({
-        start(controller) {
-            controller.enqueue(new TextEncoder().encode(text))
-            controller.close()
-        }
-    })
 
     const triggerCountEvent = (id) => {
         window.dispatchEvent(new CustomEvent('pagescript', {
@@ -70,23 +63,26 @@
     }
 
     const fake = () => {
-        af.fake({
+        fr.fake({
             onMatch(req) {
-                return matching(req.url, req.method, __interceptor__.rules)
-            },
-            onHandle(data) {
-                if (__interceptor__.action === 'watch') {
-                    return
-                }
-                const sendRealXhr = data.response === 'null' && !!data.code
-                if (data && !sendRealXhr) {
-                    const { response, status, delay } = handleCode(data, data.response)
-                    triggerCountEvent(data.id)
-                    return {
-                        delay,
-                        status,
-                        response,
-                        sendRealXhr: false,
+                if (__interceptor__.action === 'intercept') {
+                    const matchRule = matching(req.url, req.method, __interceptor__.rules)
+                    if (matchRule) {
+                        const sendReal = matchRule.response === 'null' && !!matchRule.code
+                        const { requestHeaders, responseHeaders, } = matchRule
+                        const { response, status, delay, } = handleCode(matchRule, matchRule.response)
+                        return {
+                            sendReal,
+                            delay,
+                            requestInit: {
+                                headers: requestHeaders
+                            },
+                            responseInit: {
+                                status,
+                                response,
+                                headers: responseHeaders
+                            }
+                        }
                     }
                 }
             },
@@ -119,15 +115,12 @@
     const __interceptor__ = {
         rules: [],
         action: 'close', // close | watch | intercept,
-        OriginalFetch: window.fetch,
-        OriginalXhr: window.XMLHttpRequest,
         proxy() {
             window.fetch = __interceptor__.fetch
             fake()
         },
         restore() {
-            window.fetch = __interceptor__.OriginalFetch
-            af.unfake()
+            fr.unfake()
         },
         run() {
             const action = __interceptor__.action
@@ -141,43 +134,6 @@
                     break;
             }
         },
-        fetch: async function (...args) {
-            const { rules, action, OriginalFetch } = __interceptor__
-            const response = await OriginalFetch(...args)
-            if (action === 'intercept') {
-                const match = matching(response.url, response.method, rules)
-                if (match) {
-                    const responseText = await response.text()
-                    const result = handleCode(match, responseText).response
-                    const newResponse = new Response(createStream(result), { ...response })
-
-                    const proxy = new Proxy(newResponse, {
-                        get(target, name) {
-                            const fields = ['ok', 'url', 'body', 'type', 'bodyUsed', 'redirected', 'useFinalURL']
-                            if (fields.includes(name)) {
-                                return response[name]
-                            }
-                            return target[name]
-                        }
-                    })
-
-                    for (let key in proxy) {
-                        if (typeof proxy[key] === 'function') {
-                            proxy[key] = proxy[key].bind(newResponse)
-                        }
-                    }
-
-                    triggerCountEvent(match.id)
-
-                    return proxy
-                }
-            } else if (action === 'watch') {
-                const responseText = await response.text()
-                triggerResponseEvent(JSON.parse(responseText), response.url)
-                return new Response(createStream(responseText), { ...response })
-            }
-            return response
-        }
     }
 
     window.addEventListener("message", (event) => {

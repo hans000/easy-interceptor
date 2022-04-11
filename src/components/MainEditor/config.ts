@@ -21,15 +21,13 @@ export default {
         name: 'requestHeaders',
         language: 'json',
         value: 'requestHeaders',
-        readonly: true,
-        schema: false,
+        schema: HeaderSchema,
     },
     responseHeaders: {
         name: 'responseHeaders',
         language: 'json',
         value: 'responseHeaders',
-        readonly: true,
-        schema: false,
+        schema: HeaderSchema,
     },
     body: {
         name: 'body',
