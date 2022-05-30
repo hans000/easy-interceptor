@@ -18,6 +18,13 @@ import { FileType } from './components/MainEditor/config'
 import { sizeof } from './tools/sizeof'
 import Quote from './components/Quote'
 import { runCode } from './tools/runCode'
+import { loader } from "@monaco-editor/react";
+
+loader.config({
+    paths: {
+        vs: 'https://unpkg.com/monaco-editor@0.33.0/min/vs'
+    },
+})
 
 export interface TransformResult {
     id: string
