@@ -1,6 +1,5 @@
 import { Progress } from 'antd'
 import React, { useEffect, useState } from 'react'
-import './index.less'
 
 interface IProps {
     size: number

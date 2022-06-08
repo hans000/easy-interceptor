@@ -1,21 +1,10 @@
 import { defineConfig } from 'vite'
 import reactRefresh from '@vitejs/plugin-react-refresh'
-import { resolve } from 'path'
 import styleImport from 'vite-plugin-style-import'
+import cdnImport from 'vite-plugin-cdn-import'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  base: './',
-  build: {
-    rollupOptions: {
-      input: {
-        main: resolve(__dirname, 'index.html'),
-      },
-      output: {
-        entryFileNames: '[name].js',
-      }
-    }
-  },
   css: {
     preprocessorOptions: {
       less: { javascriptEnabled: true }
@@ -23,16 +12,71 @@ export default defineConfig({
   },
   plugins: [
     reactRefresh(),
-    styleImport({
-      libs: [
+    cdnImport({
+      modules: [
         {
-          libraryName: 'antd',
-          esModule: true,
-          resolveStyle: (name) => {
-            return `antd/es/${name}/style/index`
-          },
+          name: 'react-is',
+          var: 'ReactIs',
+          path: 'https://unpkg.com/react-is@17.0.2/umd/react-is.production.min.js',
+        },
+        {
+          name: 'prop-types',
+          var: 'PropTypes',
+          path: 'https://unpkg.com/prop-types@15.8.1/prop-types.min.js',
+        },
+        {
+          name: 'react',
+          var: 'React',
+          path: 'https://unpkg.com/react@17.0.2/umd/react.production.min.js',
+        },
+        {
+          name: 'react-dom',
+          var: 'ReactDOM',
+          path: 'https://unpkg.com/react-dom@17.0.2/umd/react-dom.production.min.js',
+        },
+        {
+          name: 'json-schema',
+          var: 'jsonSchema',
+          path: 'https://unpkg.com/json-schema@0.4.0/lib/validate.js',
+        },
+        // {
+        //   name: 'minimatch',
+        //   var: 'minimatch',
+        //   path: 'https://unpkg.com/minimatch@5.1.0/minimatch.js',
+        // },
+        {
+          name: '@ant-design/icons',
+          var: 'icons',
+          path: 'https://unpkg.com/@ant-design/icons@4.7.0/dist/index.umd.js',
+        },
+        {
+          name: 'antd',
+          var: 'antd',
+          path: 'https://unpkg.com/antd@4.21.0/dist/antd.min.js',
+          css: 'https://unpkg.com/antd@4.21.0/dist/antd.min.css',
+        },
+        {
+          name: '@monaco-editor/loader',
+          var: 'monaco_loader',
+          path: 'https://unpkg.com/@monaco-editor/loader@1.3.2/lib/umd/monaco-loader.min.js',
+        },
+        {
+          name: '@monaco-editor/react',
+          var: 'monaco_react',
+          path: 'https://unpkg.com/@monaco-editor/react@4.4.5/lib/umd/monaco-react.min.js'
         },
       ]
-    })
+    }),
+    // styleImport({
+    //   libs: [
+    //     {
+    //       libraryName: 'antd',
+    //       esModule: true,
+    //       resolveStyle: (name) => {
+    //         return `antd/es/${name}/style/index`
+    //       },
+    //     },
+    //   ]
+    // })
   ]
 })

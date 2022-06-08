@@ -1,34 +1,34 @@
-import Editor from '@monaco-editor/react'
+import MonacoEditor from '@monaco-editor/react'
 import { Menu, message } from 'antd'
-import React, { useEffect, useImperativeHandle, useRef, useState } from 'react'
+import React, { useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import { useDebounce } from '../../hooks/useDebounce'
 import useStorage from '../../hooks/useStorage'
 import getStorage from '../../tools/getStorage'
-import { runCode } from '../../tools/runCode'
 import { equal } from '../../utils'
 import config, { FileType } from './config'
 import jsonschema from 'json-schema'
+import { MatchRule } from '../../App'
 
 interface IProps {
+    rule: MatchRule
+    index: number
     value?: Record<FileType, string>
     onChange?: (value: Record<FileType, string>, invalid: boolean) => void
 }
 
 const defaultData = {
-    general: '',
-    requestHeaders: '',
-    responseHeaders: '',
-    body: '',
-    response: '',
+    config: '',
     code: '',
 }
 
+const __DEV__ = import.meta.env.DEV
 
-export default React.forwardRef(function MainEditor(props: IProps, ref) {
+// const Editor = MonacoEditor
+const Editor = __DEV__ ? MonacoEditor : (MonacoEditor as any).default as unknown as typeof MonacoEditor
+
+const MainEditor = React.forwardRef(function (props: IProps, ref) {
     const [data, setData] = useState<Record<FileType, string>>(defaultData)
-    const [filename, setFilename] = useStorage<FileType>('path', 'general')
-    const [invalid, setInvalid] = useState(false)
-    const editorRef = useRef<any>()
+    const [filename, setFilename] = useStorage<FileType>('path', 'config')
     const dataRef = useRef<Record<FileType, string>>()
     const msgRef = useRef('')
 
@@ -43,7 +43,7 @@ export default React.forwardRef(function MainEditor(props: IProps, ref) {
         []
     )
 
-    const info = React.useMemo(() => config[filename], [filename])
+    const info = React.useMemo(() => config.find((info => info.name === filename)), [filename])
     const sendMsg = () => message.error(msgRef.current)
 
     useImperativeHandle(
@@ -53,78 +53,94 @@ export default React.forwardRef(function MainEditor(props: IProps, ref) {
         },
         [],
     )
-    
+
     const handle = useDebounce(() => {
         if (info.language === 'json' && info.schema !== false) {
             try {
-                const json = JSON.parse(data[filename])
-                if (info.schema) {
-                    const validateResult = jsonschema.validate(json, info.schema)
-                    if (validateResult.errors.length) {
-                        const { property: p, message: m } = validateResult.errors[0]
-                        msgRef.current = `\`${p}\` ${m}`
-                        sendMsg()
-                        throw msgRef.current
-                    }
-                }
+                JSON.parse(data[filename])
                 props.onChange?.(data, false)
-                setInvalid(false)
             } catch (error) {
                 msgRef.current = error + ''
-                setInvalid(true)
                 props.onChange?.(props.value, true)
             }
         } else {
-            setInvalid(false)
             props.onChange?.(data, false)
         }
     })
 
     return (
         <div className='main-editor'>
-            <Menu mode='horizontal' activeKey={filename} onClick={(info) => {
-                if (invalid) {
-                    sendMsg()
-                    return
+            <Menu style={{ userSelect: 'none' }} mode='horizontal' selectable={false} activeKey={filename} onClick={(currInfo) => {
+                if (info.name === 'config') {
+                    try {
+                        const json = JSON.parse(data[filename])
+                        const { schema } = info
+                        if (schema) {
+                            const validateResult = jsonschema.validate(json, schema)
+                            if (validateResult.errors.length) {
+                                const { property: p, message: m } = validateResult.errors[0]
+                                msgRef.current = `\`${p}\` ${m}`
+                                sendMsg()
+                                throw msgRef.current
+                            }
+                        }
+                    } catch (error) {
+                        msgRef.current = error + ''
+                        props.onChange?.(props.value, true)
+                        return
+                    }
                 }
-                setFilename(info.key as FileType)
-            }}>
-                { Object.keys(config).map(file => <Menu.Item key={file}>{file}</Menu.Item>) }
-            </Menu>
-            <Editor
-                height="510px"
-                path={filename}
-                value={data[filename]}
-                language={info.language}
-                options={{
-                    readOnly: info.readonly
-                }}
-                onMount={(editor, monaco) => {
-                    editorRef.current = editor
-                    editor.addAction({
-                        id: 'easy-interceptor-test-code',
-                        label: 'Test Code',
-                        keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_R],
-                        contextMenuGroupId: '9_cutcopypaste',
-                        run() {
-                            const general = JSON.parse(dataRef.current.general) as any
-                            runCode(dataRef.current.code, {
-                                delay: general.delay,
-                                status: general.status,
-                                response: JSON.parse(dataRef.current.response),
-                            })
-                        },
+                setFilename(currInfo.key as FileType)
+            }} items={config.map(info => ({
+                label: info.name,
+                key: info.name
+            }))} />
+            <div>
+                {
+                    config.map(info => {
+                        return (
+                            <div key={info.name} style={{ position: 'absolute', height: 510, background: '#fff', width: '100%', zIndex: filename === info.name ? 1 : 0 }} className={info.name}>
+                                <Editor
+                                    height="510px"
+                                    path={info.name}
+                                    value={data[info.name]}
+                                    language={info.language}
+                                    options={{
+                                        readOnly: info.readonly,
+                                        // ...(info.model && { model: info.model })
+                                    }}
+                                    beforeMount={(monaco) => {
+                                        if (info.beforeMount) {
+                                            info.beforeMount(monaco)
+                                        }
+                                    }}
+                                    onMount={(editor, monaco) => {
+                                        if (info.onMount) {
+                                            info.onMount({
+                                                editor,
+                                                monaco,
+                                                rawdataRef: dataRef,
+                                                rule: props.rule,
+                                                index: props.index
+                                            })
+                                        }
+                                    }}
+                                    onChange={value => {
+                                        setData(data => {
+                                            const result = { ...data, [filename]: value }
+                                            dataRef.current = result
+                                            return result
+                                        })
+                                        handle()
+                                    }}
+                                />
+                            </div>
+                        )
                     })
-                }}
-                onChange={value => {
-                    setData(data => {
-                        const result = { ...data, [filename]: value }
-                        dataRef.current = result
-                        return result
-                    })
-                    handle()
-                }}
-            />
+                }
+            </div>
         </div>
     )
 })
+
+export default MainEditor

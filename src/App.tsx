@@ -1,11 +1,10 @@
 import './App.less'
-import { Badge, BadgeProps, Button, Dropdown, Input, Menu, message, Modal, Spin, Table, Tag, Tooltip, Upload } from 'antd'
-import Checkbox from 'antd/lib/checkbox/Checkbox'
+import { Badge, Checkbox, BadgeProps, Button, Dropdown, Input, Menu, message, Modal, Spin, Table, Tag, Tooltip, Upload } from 'antd'
 import React, { useEffect, useRef, useState } from 'react'
-import { FontSizeOutlined, TagOutlined, ControlOutlined, CodeOutlined, DeleteOutlined, PlusOutlined, SearchOutlined, DownOutlined, VerticalAlignBottomOutlined, UploadOutlined, SyncOutlined, RollbackOutlined } from '@ant-design/icons'
+import { TagOutlined, ControlOutlined, CodeOutlined, DeleteOutlined, PlusOutlined, SearchOutlined, DownOutlined, VerticalAlignBottomOutlined, UploadOutlined, SyncOutlined, RollbackOutlined, BugOutlined, FilterOutlined } from '@ant-design/icons'
 import { ColumnsType } from 'antd/lib/table'
 import minimatch from 'minimatch'
-import { randID, renderSize } from './utils'
+import { parseUrl, randID, renderSize, stringifyParams } from './utils'
 import { getConfigText, getMethodColor } from './tools/mappings'
 import { download } from './tools/download'
 import { buildStorageMsg } from './tools/message'
@@ -17,8 +16,9 @@ import MainEditor from './components/MainEditor'
 import { FileType } from './components/MainEditor/config'
 import { sizeof } from './tools/sizeof'
 import Quote from './components/Quote'
-import { runCode } from './tools/runCode'
+import { runCode, sendLog } from './tools/runCode'
 import { loader } from "@monaco-editor/react";
+import { sendRequest } from './tools/sendRequest'
 
 loader.config({
     paths: {
@@ -26,34 +26,40 @@ loader.config({
     },
 })
 
-export interface TransformResult {
+export interface MatchRule {
     id: string
     count: number
-    url?: string
-    enable?: boolean
-    regexp?: boolean
-    status?: number
     delay?: number
-    method?: 'get' | 'post' | 'delete' | 'put' | ''
-    response?: any
+    sendReal?: boolean
+    enable?: boolean
+    url: string
+    method?: 'get' | 'post' | 'delete' | 'put'
     body?: any
-    // params?: Record<string, string>
+    params?: [string, string][]
     requestHeaders?: Record<string, string>
+    status?: number
+    response?: any
     responseHeaders?: Record<string, string>
     code?: string
 }
 
 const __DEV__ = import.meta.env.DEV
 
+const fields = ['url', 'method', 'status', 'delay', 'params', 'sendReal', 'requestHeaders', 'responseHeaders', 'body', 'response']
+
+const isDrakTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
+
 function App() {
     const originRef = useRef('')
-    const [dark, setDark] = useStorage('dark', false)
+    const [dark, setDark] = useStorage('dark', isDrakTheme)
     const [action, setAction] = useStorage('action', 'close')
-    const [rules, setRules] = useStorage<TransformResult[]>('rules', [])
+    const [rules, setRules] = useStorage<MatchRule[]>('rules', [])
     const [selectedRowKeys, setSelectedRowKeys] = useStorage('selectedRowKeys', [])
     const [loading, setLoading] = useState(false)
     const [activeIndex, setActiveIndex] = useStorage('index', -1)
     const [invalid, setInvalid] = useState(false)
+    const [visible, setVisible] = useState(false)
+    const [hiddenFields, setHiddenFields] = useStorage('hiddenFields', [])
     const editorRef = useRef()
 
     useEffect(
@@ -111,11 +117,12 @@ function App() {
     const reload = (clean = false) => {
         setLoading(true)
         getStorage([
-            'action', 'rules', 'selectedRowKeys', 'dark',  'index',
+            'action', 'rules', 'selectedRowKeys', 'dark',  'index', 'hiddenFields'
         ]).then(result => {
             setLoading(false)
             setDark(result.dark)
             setAction(result.action)
+            setHiddenFields(result.hiddenFields)
             if (clean) {
                 setSelectedRowKeys([])
                 setRules(result.rules.map(item => ({ ...item, count: 0 })))
@@ -142,11 +149,37 @@ function App() {
 
     const size = React.useMemo(() => sizeof(rules), [rules])
 
-    const columns = React.useMemo<ColumnsType<TransformResult>>(
+    const columns = React.useMemo<ColumnsType<MatchRule>>(
         () => {
             return [
                 {
-                    title: '地址url', dataIndex: 'url', key: 'url', ellipsis: true,
+                    title: (
+                        <Dropdown visible={visible} onVisibleChange={setVisible} overlay={
+                            <Menu items={fields.map(field => {
+                                return {
+                                    key: field,
+                                    label: (
+                                        <Checkbox key={field} defaultChecked={!hiddenFields.includes(field)} onChange={(e) => {
+                                            const checked = e.target.checked
+                                            setHiddenFields(fields => {
+                                                if (checked) {
+                                                    return fields.filter(item => item !== field)
+                                                } else {
+                                                    return [...fields, field]
+                                                }
+                                            })
+                                        }}>{field}</Checkbox>
+                                    ),
+                                }
+                            })}/>
+                        }>
+                            <span>
+                                <span>地址url</span>
+                                <FilterOutlined style={{ marginLeft: 8, padding: 4, color: '#bfbfbf' }} />
+                            </span>
+                        </Dropdown>
+                    ),
+                    dataIndex: 'url', key: 'url', ellipsis: true,
                     filterIcon: filtered => <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />,
                     filterDropdown: ({ setSelectedKeys, selectedKeys, confirm }) => (
                         <div style={{ padding: 8 }}>
@@ -158,7 +191,7 @@ function App() {
                                     setSelectedKeys([[v, k].join('\n')])
                                     confirm({ closeDropdown: false });
                                 }} />
-                            <Input placeholder='排除选项，glob规则'
+                            <Input placeholder='排除选项 (glob规则)'
                                 style={{ display: 'block', width: 300 }}
                                 onChange={e => {
                                     const v = e.target.value
@@ -170,9 +203,10 @@ function App() {
                     ),
                     onFilter(value: string, record) {
                         const [k, e] = value.split('\n')
+                        const url = record.url
                         const include = record.url.includes(k)
-                        const exclude = e ? e.split(',').some(el => minimatch(record.url, el)) : false
-                        return record.url ? (include && !exclude) : true
+                        const exclude = e ? e.split(',').some(el => minimatch(url, el)) : false
+                        return url ? (include && !exclude) : true
                     },
                     render: (value, record, index) => {
                         const origin = originRef.current
@@ -207,16 +241,12 @@ function App() {
                     }
                 },
                 {
-                    dataIndex: 'count', key: 'count', width: 100, align: 'center',
-                    title: '拦截•次数',
+                    dataIndex: 'count', key: 'count', width: 80, align: 'center',
+                    title: <Tooltip title='debug • 拦截次数'><BugOutlined /></Tooltip>,
                     render: (value, record) => (
                         <>
                             { !!record.code ? <CodeOutlined onClick={() => {
-                                runCode(record.code, {
-                                    status: record.status,
-                                    response: record.response,
-                                    delay: record.delay,
-                                })
+                                runCode(record)
                             }} /> : null } 
                             <span style={{ paddingLeft: 4 }}>{ value ? value : null }</span>
                         </>
@@ -232,26 +262,22 @@ function App() {
                     // ],
                     // onFilter: (value, record) => record.method.includes(value),
                     title: (
-                        <Tooltip title='请求类型'>
+                        <Tooltip title='请求类型 • 发送'>
                             <TagOutlined />
                         </Tooltip>
                     ),
-                    render: value => value !== '*' ? <Tag color={getMethodColor(value)}>{value}</Tag> : null
-                },
-                {
-                    dataIndex: 'regexp', key: 'regexp', width: 50, align: 'center',
-                    title: (
-                        <Tooltip title='启用正则匹配'>
-                            <FontSizeOutlined />
-                        </Tooltip>
-                    ),
-                    render: (value, record, index) => <Checkbox checked={value} onChange={(e) => {
-                        setRules(data => {
-                            const result = [...data]
-                            result[index].regexp = e.target.checked
-                            return result
-                        })
-                    }}></Checkbox>
+                    render: (value, record, index) => {
+                        if (! value) {
+                            return null
+                        }
+                        const canSend = /https?/.test(record.url)
+
+                        return (
+                            <Tag style={{ cursor: canSend ? 'pointer' : 'text', borderStyle: canSend ? 'solid' : 'dashed' }} color={getMethodColor(value)} onClick={() => {
+                                sendRequest(record, index)
+                            }}>{value}</Tag>
+                        )
+                    }
                 },
                 {
                     dataIndex: 'enable', key: 'enable', width: 50, align: 'center',
@@ -278,31 +304,23 @@ function App() {
                 },
             ]	
         },
-        []
+        [setRules]
     )
 
     const update = (value: Record<FileType, string>, index: number) => {
-        setRules(data => {
-            const result = [...data]
-            const obj = result[index]
-
-            const general = JSON.parse(value.general)
-            const requestHeaders = JSON.parse(value.requestHeaders) || {}
-            const responseHeaders = JSON.parse(value.responseHeaders) || {}
-            const response = JSON.parse(value.response) || null
-            const body = JSON.parse(value.body) || {}
-
-            obj.url = general.url
-            obj.regexp = general.regexp
-            obj.delay = general.delay || 0
-            obj.status = general.status || 200
-            obj.method = general.method || ''
-            obj.requestHeaders = requestHeaders
-            obj.responseHeaders = responseHeaders
-            obj.response = response || null
-            obj.body = body
-            obj.code = value.code || ''
-            // obj.params = value.general.params || {}
+        setRules(rule => {
+            const result = [...rule]
+            const config = JSON.parse(value.config)
+            result[index] = {
+                ...Object.keys(result[index]).reduce((acc, k) => {
+                    if (! fields.includes(k)) {
+                        acc[k] = result[index][k]
+                    }
+                    return acc
+                }, {}),
+                ...config,
+                code: value.code
+            }
             return result
         })
     }
@@ -326,16 +344,12 @@ function App() {
 
     const editable = React.useMemo(() => activeIndex !== -1, [activeIndex])
 
-    const formatResult = (record: TransformResult) => {
-        const { id, enable, regexp, count,
-            body, requestHeaders, response, responseHeaders, code, ...general } = record
+    const formatResult = (record: MatchRule) => {
+        const { code, } = record
+        const data = fields.filter(field => !hiddenFields.includes(field)).reduce((acc, k) => (acc[k] = record[k], acc), {})
         return {
-            body: JSON.stringify(body || {}, null, 4),
-            general: JSON.stringify(general || {}, null, 4),
-            response: JSON.stringify(response || null, null, 4),
-            requestHeaders: JSON.stringify(requestHeaders || {}, null, 4),
-            responseHeaders: JSON.stringify(responseHeaders || {}, null, 4),
             code,
+            config: JSON.stringify(data, null, 4)
         }
     }
 
@@ -346,8 +360,13 @@ function App() {
                     <Button.Group style={{ paddingRight: 8 }}>
                         <Tooltip title={'添加'}>
                             <Button disabled={editable} icon={<PlusOutlined />} onClick={() => {
-                                setRules(data => {
-                                    const result = [...data, { url: '/api-' + data.length, id: randID(), count: 0, method: 'get' as any }]
+                                setRules(rule => {
+                                    const result = [...rule, {
+                                        id: randID(),
+                                        count: 0,
+                                        url: '/api-' + rule.length,
+                                        response: null,
+                                    }]
                                     return result
                                 })
                             }}></Button>
@@ -364,7 +383,7 @@ function App() {
                         <Tooltip title={getActionText('下载')}>
                             <Button disabled={editable} icon={<VerticalAlignBottomOutlined />} onClick={() => {
                                 const sel = selectedRowKeys.length ? rules.filter(item => !selectedRowKeys.find(id => id === item.id)) : rules
-                                const origin = originRef.current || 'interceptor-data'
+                                const origin = originRef.current || 'data'
                                 download(origin + '.json', JSON.stringify(sel, null, 2))
                                 setSelectedRowKeys([])
                             }}></Button>
@@ -373,11 +392,11 @@ function App() {
                             <Upload disabled={editable} showUploadList={false} beforeUpload={(file) => {
                                 setLoading(true)
                                 if (! ['application/json', 'text/plain'].includes(file.type)) {
-                                    message.error('文件格式错误！仅支持txt, json')
+                                    message.error('文件格式错误！仅支持json文本')
                                     setLoading(false)
                                 } else {
                                     file.text().then(text => {
-                                        const arr = JSON.parse(text) as TransformResult[]
+                                        const arr = JSON.parse(text) as MatchRule[]
                                         const result = jsonschema.validate(arr, TransformResultSchema)
                                         if (! result.valid) {
                                             throw result.errors
@@ -448,7 +467,7 @@ function App() {
                         }
                     </Button.Group>
                     <div>
-                        <Dropdown trigger={['click']} overlay={
+                        <Dropdown overlay={
                             <Menu activeKey={action} onClick={(info) => {
                                 setAction(info.key)
                                 if (info.key === 'intercept' && activeIndex !== -1) {
@@ -458,17 +477,20 @@ function App() {
                                         return newRules
                                     })
                                 }
-                            }}>
-                                <Menu.Item key='close'>
-                                    <Badge status='default' text='关闭'></Badge>
-                                </Menu.Item>
-                                <Menu.Item key='watch'>
-                                    <Badge color={'orange'} status='default' text='启用监听'></Badge>
-                                </Menu.Item>
-                                <Menu.Item key='intercept'>
-                                    <Badge color={'purple'} status='default' text='启用拦截'></Badge>
-                                </Menu.Item>
-                            </Menu>
+                            }} items={[
+                                {
+                                    label: <Badge status='default' text='关闭'></Badge>,
+                                    key: 'close',
+                                },
+                                {
+                                    label: <Badge color={'orange'} status='default' text='启用监听'></Badge>,
+                                    key: 'watch',
+                                },
+                                {
+                                    label: <Badge color={'purple'} status='default' text='启用拦截'></Badge>,
+                                    key: 'intercept',
+                                }
+                            ]} />
                         }>
                             <a className="ant-dropdown-link" onClick={e => e.preventDefault()}>
                                 <span>{getConfigText(action as ActionType)}</span> <DownOutlined />
@@ -498,10 +520,15 @@ function App() {
                 {
                     editable && (
                         <div className='app__editor'>
-                            <MainEditor ref={editorRef} value={formatResult(rules[activeIndex])} onChange={(value, invalid) => {
-                                update(value, activeIndex)
-                                setInvalid(invalid)
-                            }} />
+                            <MainEditor
+                                ref={editorRef}
+                                index={activeIndex}
+                                rule={rules[activeIndex]}
+                                value={formatResult(rules[activeIndex])}
+                                onChange={(value, invalid) => {
+                                    update(value, activeIndex)
+                                    setInvalid(invalid)
+                                }} />
                         </div>
                     )
                 }

@@ -1,5 +1,6 @@
-import { CodeResultSchema } from './../components/MainEditor/validator';
 import jsonschema from 'json-schema'
+import { MatchRule } from '../App'
+import { ExportSchema } from '../components/MainEditor/validator'
 
 const __DEV__ = import.meta.env.DEV
 
@@ -9,36 +10,50 @@ export interface CodeResult {
     delay?: number
 }
 
-function sendMsg(msg: any) {
+export function sendLog(msg: any) {
     if (__DEV__) {
-        console.log('[EI]', msg)
-    } else {
-        chrome.runtime.sendMessage(chrome.runtime.id, {
-            type: '__hs_log__',
-            from: '__hs_iframe__',
-            key: 'log',
-            value: msg,
-        })
+        console.log(msg)
+        return
     }
+    chrome.runtime.sendMessage(chrome.runtime.id, {
+        type: '__hs_log__',
+        from: '__hs_iframe__',
+        key: 'log',
+        value: msg,
+    })
 }
 
-export function runCode(code: string, data: CodeResult) {
+export function runCode(data: MatchRule) {
     try {
-        if (data.response === null) {
-            sendMsg('cannot run code in this environment')
+        const { id, count, enable, code, ...restData  } = data
+        const dataStr = JSON.stringify(restData)
+        const raw = `
+            ;(function (ctx) {
+                ${code}
+                return __map__(ctx);
+            })(${dataStr})
+        `
+        let msg = {}
+        try {
+            msg = eval(raw) || {}
+        } catch (error) {
+            sendLog('error, ' + '__map__ function must be declared')
             return
         }
-        const dataStr = JSON.stringify(data)
-        const msg = eval(`;(${code})(${dataStr})`)
-        const validateResult = jsonschema.validate(msg, CodeResultSchema)
+
+        const newMsg = { ...data, ...msg }
+
+        const validateResult = jsonschema.validate(newMsg, ExportSchema)
 
         if (validateResult.errors.length) {
-            sendMsg(validateResult.errors)
+            const { property: p, message: m } = validateResult.errors[0]
+            const msg = `\`${p}\` ${m}`
+            sendLog('__map__ function must be return an object, ' + msg)
             return
         }
 
-        sendMsg({ ...data, ...msg, })
+        sendLog(newMsg)
     } catch (error) {
-        sendMsg(error)
+        sendLog(error)
     }
 }

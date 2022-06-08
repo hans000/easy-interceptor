@@ -1,125 +1,97 @@
 import { JSONSchema7 } from "json-schema";
 
-export const GeneralSchema: JSONSchema7 = {
+export const ConfigSchema: JSONSchema7 = {
     type: "object",
     additionalProperties: false,
     properties: {
+        delay: {
+            type: "number"
+        },
+        sendReal: {
+            type: "boolean"
+        },
+        response: {
+            required: ["response"],
+            type: ["object", "null"]
+        },
+        responseHeaders: {
+            type: "object",
+            patternProperties: {
+                "^[A-Za-z_$][A-Za-z0-9_$]*$": {
+                    type: "string"
+                }
+            }
+        },
+        status: {
+            type: "number"
+        },
+        statusText: {
+            type: "string"
+        },
         url: {
             type: "string",
             required: ["url"],
         },
         method: {
             type: "string",
-            enum: ["get", "post", "put", "delete", ""]
+            enum: ["get", "post", "put", "delete"]
         },
-        delay: {
-            type: "number"
+        params: {
+            type: "array",
+            items: {
+                type: "array",
+                items: {
+                    type: ['string', 'number'],
+                    minItems: 2,
+                    maxItems: 2
+                }
+            }
         },
-        status: {
-            type: "number"
+        body: {
+            type: ["object", "null"]
         },
-        // params: {
-        //     type: "object",
-        //     patternProperties: {
-        //         "^[A-Za-z_$][A-Za-z0-9_$]*$": {
-        //             type: "string"
-        //         }
-        //     }
-        // },
+        requestHeaders: {
+            type: "object",
+            patternProperties: {
+                "^[A-Za-z_$][A-Za-z0-9_$]*$": {
+                    type: "string"
+                }
+            }
+        },
     },
 }
 
-export const CodeResultSchema: JSONSchema7 = {
+
+export const MatchTokenSchema: JSONSchema7 = {
     type: "object",
     additionalProperties: false,
     properties: {
-        delay: {
-            type: "number"
-        },
-        status: {
-            type: "number"
-        },
-        response: {
-            required: ["response"],
+        ...ConfigSchema.properties,
+        code: {
+            type: "string",
         },
     },
 }
 
-export const HeaderSchema: JSONSchema7 = {
+export const ExportSchema: JSONSchema7 = {
     type: "object",
-    patternProperties: {
-        "^[A-Za-z_$][A-Za-z0-9_$]*$": {
-            type: "string"
-        }
-    }
+    additionalProperties: false,
+    properties: {
+        ...MatchTokenSchema.properties,
+        id: {
+            type: "string",
+            required: ["id"],
+        },
+        enable: {
+            type: "boolean",
+        },
+        count: {
+            type: "number",
+        },
+    },
 }
 
 export const TransformResultSchema: JSONSchema7 = {
     type: "array",
-    items: {
-        type: "object",
-        additionalProperties: false,
-        properties: {
-            id: {
-                type: "string",
-                required: ["id"],
-            },
-            url: {
-                type: "string",
-                required: ["url"],
-            },
-            enable: {
-                type: "boolean",
-            },
-            regexp: {
-                type: "boolean",
-            },
-            delay: {
-                type: "number",
-            },
-            status: {
-                type: "number",
-            },
-            count: {
-                type: "number",
-            },
-            method: {
-                type: "string",
-                enum: ["get", "post", "put", "delete", ""]
-            },
-            // params: {
-            //     type: "object",
-            //     patternProperties: {
-            //         "^[A-Za-z_$][A-Za-z0-9_$]*$": {
-            //             type: "string"
-            //         }
-            //     }
-            // },
-            requestHeaders: {
-                type: "object",
-                patternProperties: {
-                    "^[A-Za-z_$][A-Za-z0-9_$]*$": {
-                        type: "string"
-                    }
-                }
-            },
-            responseHeaders: {
-                type: "object",
-                patternProperties: {
-                    "^[A-Za-z_$][A-Za-z0-9_$]*$": {
-                        type: "string"
-                    }
-                }
-            },
-            body: {
-                type: "object",
-            },
-            response: {
-                type: ["object", "null"],
-            },
-            code: {
-                type: "string",
-            },
-        },
-    }
+    items: ExportSchema
 }

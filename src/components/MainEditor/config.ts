@@ -1,51 +1,112 @@
 import { JSONSchema7 } from 'json-schema';
-import { GeneralSchema, HeaderSchema } from './validator';
+import { MutableRefObject } from 'react';
+import { MatchRule } from '../../App';
+import { runCode } from '../../tools/runCode';
+import { sendRequest } from '../../tools/sendRequest';
+import { ConfigSchema } from './validator';
+
+interface CustomEditorContext {
+    editor: any
+    monaco: any
+    rawdataRef?: MutableRefObject<Record<FileType, string>>
+    rule?: MatchRule
+    index?: number
+}
+
 interface EditorProps {
     name: FileType
     language: string
     value?: string
     readonly?: boolean
     schema?: JSONSchema7
+    beforeMount?: (monaco) => void
+    onMount?: (context: CustomEditorContext) => void
 }
 
-export type FileType = 'general' | 'requestHeaders' | 'responseHeaders' | 'body' | 'response' | 'code'
+export type FileType = 'config' | 'code'
 
-export default {
-    general: {
-        name: 'general',
+function createAction(id: string, label: string, handle: Function) {
+    return {
+        id,
+        label,
+        contextMenuGroupId: 'intercept',
+        run: handle,
+    }
+}
+
+function createRequestAction(context: CustomEditorContext) {
+    return createAction('send request', 'Send Request', () => {
+        sendRequest(context.rule, context.index)
+    })
+}
+
+function createRunCodeAction(context: CustomEditorContext) {
+    return createAction('run code', 'Run Code', () => {
+        const rawdata = context.rawdataRef.current
+        const config = JSON.parse(rawdata.config) as any
+        runCode({ ...context.rule, ...config, code: rawdata.code })
+    })
+}
+
+const config: EditorProps[] = [
+    {
+        name: 'config',
         language: 'json',
-        value: 'general',
-        schema: GeneralSchema,
+        value: 'config',
+        schema: ConfigSchema,
+        onMount: ({ editor, monaco, rule, index }) => {
+            monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
+                schemas: [
+                    {
+                        uri: 'http://json-schema.org/',
+                        fileMatch: [editor.getModel().uri.toString()],
+                        schema: ConfigSchema
+                    }
+                ]
+            })
+            editor.addAction(createRequestAction({ editor, monaco, rule, index }))
+        }
     },
-    requestHeaders: {
-        name: 'requestHeaders',
-        language: 'json',
-        value: 'requestHeaders',
-        schema: HeaderSchema,
-    },
-    responseHeaders: {
-        name: 'responseHeaders',
-        language: 'json',
-        value: 'responseHeaders',
-        schema: HeaderSchema,
-    },
-    body: {
-        name: 'body',
-        language: 'json',
-        value: 'body',
-        readonly: true,
-        schema: false,
-    },
-    response: {
-        name: 'response',
-        language: 'json',
-        value: 'response',
-        readonly: false,
-    },
-    code: {
+    {
         name: 'code',
         language: 'javascript',
         value: 'code',
-        readonly: false,
+//         beforeMount: (monaco) => {
+//             const libSource = `
+// declare type Context = {
+//     delay?: number
+//     sendReal?: boolean
+//     requestInit: {
+//         url: string
+//         method?: 'get' | 'post' | 'delete' | 'put'
+//         body?: any
+//         params?: Record<string, string>
+//         headers?: Record<string, string>
+//     }
+//     responseInit: {
+//         status?: number
+//         response?: any
+//         headers?: Record<string, string>
+//     }
+// }
+
+// declare module "fake" {
+//     export = $
+// }
+
+// declare type Handle = (context: Context) => Context
+
+// declare var $: (handle: Handle) => Context
+// `
+//             const libUri = 'ts:typings/fake.d.ts';
+//             monaco.languages.typescript.javascriptDefaults.addExtraLib(libSource, libUri);
+//         },
+        onMount: (context) => {
+            const { editor } = context
+            editor.addAction(createRunCodeAction(context))
+            editor.addAction(createRequestAction(context))
+        }
     },
-} as Record<FileType, EditorProps>
+]
+
+export default config

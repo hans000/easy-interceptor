@@ -17,67 +17,39 @@
 
 如何解决上述问题呢？如果可以在客户端接收数据前拦截并加以修改再返回就可以达到目的。Easy Interceptor就是利用上述思路，它可以拦截XMLHttpRequest，fetch数据请求方式的http请求，通过覆盖response，responseText字段，从而达到对数据的修改。作为一个chrome插件，天然的集成在用户测试环境，因此对使用者的心智负担极小。
 
-- xhr: 内部实现了一个假的XMLHttpRequest，因此使用xhr类型的请求方式不会向后端发出请求，也无须后端服务支持（xhr类型依赖于[ajax-fake](https://github.com/Jcanno/ajax-fake)）
+- xhr: 内部实现了一个FakeXMLHttpRequest，因此使用xhr类型的请求方式可以不向后端发出请求，也无须后端服务支持
 
-- fetch: 通过代理其上的方法、属性，覆盖特定的字段，因此无法配置delay、status字段，还是会发出请求，需要保证接口正常才能生效，并且也不会改变devtool-network的信息（fetch类型使用Proxy）
+- fetch: (待完善)
 
 > 注意：
-> 插件仅针对content-type: json类型有效
+> 
+> 插件仅针对content-type: json类型有效，在不用时请关闭该插件防止出现意外
+>
 > 如果你是一个熟练度拉满，有着完善的代理环境大可不必使用，仅作为特定场合的补充
+> 
+> 插件使用cdn引入资源，因此需要联网，首次加载会比较慢
 
 ## 🎉 特点
 
-- 免费，无广告推广，较好的用户体验
+- 免费无广告推广，较好的用户体验，暗色模式
 - 提供监听当前请求（省略手动填写的麻烦）
-- 集成monaco-editor，更方便的编辑处理文本（10W行数据也不会卡顿）
 - 导入导出，工程序列化
-- 更加友好的交互，用颜色法突出当前状态
-- 拥有一定的js编程能力，可以动态处理数据，可打印输出信息
+- （v1.3+）拥有一定的js编程能力，可以动态处理数据，可打印输出信息
+- （v1.5+）集成monaco-editor，更方便的编辑处理文本（10W行数据也不会卡顿）
+- （v1.5+）更加友好的交互，用颜色法突出当前状态
+- （v1.6+）使用cdn，大幅度缩减安装包（安装包仅49kb）
+- （v1.6+）扁平化数据，支持过滤字段，更加符合直觉
+- （v1.6+）支持修改响应头
+- （v1.6+）主动发送请求，支持修改请求参数（params、headers、body）
 
 ## 📑 使用说明
 
-动图演示
+> 部分操作查看老版本使用说明
 
-<img src="./assets/demo-v1.5.0.gif" alt="演示" style="width:80%;padding-left:10%" />
-
-## 💬 Q&A
-
-
-
-### 🔹 为什么插件窗口只有800x600
-这个是由于浏览器限制的，popup的形式最大支持800x600，该形式的好处在于尽可能不影响项目本身（不足在于每次都会重新加载页面，因此插件做了很多的序列化以保证较好的用户体验）
-
-
-### 🔹 存储只有5M，如何突破限制
-主要response数据量太大导致的，可以把response面板设置为 `null` , code面板通过js修改数据（注意：此时会发送真实的请求，依赖后端服务）
-
-
-
-### 🔹 为什么是262kb
-这里是为了方便写程序，y = f(x) = log2(x)，取了个公差为2的等差数列18 20 22；也就是2^18 = 262144，并且这些值也比较合适。
-
-
-
-### 🔹 为什么fetch不支持模拟请求
-主要是由于没有找的合适的库，xhr类型是魔改的ajax-fake；并且现在的绝大部分应用都是基于xhr，因此仅对fetch做了代理来拦截请求，功能要稍微少一点。
-
-
-
-### 🔹 为什么仅支持json类型的请求
-起初是为了解决自测阶段部分场景的复现问题（现在的应用前后端交互基本都是json类型），期间使用了几个类似的插件发现用户体验不是很好，一些代理软件功能很强，但是个人也不太喜欢太重的配置，使用的环境要尽可能单一。
-
-
-
-## 📑 老版本使用说明（v1.4之前）
-<details>
-    <summary>展开 / 折叠</summary>
-    
-<img src="./assets/demo.png" alt="演示" style="width:80%;padding-left:10%" />
-    
 ### 图标状态
-- 灰色：关闭状态
-- 橙色：监听状态
-- 紫色：拦截状态
+- 灰色：关闭状态（数字角标展示当前列表共有多少条数据）
+- 橙色：监听状态（数字角标展示当前列表共有多少条数据）
+- 紫色：拦截状态（数字角标展示当前列表共启用拦截多少条数据）
 
 ### 左上方工具栏
 - 【新增】：添加一条数据
@@ -90,6 +62,117 @@
 - 关闭状态：关闭插件
 - 监听功能：监听请求（仅对Content-Type为json类型的请求有效）
 - 拦截功能：自定义responseText
+
+### config面板
+```
+interface Config {
+    /** 延迟的毫秒数 */
+    delay?: number
+    /** 是否发送真实的xhr */
+    sendReal?: boolean
+    /** 定义返回的数据 */
+    response?: any
+    /** 匹配的请求地址，支持glob规则 */
+    url: string
+    method?: 'get' | 'post' | 'delete' | 'put'
+    body?: any
+    params?: [string, string][]
+    requestHeaders?: Record<string, string>
+    status?: number
+    responseHeaders?: Record<string, string>
+}
+```
+
+### code面板
+通过定义\_\_map\_\_来动态的修改数据
+```
+function __map__(data) {
+    return {
+        // 内部会做一个shallow merge
+        response: Math.random().toString()
+    }
+}
+```
+原理如下
+```
+const dataStr = JSON.strigify({ ... })
+const raw = `
+    ;(function (ctx) {
+        ${code}
+        return __map__(ctx);
+    })(${dataStr})
+`
+eval(raw)
+```
+
+## ⭐ 使用场景
+
+### 拦截数据
+
+选择拦截模式，勾选需要拦截的接口，刷新页面即可
+
+> 注意：
+>
+> 确保url和method字段匹配
+>
+> 使用response字段来覆盖responseText
+> 
+> 如果需要延迟接口响应可以使用delay字段
+>
+> 默认使用FakeXMLHttpRequest，如果希望发送真实xhr，使用sendReal字段
+> 
+
+
+### 测试后端接口
+
+插件提供了测试后端接口的功能，你可以理解为是一个简单的postman，由于插件端不存在跨域的问题，因此无需代理，设置好相应的请求头即可。
+
+> 注意：确保是一个完整的url（可以从请求类型表框是否为实线看出）
+
+
+## 📜 后期计划
+
+- ⚪ 支持fetch
+- ⚪ 支持indexeddb
+- ⚪ 支持通过cdn来增强code面板
+- ⚪ 使用v3版本（chrome88+）
+- ⚪ 支持环境变量等
+
+
+
+## 💬 Q&A
+
+
+### 🔹 为什么插件窗口只有800x600
+这个是由于浏览器限制的，popup的形式最大支持800x600，该形式的好处在于尽可能不影响项目本身（不足在于每次都会重新加载页面，因此插件做了很多的序列化以保证较好的用户体验）
+
+
+### 🔹 存储只有5M，如何突破限制
+主要response数据量太大导致的，可以把response面板设置为 `null` , code面板通过js修改数据（未来会加入indexeddb）
+
+
+
+### 🔹 为什么是262kb
+这里是为了方便写程序，y = f(x) = log2(x)，取了个公差为2的等差数列18 20 22；也就是2^18 = 262144，并且这些值也比较合适。
+
+
+
+### 🔹 为什么仅支持json类型的请求
+起初是为了解决自测阶段部分场景的复现问题（现在的应用前后端交互基本都是json类型），期间使用了几个类似的插件发现用户体验不是很好，一些代理软件功能很强，但是个人也不太喜欢太重的配置，使用的环境要尽可能单一。如果无法满足您的个人需要可以pr或fork
+
+
+
+## 📑 老版本使用说明
+> 强烈建议使用最新版本
+<details>
+    <summary>（v1.5）展开 / 折叠</summary>
+<img src="./assets/demo-v1.5.0.gif" alt="演示" style="width:80%;padding-left:10%" />
+</details>
+
+<details>
+    <summary>（v1.4之前）展开 / 折叠</summary>
+    
+<img src="./assets/demo.png" alt="演示" style="width:80%;padding-left:10%" />
 
 ### 如何使用
 
@@ -118,4 +201,4 @@
 </details>
 
 ## License
-MIT
+[MIT](./LICENSE)
