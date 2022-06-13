@@ -1,3 +1,8 @@
+## v1.6.1
+
+- 实现require机制，通过cdn引入minimatch
+- 修复筛选bug
+
 ## v1.6
 
 - 使用glob规则匹配url，移除正则匹配
