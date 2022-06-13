@@ -22,6 +22,7 @@ specifiers:
   react: ^17.0.0
   react-dom: ^17.0.0
   rollup: ^2.75.6
+  rollup-plugin-external-globals: ^0.6.1
   rollup-plugin-terser: ^7.0.2
   rollup-plugin-typescript2: ^0.32.1
   typescript: ^4.3.2
@@ -53,6 +54,7 @@ devDependencies:
   less-loader: registry.npmmirror.com/less-loader/10.2.0_less@4.1.2
   monaco-editor: registry.npmmirror.com/monaco-editor/0.33.0
   rollup: registry.npmmirror.com/rollup/2.75.6
+  rollup-plugin-external-globals: registry.npmmirror.com/rollup-plugin-external-globals/0.6.1_rollup@2.75.6
   rollup-plugin-terser: registry.npmmirror.com/rollup-plugin-terser/7.0.2_rollup@2.75.6
   rollup-plugin-typescript2: registry.npmmirror.com/rollup-plugin-typescript2/0.32.1_rollup@2.75.6+typescript@4.7.3
   typescript: registry.npmmirror.com/typescript/4.7.3

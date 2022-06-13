@@ -15,6 +15,11 @@ export default defineConfig({
     cdnImport({
       modules: [
         {
+          name: 'minimatch',
+          var: 'minimatch',
+          path: [],
+        },
+        {
           name: 'react-is',
           var: 'ReactIs',
           path: 'https://unpkg.com/react-is@17.0.2/umd/react-is.production.min.js',
@@ -39,11 +44,6 @@ export default defineConfig({
           var: 'jsonSchema',
           path: 'https://unpkg.com/json-schema@0.4.0/lib/validate.js',
         },
-        // {
-        //   name: 'minimatch',
-        //   var: 'minimatch',
-        //   path: 'https://unpkg.com/minimatch@5.1.0/minimatch.js',
-        // },
         {
           name: '@ant-design/icons',
           var: 'icons',

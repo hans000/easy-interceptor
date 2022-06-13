@@ -31,6 +31,7 @@
     "less-loader": "^10.0.1",
     "monaco-editor": "^0.33.0",
     "rollup": "^2.75.6",
+    "rollup-plugin-external-globals": "^0.6.1",
     "rollup-plugin-terser": "^7.0.2",
     "rollup-plugin-typescript2": "^0.32.1",
     "typescript": "^4.3.2",

@@ -3,6 +3,7 @@ import { defineConfig } from 'rollup'
 import typescript from 'rollup-plugin-typescript2'
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
+import externalGlobals from 'rollup-plugin-external-globals'
 
 function createConfig(input, filename) {
   return defineConfig({
@@ -19,11 +20,14 @@ function createConfig(input, filename) {
         tsconfig: 'tsconfig.json',
         useTsconfigDeclarationDir: true,
       }),
-      // terser({
-      //   keep_classnames: true,
-      //   keep_fnames: true,
-      //   ecma: 2015,
-      // })
+      externalGlobals({
+        minimatch: "minimatch"
+      }),
+      terser({
+        keep_classnames: true,
+        keep_fnames: true,
+        ecma: 2015,
+      })
     ],
   })
 }

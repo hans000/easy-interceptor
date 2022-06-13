@@ -145,24 +145,32 @@ chrome.storage.local.get(['__hs_rules__'], (result) => {
 // 获取requestHeaders
 chrome.webRequest.onBeforeSendHeaders.addListener(
     (details) => {
+        if (__action === 'close') {
+            return
+        }
+
         const objectHeaders = details.requestHeaders.reduce((acc, { name, value }) => {
             acc[name] = value
             return acc
         }, {}) as any
 
-        const index = +objectHeaders.Index
-        if (index > -1) {
-            const { requestHeaders: h } = __rules[index]
-            const { Index, ...o } = objectHeaders
-            const mergeObj = { ...o, ...h }
-            const requestHeaders = Object.keys(mergeObj).map(key => ({ name: key, value: mergeObj[key] }))
-            return { requestHeaders }
+        if (__action === 'intercept') {
+            const index = +objectHeaders.Index
+    
+            if (index > -1) {
+                const { requestHeaders: h } = __rules[index]
+                const { Index, ...o } = objectHeaders
+                const mergeObj = { ...o, ...h }
+                const requestHeaders = Object.keys(mergeObj).map(key => ({ name: key, value: mergeObj[key] }))
+                return { requestHeaders }
+            }
         }
 
-        if (__action !== 'watch') return;
-        if (! __result[details.requestId]) return;
-
-        __result[details.requestId].requestHeaders = objectHeaders
+        if (__action === 'watch') {
+            if (! __result[details.requestId]) return;
+    
+            __result[details.requestId].requestHeaders = objectHeaders
+        }
     },
     {
       urls: ["<all_urls>"],

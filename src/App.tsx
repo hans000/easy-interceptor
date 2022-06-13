@@ -3,8 +3,7 @@ import { Badge, Checkbox, BadgeProps, Button, Dropdown, Input, Menu, message, Mo
 import React, { useEffect, useRef, useState } from 'react'
 import { TagOutlined, ControlOutlined, CodeOutlined, DeleteOutlined, PlusOutlined, SearchOutlined, DownOutlined, VerticalAlignBottomOutlined, UploadOutlined, SyncOutlined, RollbackOutlined, BugOutlined, FilterOutlined } from '@ant-design/icons'
 import { ColumnsType } from 'antd/lib/table'
-import minimatch from 'minimatch'
-import { parseUrl, randID, renderSize, stringifyParams } from './utils'
+import { randID, renderSize } from './utils'
 import { getConfigText, getMethodColor } from './tools/mappings'
 import { download } from './tools/download'
 import { buildStorageMsg } from './tools/message'
@@ -16,9 +15,11 @@ import MainEditor from './components/MainEditor'
 import { FileType } from './components/MainEditor/config'
 import { sizeof } from './tools/sizeof'
 import Quote from './components/Quote'
-import { runCode, sendLog } from './tools/runCode'
+import { runCode } from './tools/runCode'
 import { loader } from "@monaco-editor/react";
 import { sendRequest } from './tools/sendRequest'
+import minimatch from 'minimatch'
+import { importMinimatch } from './tools/cdn'
 
 loader.config({
     paths: {
@@ -44,6 +45,10 @@ export interface MatchRule {
 }
 
 const __DEV__ = import.meta.env.DEV
+
+if (! __DEV__) {
+    importMinimatch()
+}
 
 const fields = ['url', 'method', 'status', 'delay', 'params', 'sendReal', 'requestHeaders', 'responseHeaders', 'body', 'response']
 
