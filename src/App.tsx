@@ -8,7 +8,7 @@ import { getConfigText, getMethodColor } from './tools/mappings'
 import { download } from './tools/download'
 import { buildStorageMsg } from './tools/message'
 import jsonschema from 'json-schema'
-import { TransformResultSchema } from './components/MainEditor/validator'
+import { ConfigSchema, TransformResultSchema } from './components/MainEditor/validator'
 import getStorage from './tools/getStorage'
 import useStorage from './hooks/useStorage'
 import MainEditor from './components/MainEditor'
@@ -161,10 +161,11 @@ function App() {
                     title: (
                         <Dropdown visible={visible} onVisibleChange={setVisible} overlay={
                             <Menu items={fields.map(field => {
+                                const disabled = (ConfigSchema.properties[field] as any).required
                                 return {
                                     key: field,
                                     label: (
-                                        <Checkbox key={field} defaultChecked={!hiddenFields.includes(field)} onChange={(e) => {
+                                        <Checkbox disabled={disabled} key={field} defaultChecked={!hiddenFields.includes(field)} onChange={(e) => {
                                             const checked = e.target.checked
                                             setHiddenFields(fields => {
                                                 if (checked) {
