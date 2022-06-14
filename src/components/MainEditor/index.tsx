@@ -1,3 +1,4 @@
+
 import MonacoEditor from '@monaco-editor/react'
 import { Menu, message } from 'antd'
 import React, { useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
@@ -9,6 +10,10 @@ import config, { FileType } from './config'
 import jsonschema from 'json-schema'
 import { MatchRule } from '../../App'
 
+//#region loadConfig
+//#endregion
+
+
 interface IProps {
     rule: MatchRule
     index: number
@@ -16,15 +21,13 @@ interface IProps {
     onChange?: (value: Record<FileType, string>, invalid: boolean) => void
 }
 
-const defaultData = {
-    config: '',
-    code: '',
-}
+const defaultData = { config: '', code: '' }
 
 const __DEV__ = import.meta.env.DEV
 
-// const Editor = MonacoEditor
-const Editor = __DEV__ ? MonacoEditor : (MonacoEditor as any).default as unknown as typeof MonacoEditor
+
+
+const Editor = __DEV__ || process.env.VITE_LOCAL ? MonacoEditor : (MonacoEditor as any).default as unknown as typeof MonacoEditor
 
 const MainEditor = React.forwardRef(function (props: IProps, ref) {
     const [data, setData] = useState<Record<FileType, string>>(defaultData)

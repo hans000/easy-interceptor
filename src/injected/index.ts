@@ -2,9 +2,11 @@ import { MatchRule } from '../App'
 import { parseUrl } from '../utils'
 import { fake, unfake } from './fake'
 import minimatch from 'minimatch'
-import { importMinimatch } from '../tools/cdn'
+import { importMinimatch } from '../tools/packing'
 
-importMinimatch()
+if (! process.env.VITE_LOCAL) {
+    importMinimatch()
+}
 
 function matching(rules: MatchRule[], requestUrl: string, method: string): MatchRule | undefined {
     for(let rule of rules) {

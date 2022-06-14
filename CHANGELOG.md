@@ -1,5 +1,9 @@
 ## v1.6.1
 
+- 添加local版本
+
+## v1.6.1
+
 - 实现require机制，通过cdn引入minimatch
 - 修复筛选bug
 

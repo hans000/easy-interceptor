@@ -1,7 +1,12 @@
 import { defineConfig } from 'vite'
 import reactRefresh from '@vitejs/plugin-react-refresh'
 import styleImport from 'vite-plugin-style-import'
+import replace from '@rollup/plugin-replace';
+import * as path from 'path'
 import cdnImport from 'vite-plugin-cdn-import'
+
+const isLocal = !!process.env.VITE_LOCAL
+const dist = isLocal ? 'local' : 'cdn'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -10,9 +15,13 @@ export default defineConfig({
       less: { javascriptEnabled: true }
     }
   },
+  build: {
+    outDir: path.join('dist', dist),
+    target: 'esnext',
+  },
   plugins: [
     reactRefresh(),
-    cdnImport({
+    !isLocal && cdnImport({
       modules: [
         {
           name: 'minimatch',
@@ -67,16 +76,20 @@ export default defineConfig({
         },
       ]
     }),
-    // styleImport({
-    //   libs: [
-    //     {
-    //       libraryName: 'antd',
-    //       esModule: true,
-    //       resolveStyle: (name) => {
-    //         return `antd/es/${name}/style/index`
-    //       },
-    //     },
-    //   ]
-    // })
-  ]
+    isLocal && styleImport({
+      libs: [
+        {
+          libraryName: 'antd',
+          esModule: true,
+          resolveStyle: (name) => {
+            return `antd/es/${name}/style/index`
+          },
+        },
+      ]
+    }),
+    replace({
+      preventAssignment: true,
+      'process.env.VITE_LOCAL': JSON.stringify(process.env.VITE_LOCAL),
+    }),
+  ].filter(Boolean)
 })

@@ -19,13 +19,7 @@ import { runCode } from './tools/runCode'
 import { loader } from "@monaco-editor/react";
 import { sendRequest } from './tools/sendRequest'
 import minimatch from 'minimatch'
-import { importMinimatch } from './tools/cdn'
-
-loader.config({
-    paths: {
-        vs: 'https://unpkg.com/monaco-editor@0.33.0/min/vs'
-    },
-})
+import { importMinimatch } from './tools/packing'
 
 export interface MatchRule {
     id: string
@@ -46,9 +40,18 @@ export interface MatchRule {
 
 const __DEV__ = import.meta.env.DEV
 
-if (! __DEV__) {
-    importMinimatch()
+if (! process.env.VITE_LOCAL) {
+    if (! __DEV__) {
+        importMinimatch()
+    }
+
+    loader.config({
+        paths: {
+            vs: 'https://unpkg.com/monaco-editor@0.33.0/min/vs'
+        },
+    })
 }
+
 
 const fields = ['url', 'method', 'status', 'delay', 'params', 'sendReal', 'requestHeaders', 'responseHeaders', 'body', 'response']
 
