@@ -37,7 +37,7 @@ export function runCode(data: MatchRule) {
         try {
             msg = eval(raw) || {}
         } catch (error) {
-            sendLog('error, ' + '__map__ function must be declared')
+            sendLog(error.message)
             return
         }
 

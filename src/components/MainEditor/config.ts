@@ -3,7 +3,7 @@ import { MutableRefObject } from 'react';
 import { MatchRule } from '../../App';
 import { runCode } from '../../tools/runCode';
 import { sendRequest } from '../../tools/sendRequest';
-import { ConfigSchema } from './validator';
+import { ConfigSchema, removeRequiredField } from './validator';
 
 interface CustomEditorContext {
     editor: any
@@ -60,7 +60,7 @@ const config: EditorProps[] = [
                     {
                         uri: 'http://json-schema.org/',
                         fileMatch: [editor.getModel().uri.toString()],
-                        schema: ConfigSchema
+                        schema: removeRequiredField(ConfigSchema)
                     }
                 ]
             })

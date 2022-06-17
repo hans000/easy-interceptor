@@ -1,22 +1,30 @@
 const modules = {}
 
 class AsyncQueue {
-    private _tasks: Function[] = []
-    private _running = false
+    private _tasks: (() => Promise<any>)[] = []
     private _index = 0
+    private _count = 0
 
-    public push(fn: Function) {
-        this._tasks.push(fn)
-        if (!this._running && this._index < this._tasks.length) {
+    public push(fn: () => Promise<any>) {
+        if (! this._tasks.length) {
             setTimeout(() => this._run())
         }
+        this._tasks.push(fn)
     }
 
     private _run() {
         let promise = Promise.resolve()
         for (; this._index < this._tasks.length; this._index++) {
             const task = this._tasks[this._index]
-            promise = promise.then(() => task())
+            promise = promise.then(() => task()).then(() => {
+                this._count++
+                if (this._count === this._index && this._count < this._tasks.length) {
+                    this._tasks.splice(0, this._index)
+                    this._index = 0
+                    this._count = 0
+                    this._run()
+                }
+            })
         }
     }
 }
