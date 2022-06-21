@@ -1,6 +1,8 @@
 import jsonschema from 'json-schema'
 import { MatchRule } from '../App'
 import { ExportSchema } from '../components/MainEditor/validator'
+import { createRunFunc } from '../utils'
+import { IframeMsgKey, LogMsgKey } from './constants'
 
 const __DEV__ = import.meta.env.DEV
 
@@ -16,8 +18,8 @@ export function sendLog(msg: any) {
         return
     }
     chrome.runtime.sendMessage(chrome.runtime.id, {
-        type: '__hs_log__',
-        from: '__hs_iframe__',
+        type: LogMsgKey,
+        from: IframeMsgKey,
         key: 'log',
         value: msg,
     })
@@ -26,16 +28,10 @@ export function sendLog(msg: any) {
 export function runCode(data: MatchRule) {
     try {
         const { id, count, enable, code, ...restData  } = data
-        const dataStr = JSON.stringify(restData)
-        const raw = `
-            ;(function (ctx) {
-                ${code}
-                return __map__(ctx);
-            })(${dataStr})
-        `
+        const fn = createRunFunc(code)
         let msg = {}
         try {
-            msg = eval(raw) || {}
+            msg = fn(restData) || {}
         } catch (error) {
             sendLog(error.message)
             return

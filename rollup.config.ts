@@ -32,11 +32,11 @@ function createConfig(input, filename) {
         preventAssignment: true,
         'process.env.VITE_LOCAL': JSON.stringify(process.env.VITE_LOCAL),
       }),
-      terser({
-        keep_classnames: true,
-        keep_fnames: true,
-        ecma: 2015,
-      })
+      // terser({
+      //   keep_classnames: true,
+      //   keep_fnames: true,
+      //   ecma: 2015,
+      // })
     ].filter(Boolean),
   })
 }

@@ -54,18 +54,22 @@ function mounted(config: RequireConfig, fn: Function = config.fn) {
 }
 
 require.register = function (config: RequireConfig) {
-    queue.push(() => {
-        if (config.fn) {
-            return Promise.resolve().then(() => {
-                mounted(config)
-            })
-        }
-        return runScript(config.path, config).then(fn => {
-            mounted(config, fn)
-        }).catch((err) => {
-            if (modules[config.name] !== err) {
-                throw err
+    return new Promise((resolve, reject) => {
+        queue.push(() => {
+            if (config.fn) {
+                return Promise.resolve().then(() => {
+                    mounted(config)
+                })
             }
+            return runScript(config.path, config).then(fn => {
+                mounted(config, fn)
+                resolve(fn)
+            }).catch((err) => {
+                reject(err)
+                if (modules[config.name] !== err) {
+                    throw err
+                }
+            })
         })
     })
 }
@@ -78,15 +82,7 @@ function runScript(path: string, config: RequireConfig) {
 
     return fetch(path)
         .then(res => res.text())
-        .then(code => eval(`
-                ;((ctx) => {
-                    const module = {
-                        exports: null
-                    }
-                    ${code}
-                    return module.exports
-                })(${JSON.stringify(config)})
-            `))
+        .then(code => new Function('require', `const module={exports:null};${code};return module.exports`).call(null, require))
 }
 
 

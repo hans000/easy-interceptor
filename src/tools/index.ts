@@ -7,3 +7,7 @@ export function download(filename: string, data: string) {
     a.click()
     URL.revokeObjectURL(url)
 }
+
+export function sizeof(object: Record<string, any> = {}) {
+    return JSON.stringify(object).length
+}

@@ -1,5 +1,7 @@
+import { ActionFieldKey, RulesFieldKey, StorageMsgKey } from "../tools/constants"
+
 /** 在页面上插入js */
-export function createScript(path) {
+export function createScript(path: string) {
     const script = document.createElement('script')
     script.setAttribute('type', 'text/javascript')
     script.setAttribute('src', chrome.extension.getURL(path))
@@ -11,13 +13,14 @@ export function createScript(path) {
 }
 
 /** 初始化数据 */
-export function initData() {
-    chrome.storage.local.get(['__hs_action__', '__hs_rules__'], (result) => {
-        if (result.hasOwnProperty('__hs_action__')) {
-            postMessage({ type: '__hs_storage__', to: 'pagescript', key: 'action', value: result.__hs_action__ })
+export function syncData() {
+    chrome.storage.local.get([ActionFieldKey, RulesFieldKey], (result) => {
+        const { [ActionFieldKey]: action, [RulesFieldKey]: rules } = result
+        if (result.hasOwnProperty(ActionFieldKey)) {
+            postMessage({ type: StorageMsgKey, to: 'pagescript', key: 'action', value: action })
         }
-        if (result.__hs_rules__) {
-            postMessage({ type: '__hs_storage__', to: 'pagescript', key: 'rules', value: result.__hs_rules__ })
+        if (rules) {
+            postMessage({ type: StorageMsgKey, to: 'pagescript', key: 'rules', value: rules })
         }
     })
 }

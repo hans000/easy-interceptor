@@ -1,14 +1,13 @@
 import { useState } from 'react';
-import wrapKey from '../tools/wrapKey';
 
-const mapKey = wrapKey('map')
+const mapKey = '__hs_map__'
 const mapValue = localStorage.getItem(mapKey)
 const map = mapValue ? JSON.parse(mapValue) : Object.create(null)
 
 export default function useStorage<T>(key: string, value: T): [T, React.Dispatch<React.SetStateAction<T>>] {
     const __DEV__ = import.meta.env.DEV
     const [val, setVal] = useState(value)
-    const name = wrapKey(key)
+    const name = key
 
     const wrapSetVal = (val) => {
         map[name] = true

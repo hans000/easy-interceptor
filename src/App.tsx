@@ -5,7 +5,7 @@ import { TagOutlined, ControlOutlined, CodeOutlined, DeleteOutlined, PlusOutline
 import { ColumnsType } from 'antd/lib/table'
 import { randID, renderSize } from './utils'
 import { getConfigText, getMethodColor } from './tools/mappings'
-import { download } from './tools/download'
+import { download, sizeof } from './tools'
 import { buildStorageMsg } from './tools/message'
 import jsonschema from 'json-schema'
 import { ConfigSchema, TransformResultSchema } from './components/MainEditor/validator'
@@ -13,13 +13,13 @@ import getStorage from './tools/getStorage'
 import useStorage from './hooks/useStorage'
 import MainEditor from './components/MainEditor'
 import { FileType } from './components/MainEditor/config'
-import { sizeof } from './tools/sizeof'
 import Quote from './components/Quote'
 import { runCode } from './tools/runCode'
 import { loader } from "@monaco-editor/react";
 import { sendRequest } from './tools/sendRequest'
 import minimatch from 'minimatch'
 import { importMinimatch } from './tools/packing'
+import { ActionFieldKey, DarkFieldKey, HiddenFieldsFieldKey, IndexFieldKey, RulesFieldKey, SelectedRowFieldKeys, UpdateMsgKey } from './tools/constants'
 
 export interface MatchRule {
     id: string
@@ -43,6 +43,12 @@ const __DEV__ = import.meta.env.DEV
 if (! process.env.VITE_LOCAL) {
     if (! __DEV__) {
         importMinimatch()
+            .then(() => {
+                
+            })
+            .catch(err => {
+                console.error(err)
+            })
     }
 
     loader.config({
@@ -59,15 +65,15 @@ const isDrakTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
 
 function App() {
     const originRef = useRef('')
-    const [dark, setDark] = useStorage('dark', isDrakTheme)
-    const [action, setAction] = useStorage('action', 'close')
-    const [rules, setRules] = useStorage<MatchRule[]>('rules', [])
-    const [selectedRowKeys, setSelectedRowKeys] = useStorage('selectedRowKeys', [])
+    const [dark, setDark] = useStorage(DarkFieldKey, isDrakTheme)
+    const [action, setAction] = useStorage(ActionFieldKey, 'close')
+    const [rules, setRules] = useStorage<MatchRule[]>(RulesFieldKey, [])
+    const [selectedRowKeys, setSelectedRowKeys] = useStorage(SelectedRowFieldKeys, [])
     const [loading, setLoading] = useState(false)
-    const [activeIndex, setActiveIndex] = useStorage('index', -1)
+    const [activeIndex, setActiveIndex] = useStorage(IndexFieldKey, -1)
     const [invalid, setInvalid] = useState(false)
     const [visible, setVisible] = useState(false)
-    const [hiddenFields, setHiddenFields] = useStorage('hiddenFields', [])
+    const [hiddenFields, setHiddenFields] = useStorage(HiddenFieldsFieldKey, [])
     const editorRef = useRef()
 
     useEffect(
@@ -83,7 +89,7 @@ function App() {
         if (! __DEV__) {
             // @ts-ignore
             chrome.storage.local.onChanged.addListener((result) => {
-                if (result.__hs_update__ !== undefined) {
+                if (result[UpdateMsgKey] !== undefined) {
                     reload()
                 }
             })
@@ -125,20 +131,20 @@ function App() {
     const reload = (clean = false) => {
         setLoading(true)
         getStorage([
-            'action', 'rules', 'selectedRowKeys', 'dark',  'index', 'hiddenFields'
+            ActionFieldKey, RulesFieldKey, SelectedRowFieldKeys, DarkFieldKey,  IndexFieldKey, HiddenFieldsFieldKey
         ]).then(result => {
             setLoading(false)
-            setDark(result.dark)
-            setAction(result.action)
-            setHiddenFields(result.hiddenFields)
+            setDark(result[DarkFieldKey])
+            setAction(result[ActionFieldKey])
+            setHiddenFields(result[HiddenFieldsFieldKey])
             if (clean) {
                 setSelectedRowKeys([])
-                setRules(result.rules.map(item => ({ ...item, count: 0 })))
+                setRules(result[RulesFieldKey].map(item => ({ ...item, count: 0 })))
                 setActiveIndex(-1)
             } else {
-                setSelectedRowKeys(result.selectedRowKeys)
-                setRules(result.rules)
-                setActiveIndex(result.index)
+                setSelectedRowKeys(result[SelectedRowFieldKeys])
+                setRules(result[RulesFieldKey])
+                setActiveIndex(result[IndexFieldKey])
             }
         })
     }

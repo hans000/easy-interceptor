@@ -163,3 +163,17 @@ export function hook<T extends object, P extends object>(proxyer: P, proxyee: T,
         }
     }
 }
+
+export function createRunFunc(code: string) {
+    return new Function('c', `${code};return __map__(c)`)
+}
+
+export function debounce(func: Function, delay = 300, thisArg = null) {
+    let timer
+    return (...args) => {
+        clearTimeout(timer)
+        timer = setTimeout(() => {
+            func.call(thisArg, ...args)
+        }, delay)
+    }
+}

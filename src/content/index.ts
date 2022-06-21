@@ -1,8 +1,8 @@
-import { createScript, initData } from './utils'
+import { BackgroundMsgKey, CountMsgKey, LogMsgKey, PagescriptMsgKey, ResponseMsgKey, RulesFieldKey, StorageMsgKey, SyncDataMsgKey, UpdateMsgKey } from '../tools/constants'
+import { createScript, syncData } from './utils'
 
 async function loadScripts() {
     await createScript('injected.js')
-    initData()
 }
 
 loadScripts()
@@ -10,17 +10,17 @@ loadScripts()
 // 接收background.js传来的信息
 chrome.runtime.onMessage.addListener(msg => {
     // 过滤消息
-    if (msg.from !== '__hs_background__') {
+    if (msg.from !== BackgroundMsgKey) {
         return
     }
 
     // 转发给pageScript
-    if (msg.type === '__hs_storage__') {
+    if (msg.type === StorageMsgKey) {
         postMessage({ ...msg })
         return
     }
 
-    if (msg.type === '__hs_log__') {
+    if (msg.type === LogMsgKey) {
         console.log('[EI]', msg.value)
         return
     }
@@ -31,19 +31,19 @@ let timer;
 const queue = new Map()
 
 function handle() {
-    chrome.storage.local.get(['__hs_rules__', '__hs_update__'], (result) => {
-        const rules = result.__hs_rules__
+    chrome.storage.local.get([RulesFieldKey, UpdateMsgKey], (result) => {
+        const rules = result[RulesFieldKey]
         // 取出队列中的数据
         for (const [data, type] of queue) {
             // 监听时 拼接数据
-            if (type === '__hs_response__') {
+            if (type === ResponseMsgKey) {
                 for (let i = rules.length - 1; i >= 0; i--) {
                     const rule = rules[i]
                     if (rule.url === data.url) {
                         rule.response = data.response
                         chrome.storage.local.set({
-                            __hs_rules__: rules,
-                            __hs_update__: !result.__hs_update__,
+                            [RulesFieldKey]: rules,
+                            [UpdateMsgKey]: !result[UpdateMsgKey],
                         })
                         // 移除队列中的此条数据
                         queue.delete(data)
@@ -52,13 +52,13 @@ function handle() {
                 }
             }
             // 拦截时计数
-            if (type === '__hs_count__') {
+            if (type === CountMsgKey) {
                 const rule = rules.find(rule => rule.id === data.id)
                 if (rule) {
                     rule.count = rule.count + 1
                     chrome.storage.local.set({
-                        __hs_rules__: rules,
-                        __hs_update__: !result.__hs_update__,
+                        [RulesFieldKey]: rules,
+                        [UpdateMsgKey]: !result[UpdateMsgKey],
                     })
                     // 移除队列中的此条数据
                     queue.delete(data)
@@ -75,6 +75,12 @@ function handle() {
 // 接收pagescript传来的信息
 window.addEventListener("pagescript", (event: any) => {
     const { data, type } = event.detail
+
+    if (type === SyncDataMsgKey) {
+        syncData()
+        return
+    }
+
     queue.set(data, type)
     clearInterval(timer)
     timer = setInterval(() => handle(), 300)

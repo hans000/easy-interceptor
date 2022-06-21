@@ -1,56 +1,13 @@
 import { MatchRule } from "../App"
-
-function setBadgeText(rules, action) {
-    if (action === 'intercept') {
-        const count = rules.filter(item => item.enable).length
-        const text = count > 99 ? '99+' : count === 0 ? '' : count + ''
-        chrome.browserAction.setBadgeText({ text })
-        chrome.browserAction.setBadgeBackgroundColor({ color: [136, 20, 127, 255] })
-    } else if (action === 'watch') {
-        const count = rules.length
-        const text = count > 99 ? '99+' : count === 0 ? '' : count + ''
-        chrome.browserAction.setBadgeText({ text })
-        chrome.browserAction.setBadgeBackgroundColor({ color: [241, 89, 43, 255] })
-    } else {
-        const count = rules.length
-        const text = count > 99 ? '99+' : count === 0 ? '' : count + ''
-        chrome.browserAction.setBadgeText({ text })
-        chrome.browserAction.setBadgeBackgroundColor({ color: [200, 200, 200, 255] })
-    }
-}
-
-function setIcon(value) {
-    const suffix = value === 'watch'
-        ? '-red'
-        : value === 'close'
-            ? '-gray'
-            : ''
-    chrome.browserAction.setIcon({
-        path: {
-            16: `/images/16${suffix}.png`,
-            32: `/images/32${suffix}.png`,
-            48: `/images/48${suffix}.png`,
-        }
-    })
-}
-
-function update(props = ['__hs_action__', '__hs_rules__']) {
-    chrome.storage.local.get(props, (result) => {
-        if (result.hasOwnProperty('__hs_action__')) {
-            setIcon(result.__hs_action__)
-        }
-        if (result.hasOwnProperty('__hs_rules__')) {
-            setBadgeText(result.__hs_rules__, result.__hs_action__)
-        }
-    })
-}
-
-update()
+import { ActionFieldKey, BackgroundMsgKey, IframeMsgKey, RulesFieldKey, StorageMsgKey } from "../tools/constants"
+import { updateIcon } from "./utils"
 
 let __result = {}
-let __action = ''
+let __action: ActionType
 let __origin = ''
 let __rules: MatchRule[] = []
+
+updateIcon()
 
 // 更新origin
 chrome.tabs.onActivated.addListener((info) => {
@@ -62,8 +19,8 @@ chrome.tabs.onActivated.addListener((info) => {
         } catch (error) {}
     })
 
-    chrome.storage.local.get(['__hs_action__'], (result) => {
-        __action = result.__hs_action__
+    chrome.storage.local.get([ActionFieldKey], (result) => {
+        __action = result[ActionFieldKey]
     })
 })
 chrome.tabs.onUpdated.addListener((_, __, info) => {
@@ -75,21 +32,21 @@ chrome.tabs.onUpdated.addListener((_, __, info) => {
         } catch (error) {}
     })
 
-    chrome.storage.local.get(['__hs_action__'], (result) => {
-        __action = result.__hs_action__
+    chrome.storage.local.get([ActionFieldKey], (result) => {
+        __action = result[ActionFieldKey]
     })
 })
 
 /** 接收iframe传来的信息，并转发给content.js */
 chrome.runtime.onMessage.addListener(msg => {
     // 过滤非本插件的消息
-    if (msg.from !== '__hs_iframe__') return;
+    if (msg.from !== IframeMsgKey) return;
 
-    update()
+    updateIcon()
     
-    if (msg.from === '__hs_iframe__') {
+    if (msg.from === IframeMsgKey) {
         // 重置result
-        if (msg.type === '__hs_storage__') {
+        if (msg.type === StorageMsgKey) {
             __result = {}
         }
         // 更新action
@@ -97,10 +54,7 @@ chrome.runtime.onMessage.addListener(msg => {
             __action = msg.value
         }
         chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-            // if (msg.key === 'rules') {
-            //     __rules = msg.value
-            // }
-            chrome.tabs.sendMessage(tabs[0].id, { ...msg, from: '__hs_background__' })
+            chrome.tabs.sendMessage(tabs[0].id, { ...msg, from: BackgroundMsgKey })
         })
     }
 })
@@ -133,13 +87,13 @@ chrome.webRequest.onBeforeRequest.addListener(
 )
 
 chrome.storage.onChanged.addListener(result => {
-    if (result.__hs_rules__ !== undefined) {
-        __rules = result.__hs_rules__.newValue
+    if (result[RulesFieldKey] !== undefined) {
+        __rules = result[RulesFieldKey].newValue
     }
 })
 
-chrome.storage.local.get(['__hs_rules__'], (result) => {
-    __rules = result.__hs_rules__
+chrome.storage.local.get([RulesFieldKey], (result) => {
+    __rules = result[RulesFieldKey]
 })
 
 // 获取requestHeaders
@@ -209,10 +163,10 @@ chrome.webRequest.onResponseStarted.addListener(
 
         const urlObj = new URL(details.url)
         
-        chrome.storage.local.get(['__hs_rules__', '__hs_action__'], (result) => {
+        chrome.storage.local.get([RulesFieldKey, ActionFieldKey], (result) => {
             chrome.storage.local.set({
-                __hs_rules__: [
-                    ...result.__hs_rules__,
+                [RulesFieldKey]: [
+                    ...result[RulesFieldKey],
                     {
                         id: Math.random().toString(36).slice(2),
                         count: 0,
@@ -226,7 +180,7 @@ chrome.webRequest.onResponseStarted.addListener(
                     }
                 ],
             })
-            update()
+            updateIcon()
             delete __result[details.requestId]
         })
     },

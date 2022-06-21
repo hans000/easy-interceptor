@@ -9,6 +9,7 @@ import { equal } from '../../utils'
 import config, { FileType } from './config'
 import jsonschema from 'json-schema'
 import { MatchRule } from '../../App'
+import { PathFieldKey } from '../../tools/constants'
 
 //#region loadConfig
 //#endregion
@@ -31,7 +32,7 @@ const Editor = __DEV__ || process.env.VITE_LOCAL ? MonacoEditor : (MonacoEditor 
 
 const MainEditor = React.forwardRef(function (props: IProps, ref) {
     const [data, setData] = useState<Record<FileType, string>>(defaultData)
-    const [filename, setFilename] = useStorage<FileType>('path', 'config')
+    const [filename, setFilename] = useStorage<FileType>(PathFieldKey, 'config')
     const dataRef = useRef<Record<FileType, string>>()
     const msgRef = useRef('')
 
@@ -41,7 +42,7 @@ const MainEditor = React.forwardRef(function (props: IProps, ref) {
                 setData(props.value)
                 dataRef.current = props.value
             }
-            getStorage(['path']).then(result => setFilename(result.path))
+            getStorage([PathFieldKey]).then(result => setFilename(result[PathFieldKey]))
         },
         []
     )

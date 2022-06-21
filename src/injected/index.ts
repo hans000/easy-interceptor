@@ -1,11 +1,18 @@
 import { MatchRule } from '../App'
-import { parseUrl } from '../utils'
+import { createRunFunc, debounce, parseUrl } from '../utils'
 import { fake, unfake } from './fake'
 import minimatch from 'minimatch'
 import { importMinimatch } from '../tools/packing'
+import { CountMsgKey, PagescriptMsgKey, ResponseMsgKey, StorageMsgKey, SyncDataMsgKey } from '../tools/constants'
 
 if (! process.env.VITE_LOCAL) {
-    importMinimatch()
+    importMinimatch().then(() => {
+        bindEvent()
+    }).catch((err) => {
+        console.error(err)
+    })
+} else {
+    bindEvent()
 }
 
 function matching(rules: MatchRule[], requestUrl: string, method: string): MatchRule | undefined {
@@ -16,11 +23,9 @@ function matching(rules: MatchRule[], requestUrl: string, method: string): Match
     }
 }
 
-type Action = 'close' | 'watch' | 'intercept'
-
 const app = {
     rules: [] as MatchRule[],
-    action: 'close' as Action,
+    action: 'close' as ActionType,
     intercept() {
         fake({
             onMatch({ method, requestUrl }) {
@@ -82,23 +87,36 @@ const app = {
     },
 }
 
-window.addEventListener("message", (event) => {
-    const data = event.data
-    if (data.type === '__hs_storage__') {
-        if (data.key === 'rules') {
-            app.rules = data.value.map(item => ({ ...item, response: JSON.stringify(item.response) }))
-        } else if (data.key === 'action') {
-            app.action = data.value
+const run = debounce(() => app.run())
+
+function bindEvent() {
+    // get data
+    window.dispatchEvent(new CustomEvent('pagescript', {
+        detail: {
+            type: SyncDataMsgKey,
+            from: PagescriptMsgKey,
         }
-    }
-    app.run()
-})
+    }))
+    // register event
+    window.addEventListener("message", (event) => {
+        const data = event.data
+        if (data.type === StorageMsgKey) {
+            if (data.key === 'rules') {
+                app.rules = data.value.map(item => ({ ...item, response: JSON.stringify(item.response) }))
+            } else if (data.key === 'action') {
+                app.action = data.value
+            }
+        }
+        run()
+    })
+}
+
 
 const triggerCountEvent = (id: string) => {
     window.dispatchEvent(new CustomEvent('pagescript', {
         detail: {
-            type: '__hs_count__',
-            from: '__hs_pagescript__',
+            type: CountMsgKey,
+            from: PagescriptMsgKey,
             data: { id },
         }
     }))
@@ -107,8 +125,8 @@ const triggerCountEvent = (id: string) => {
 const triggerResponseEvent = (response: string, url: string) => {
     window.dispatchEvent(new CustomEvent('pagescript', {
         detail: {
-            type: '__hs_response__',
-            from: '__hs_pagescript__',
+            type: ResponseMsgKey,
+            from: PagescriptMsgKey,
             data: { response, url },
         }
     }))
@@ -118,19 +136,14 @@ const handleCode = (matchRule: MatchRule, responseText: string) => {
     const { id, count, enable, code, response, ...restRule } = matchRule
     if (code) {
         try {
-            const dataStr = JSON.stringify({
+            const data = {
                 ...restRule,
                 response: JSON.parse(response === 'null' ? responseText : response),
-            })
-            const raw = `
-                ;(function (ctx) {
-                    ${code}
-                    return __map__(ctx)
-                })(${dataStr})
-            `
+            }
+            const fn = createRunFunc(code)
             return {
                 ...matchRule,
-                ...eval(raw) || {},
+                ...fn(data) || {},
             }
         } catch (error) {
             console.error(error)
