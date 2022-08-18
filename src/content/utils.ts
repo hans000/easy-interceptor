@@ -4,7 +4,7 @@ import { ActionFieldKey, RulesFieldKey, StorageMsgKey } from "../tools/constants
 export function createScript(path: string) {
     const script = document.createElement('script')
     script.setAttribute('type', 'text/javascript')
-    script.setAttribute('src', chrome.extension.getURL(path))
+    script.setAttribute('src', chrome.runtime.getURL(path))
     document.documentElement.appendChild(script)
     return new Promise(resolve => script.addEventListener('load', () => {
         script.remove()

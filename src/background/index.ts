@@ -17,7 +17,14 @@ chrome.tabs.onActivated.addListener((info) => {
             const [, a, b] = tabs[0].url.match(/^(https?:\/\/)?(.+?)(\/|$)/)
             __origin = a + b
         } catch (error) {}
+
+        chrome.scripting.executeScript({
+            target: { tabId: tabs[0].id },
+            files: ['content.js']
+        });
+
     })
+
 
     chrome.storage.local.get([ActionFieldKey], (result) => {
         __action = result[ActionFieldKey]
@@ -130,7 +137,8 @@ chrome.webRequest.onBeforeSendHeaders.addListener(
       urls: ["<all_urls>"],
       types: ["xmlhttprequest"]
     },
-    ['blocking', 'extraHeaders', "requestHeaders"]
+    ['extraHeaders', "requestHeaders"]
+    // ['blocking', 'extraHeaders', "requestHeaders"]
 )
 
 // 获取responseHeaders

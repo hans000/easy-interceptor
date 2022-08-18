@@ -15,8 +15,8 @@ function setBadgeText(rules: MatchRule[], action: ActionType) {
         color = [200, 200, 200, 255]
     }
     const text = count > 99 ? '99+' : count === 0 ? '' : count + ''
-    chrome.browserAction.setBadgeText({ text })
-    chrome.browserAction.setBadgeBackgroundColor({ color })
+    chrome.action.setBadgeText({ text })
+    chrome.action.setBadgeBackgroundColor({ color })
 }
 
 function setIcon(action: ActionType) {
@@ -25,7 +25,7 @@ function setIcon(action: ActionType) {
         : action === 'close'
             ? '-gray'
             : ''
-    chrome.browserAction.setIcon({
+    chrome.action.setIcon({
         path: {
             16: `/images/16${suffix}.png`,
             32: `/images/32${suffix}.png`,
