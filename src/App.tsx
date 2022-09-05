@@ -19,7 +19,7 @@ import { loader } from "@monaco-editor/react";
 import { sendRequest } from './tools/sendRequest'
 import minimatch from 'minimatch'
 import { importMinimatch } from './tools/packing'
-import { ActionFieldKey, DarkFieldKey, HiddenFieldsFieldKey, IndexFieldKey, RulesFieldKey, SelectedRowFieldKeys, UpdateMsgKey } from './tools/constants'
+import { ActionFieldKey, DarkFieldKey, FakedFieldKey, HiddenFieldsFieldKey, IndexFieldKey, RulesFieldKey, SelectedRowFieldKeys, UpdateMsgKey } from './tools/constants'
 
 export interface MatchRule {
     id: string
@@ -67,6 +67,7 @@ function App() {
     const originRef = useRef('')
     const [dark, setDark] = useStorage(DarkFieldKey, isDrakTheme)
     const [action, setAction] = useStorage(ActionFieldKey, 'close')
+    const [faked, setFaked] = useStorage(FakedFieldKey, false)
     const [rules, setRules] = useStorage<MatchRule[]>(RulesFieldKey, [])
     const [selectedRowKeys, setSelectedRowKeys] = useStorage(SelectedRowFieldKeys, [])
     const [loading, setLoading] = useState(false)
@@ -109,6 +110,15 @@ function App() {
     useEffect(
         () => {
             if (! __DEV__) {
+                chrome.runtime.sendMessage(chrome.runtime.id, buildStorageMsg('faked', faked))
+            }
+        },
+        [faked]
+    )
+
+    useEffect(
+        () => {
+            if (! __DEV__) {
                 chrome.runtime.sendMessage(chrome.runtime.id, buildStorageMsg('action', action))
             }
         },
@@ -131,10 +141,11 @@ function App() {
     const reload = (clean = false) => {
         setLoading(true)
         getStorage([
-            ActionFieldKey, RulesFieldKey, SelectedRowFieldKeys, DarkFieldKey,  IndexFieldKey, HiddenFieldsFieldKey
+            ActionFieldKey, RulesFieldKey, SelectedRowFieldKeys, DarkFieldKey,  IndexFieldKey, HiddenFieldsFieldKey, FakedFieldKey
         ]).then(result => {
             setLoading(false)
             setDark(result[DarkFieldKey])
+            setFaked(result[FakedFieldKey])
             setAction(result[ActionFieldKey])
             setHiddenFields(result[HiddenFieldsFieldKey])
             if (clean) {
@@ -471,6 +482,11 @@ function App() {
                         <Tooltip title='切换主题'>
                             <Button icon={<span>{ dark ? '🌜' : '🌞'}</span>} onClick={() => {
                                 setDark(dark => !dark)
+                            }}></Button>
+                        </Tooltip>
+                        <Tooltip title='fake模式'>
+                            <Button type={ faked ? 'primary' : 'default' } icon={<BugOutlined />} onClick={() => {
+                                setFaked(faked => !faked)
                             }}></Button>
                         </Tooltip>
                         {

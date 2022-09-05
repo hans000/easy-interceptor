@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Easy Interceptor",
-  "version": "1.6.3",
+  "version": "1.7.0",
   "description": "Easy Interceptor is a chrome extension that enables a developer to modify responseText that XMLHttpRequest sent",
   "permissions": [
     "storage",
@@ -32,7 +32,7 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "run_at": "document_end",
+      "run_at": "document_start",
       "all_frames": true,
       "js": [
         "content.js"

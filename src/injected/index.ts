@@ -17,24 +17,36 @@ if (! process.env.VITE_LOCAL) {
 
 function matching(rules: MatchRule[], requestUrl: string, method: string): MatchRule | undefined {
     for(let rule of rules) {
-        if (rule.enable && minimatch(requestUrl, rule.url) && (rule.method ? rule.method === method : true)) {
+        if (rule.enable && minimatch(requestUrl, rule.url) && (rule.method ? rule.method.toLowerCase() === method.toLowerCase() : true)) {
             return rule
         }
     }
 }
 
+interface GlobalVar {
+    NativeXhr: typeof XMLHttpRequest | undefined
+    NativeFetch: typeof fetch | undefined
+}
+
+export const __global__: GlobalVar = {
+    NativeXhr: undefined,
+    NativeFetch: undefined,
+}
+
 const app = {
     rules: [] as MatchRule[],
     action: 'close' as ActionType,
+    faked: false,
     intercept() {
+        const { action, rules, faked } = app
         fake({
+            faked,
             onMatch({ method, requestUrl }) {
-                const { action, rules } = app
                 if (action === 'intercept') {
                     const matchRule = matching(rules, requestUrl, method)
                     if (matchRule) {
                         const result: MatchRule = handleCode(matchRule, matchRule.response)
-                        if (! result.sendReal) {
+                        if (!result.sendReal && !faked) {
                             setTimeout(() => {
                                 triggerCountEvent(matchRule.id)
                             }, result.delay || 0)
@@ -105,6 +117,8 @@ function bindEvent() {
                 app.rules = data.value.map(item => ({ ...item, response: JSON.stringify(item.response) }))
             } else if (data.key === 'action') {
                 app.action = data.value
+            } else if (data.key === 'faked') {
+                app.faked = data.value
             }
         }
         run()

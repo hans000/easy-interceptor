@@ -1,6 +1,7 @@
 
 export const RulesFieldKey = '__hs_rules__'
 export const ActionFieldKey = '__hs_action__'
+export const FakedFieldKey = '__hs_faked__'
 export const SelectedRowFieldKeys = '__hs_selectedRowKeys__'
 export const DarkFieldKey = '__hs_dark__'
 export const IndexFieldKey = '__hs_index__'

@@ -1,6 +1,7 @@
 {
   "name": "easy-interceptor",
   "version": "0.0.0",
+  "private": true,
   "scripts": {
     "dev": "vite",
     "build:ts": "tsc && rollup -c rollup.config.ts",
