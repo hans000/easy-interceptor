@@ -49,9 +49,6 @@ export const ConfigSchema: JSONSchema7 = {
             type: "string",
             enum: ["get", "post", "put", "delete", "patch"]
         },
-        redirectUrl: {
-            type: "string",
-        },
         params: {
             type: "array",
             items: {
