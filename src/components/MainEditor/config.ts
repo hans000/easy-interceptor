@@ -78,7 +78,7 @@ const config: EditorProps[] = [
 //     sendReal?: boolean
 //     requestInit: {
 //         url: string
-//         method?: 'get' | 'post' | 'delete' | 'put'
+//         method?: 'get' | 'post' | 'delete' | 'put' | 'patch'
 //         body?: any
 //         params?: Record<string, string>
 //         headers?: Record<string, string>

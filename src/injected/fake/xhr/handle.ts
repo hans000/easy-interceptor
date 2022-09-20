@@ -66,7 +66,7 @@ export function setResponseHeaders(headers) {
         this._responseHeaders['content-type'] = this._forceMimeType
     }
     if (this._async) {
-        this._handleStateChange(XMLHttpRequest.HEADERS_RECEIVED)
+        handleStateChange.call(this, XMLHttpRequest.HEADERS_RECEIVED)
     } else {
         this._readyState = XMLHttpRequest.HEADERS_RECEIVED
     }
@@ -84,7 +84,7 @@ export function setResponseBody(body = '') {
     }
 
     if (this._async) {
-        this._handleStateChange(XMLHttpRequest.DONE)
+        handleStateChange.call(this, XMLHttpRequest.DONE)
     } else {
         this._readyState = XMLHttpRequest.DONE
     }

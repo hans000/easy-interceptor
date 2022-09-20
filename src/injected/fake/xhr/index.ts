@@ -80,6 +80,22 @@ class FakeXMLHttpRequest extends XMLHttpRequest {
         }, matchItem.delay || 0)
     }
 
+    public setRequestHeader(name: string, value: string) {
+        name = name.toLowerCase()
+        if (! this._matchItem) {
+            this._xhr.setRequestHeader(name, value)
+            return
+        }
+
+        if (this._matchItem.sendReal) {
+            this._xhr.setRequestHeader(name, value)
+            this._requestHeaders[name] = value
+            return 
+        }
+
+        this._requestHeaders[name] = value
+    }
+
     public getResponseHeader(name: string) {
         name = name.toLowerCase()
         if (! this._matchItem) {

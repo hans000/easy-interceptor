@@ -28,7 +28,7 @@ export interface MatchRule {
     sendReal?: boolean
     enable?: boolean
     url: string
-    method?: 'get' | 'post' | 'delete' | 'put'
+    method?: 'get' | 'post' | 'delete' | 'put' | 'patch'
     body?: any
     params?: [string, string][]
     requestHeaders?: Record<string, string>

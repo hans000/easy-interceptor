@@ -25,7 +25,7 @@ export const ConfigSchema: JSONSchema7 = {
         },
         response: {
             required: ["response"],
-            type: ["object", "null"]
+            type: ["object", "null", "array"]
         },
         responseHeaders: {
             type: "object",
@@ -47,7 +47,10 @@ export const ConfigSchema: JSONSchema7 = {
         },
         method: {
             type: "string",
-            enum: ["get", "post", "put", "delete"]
+            enum: ["get", "post", "put", "delete", "patch"]
+        },
+        redirectUrl: {
+            type: "string",
         },
         params: {
             type: "array",
