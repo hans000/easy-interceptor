@@ -1,3 +1,12 @@
+## v1.7.2
+
+- 替换minimatch
+
+## v1.7.1
+
+- 重写fakeXhr setResponseHeaders
+- 添加patch类型
+
 ## v1.7.0
 
 - 添加faked选项，用于适应不同的使用场景
