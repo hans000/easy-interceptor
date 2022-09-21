@@ -7,7 +7,7 @@ bindEvent()
 
 function matching(rules: MatchRule[], requestUrl: string, method: string): MatchRule | undefined {
     for(let rule of rules) {
-        if (rule.enable && pathMatch(requestUrl, rule.url) && (rule.method ? rule.method.toLowerCase() === method.toLowerCase() : true)) {
+        if (rule.enable && pathMatch(rule.url, requestUrl) && (rule.method ? rule.method.toLowerCase() === method.toLowerCase() : true)) {
             return rule
         }
     }

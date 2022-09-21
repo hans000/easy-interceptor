@@ -219,7 +219,7 @@ function App() {
                         const [k, e] = value.split('\n')
                         const url = record.url
                         const include = record.url.includes(k)
-                        const exclude = e ? e.split(',').some(el => pathMatch(url, el)) : false
+                        const exclude = e ? e.split(',').some(el => pathMatch(el, url)) : false
                         return url ? (include && !exclude) : true
                     },
                     render: (value, record, index) => {

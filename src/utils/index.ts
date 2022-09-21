@@ -179,12 +179,30 @@ export function debounce(func: Function, delay = 300, thisArg = null) {
 }
 
 export function pathMatch(pattern: string, path: string) {
-    const normalStr = pattern.replace(/[\^$(){}\[\]+]/g, '')
-    const matchRegs = normalStr.split("/").map(seg => (
-        seg.replace(/\?/g, "[\\S]")
-            .replace(/\*\*/g, '?[\\S]{0,}')
-            .replace(/\*/g, '[^/]{0,}')
-    ))
-    const regStr = matchRegs.join("/").replace(/(\.)/g, '\\$1')
+    let regStr = ''
+    for (let i = 0; i < pattern.length; i++) {
+        const ch = pattern[i]
+        if ('^$+()[]{}'.includes(ch)) {
+            continue
+        }
+        if (ch === '?') {
+            regStr += '[\\S]'
+            continue
+        }
+        if (ch === '*') {
+            if (pattern[i + 1] === ch) {
+                regStr += `${regStr.at(-1) === '/' ? '?' : '' }[\\S]{0,}`
+                i++
+            } else {
+                regStr += '[^/]{0,}'
+            }
+            continue
+        }
+        if (ch === '.') {
+            regStr += '\\' + ch
+            continue
+        }
+        regStr += ch
+    }
     return new RegExp(`^${regStr}$`).test(path)
 }
