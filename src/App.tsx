@@ -3,7 +3,7 @@ import { Badge, Checkbox, BadgeProps, Button, Dropdown, Input, Menu, message, Mo
 import React, { useEffect, useRef, useState } from 'react'
 import { TagOutlined, ControlOutlined, CodeOutlined, DeleteOutlined, PlusOutlined, SearchOutlined, DownOutlined, VerticalAlignBottomOutlined, UploadOutlined, SyncOutlined, RollbackOutlined, BugOutlined, FilterOutlined } from '@ant-design/icons'
 import { ColumnsType } from 'antd/lib/table'
-import { randID, renderSize } from './utils'
+import { pathMatch, randID, renderSize } from './utils'
 import { getConfigText, getMethodColor } from './tools/mappings'
 import { download, sizeof } from './tools'
 import { buildStorageMsg } from './tools/message'
@@ -17,8 +17,6 @@ import Quote from './components/Quote'
 import { runCode } from './tools/runCode'
 import { loader } from "@monaco-editor/react";
 import { sendRequest } from './tools/sendRequest'
-import minimatch from 'minimatch'
-import { importMinimatch } from './tools/packing'
 import { ActionFieldKey, DarkFieldKey, FakedFieldKey, HiddenFieldsFieldKey, IndexFieldKey, RulesFieldKey, SelectedRowFieldKeys, UpdateMsgKey } from './tools/constants'
 
 export interface MatchRule {
@@ -41,16 +39,6 @@ export interface MatchRule {
 const __DEV__ = import.meta.env.DEV
 
 if (! process.env.VITE_LOCAL) {
-    if (! __DEV__) {
-        importMinimatch()
-            .then(() => {
-                
-            })
-            .catch(err => {
-                console.error(err)
-            })
-    }
-
     loader.config({
         paths: {
             vs: 'https://unpkg.com/monaco-editor@0.33.0/min/vs'
@@ -231,7 +219,7 @@ function App() {
                         const [k, e] = value.split('\n')
                         const url = record.url
                         const include = record.url.includes(k)
-                        const exclude = e ? e.split(',').some(el => minimatch(url, el)) : false
+                        const exclude = e ? e.split(',').some(el => pathMatch(url, el)) : false
                         return url ? (include && !exclude) : true
                     },
                     render: (value, record, index) => {

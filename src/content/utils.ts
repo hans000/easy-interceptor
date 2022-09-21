@@ -15,7 +15,7 @@ export function createScript(path: string) {
 
 /** 初始化数据 */
 export function syncData() {
-    chrome.storage.local.get([ActionFieldKey, RulesFieldKey], (result) => {
+    chrome.storage.local.get([ActionFieldKey, RulesFieldKey, FakedFieldKey], (result) => {
         const { [ActionFieldKey]: action, [RulesFieldKey]: rules, [FakedFieldKey]: faked } = result
         if (result.hasOwnProperty(ActionFieldKey)) {
             postMessage({ type: StorageMsgKey, to: 'pagescript', key: 'action', value: action })

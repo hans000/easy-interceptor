@@ -24,11 +24,6 @@ export default defineConfig({
     !isLocal && cdnImport({
       modules: [
         {
-          name: 'minimatch',
-          var: 'minimatch',
-          path: [],
-        },
-        {
           name: 'react-is',
           var: 'ReactIs',
           path: [

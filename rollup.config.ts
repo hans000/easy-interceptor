@@ -25,9 +25,6 @@ function createConfig(input, filename) {
         tsconfig: 'tsconfig.json',
         useTsconfigDeclarationDir: true,
       }),
-      !isLocal && externalGlobals({
-        minimatch: "minimatch"
-      }),
       replace({
         preventAssignment: true,
         'process.env.VITE_LOCAL': JSON.stringify(process.env.VITE_LOCAL),

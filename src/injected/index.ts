@@ -1,23 +1,13 @@
 import { MatchRule } from '../App'
-import { createRunFunc, debounce, parseUrl } from '../utils'
+import { createRunFunc, debounce, parseUrl, pathMatch } from '../utils'
 import { fake, unfake } from './fake'
-import minimatch from 'minimatch'
-import { importMinimatch } from '../tools/packing'
 import { CountMsgKey, PagescriptMsgKey, ResponseMsgKey, StorageMsgKey, SyncDataMsgKey } from '../tools/constants'
 
-if (! process.env.VITE_LOCAL) {
-    importMinimatch().then(() => {
-        bindEvent()
-    }).catch((err) => {
-        console.error(err)
-    })
-} else {
-    bindEvent()
-}
+bindEvent()
 
 function matching(rules: MatchRule[], requestUrl: string, method: string): MatchRule | undefined {
     for(let rule of rules) {
-        if (rule.enable && minimatch(requestUrl, rule.url) && (rule.method ? rule.method.toLowerCase() === method.toLowerCase() : true)) {
+        if (rule.enable && pathMatch(requestUrl, rule.url) && (rule.method ? rule.method.toLowerCase() === method.toLowerCase() : true)) {
             return rule
         }
     }
