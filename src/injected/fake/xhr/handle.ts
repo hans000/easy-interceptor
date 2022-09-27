@@ -1,5 +1,5 @@
-import { __Options__ } from ".."
 import { parseUrl, parseXML } from "../../../utils"
+import { __global__ } from "../../globalVar"
 
 export function modifyProto() {
     const { open, send, setRequestHeader } = XMLHttpRequest.prototype
@@ -29,7 +29,7 @@ export function modifyProto() {
 export function handleReadyStateChange() {
     if (this.readyState === 4) {
         if (this.responseType === '' || this.responseType === 'text') {
-            const { onMatch, onIntercept } = __Options__
+            const { onMatch, onIntercept } = __global__.options
             const urlObj = this._url instanceof URL ? this._url : parseUrl(this._url)
 
             const matchItem = onMatch({
@@ -92,13 +92,19 @@ export function setResponseBody(body = '') {
 
 export function handleStateChange(state) {
     this.readyState = state
-    this.dispatchEvent(new Event('readystatechange'))
+    dispatchEvent.call(this, 'readystatechange')
 
     if (this.readyState == XMLHttpRequest.DONE) {
-        this.dispatchEvent(new Event('load'))
+        dispatchEvent.call(this, 'load')
     }
 
     if (this.readyState == XMLHttpRequest.UNSENT || this.readyState == XMLHttpRequest.DONE) {
-        this.dispatchEvent(new Event('loadend'))
+        dispatchEvent.call(this, 'loadend')
     }
+}
+
+export function dispatchEvent(type: string) {
+    const handle = this['on' + type]
+    handle && handle()
+    return new Event(type)
 }

@@ -1,7 +1,7 @@
-import { __NativeXhr__, __Options__ } from ".."
+import { __global__ } from "../../globalVar"
 import { hook, parseUrl, stringifyHeaders } from "../../../utils"
 import { HttpStatusCodes } from "./constants"
-import { handleReadyStateChange, handleStateChange, setResponseBody, setResponseHeaders } from "./handle"
+import { dispatchEvent, handleReadyStateChange, handleStateChange, setResponseBody, setResponseHeaders } from "./handle"
 
 interface MatchItem {
     status?: number
@@ -23,8 +23,8 @@ class FakeXMLHttpRequest extends XMLHttpRequest {
         super()
 
         // whether run a fake xhr
-        if (! __Options__.faked) {
-            const xhr = new __NativeXhr__()
+        if (! __global__.options.faked) {
+            const xhr = new __global__.NativeXhr()
             xhr.addEventListener(
                 "readystatechange",
                 handleReadyStateChange.bind(xhr),
@@ -33,7 +33,7 @@ class FakeXMLHttpRequest extends XMLHttpRequest {
             return xhr as any
         }
 
-        this._xhr = new __NativeXhr__()
+        this._xhr = new __global__.NativeXhr()
     }
 
     public overrideMimeType(mimeType: string) {
@@ -42,7 +42,7 @@ class FakeXMLHttpRequest extends XMLHttpRequest {
     }
 
     public open(method, url, async = true) {
-        const { onMatch, onIntercept } = __Options__
+        const { onMatch, onIntercept } = __global__.options
         const urlObj = url instanceof URL ? url : parseUrl(url)
         this._matchItem = onMatch({
             method,
@@ -63,7 +63,7 @@ class FakeXMLHttpRequest extends XMLHttpRequest {
             return
         }
 
-        this.dispatchEvent(new Event("loadstart"))
+        dispatchEvent.call(this, 'loadstart')
         handleStateChange.call(this, XMLHttpRequest.HEADERS_RECEIVED)
         handleStateChange.call(this, XMLHttpRequest.LOADING)
         setTimeout(() => {
@@ -143,8 +143,8 @@ class FakeXMLHttpRequest extends XMLHttpRequest {
 
         // @ts-ignore this field has been proxy
         this.readyState = XMLHttpRequest.UNSENT
-        this.dispatchEvent(new Event('abort'))
-        this.dispatchEvent(new Event('error'))
+        dispatchEvent.call(this, 'abort')
+        dispatchEvent.call(this, 'error')
     }
 
 }

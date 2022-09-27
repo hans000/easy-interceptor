@@ -7,20 +7,12 @@ bindEvent()
 
 function matching(rules: MatchRule[], requestUrl: string, method: string): MatchRule | undefined {
     for(let rule of rules) {
-        if (rule.enable && pathMatch(rule.url, requestUrl) && (rule.method ? rule.method.toLowerCase() === method.toLowerCase() : true)) {
+        if (rule.enable &&
+            pathMatch(rule.url, requestUrl) &&
+            (rule.method ? rule.method.toLowerCase() === method.toLowerCase() : true)) {
             return rule
         }
     }
-}
-
-interface GlobalVar {
-    NativeXhr: typeof XMLHttpRequest | undefined
-    NativeFetch: typeof fetch | undefined
-}
-
-export const __global__: GlobalVar = {
-    NativeXhr: undefined,
-    NativeFetch: undefined,
 }
 
 const app = {
@@ -114,7 +106,6 @@ function bindEvent() {
         run()
     })
 }
-
 
 const triggerCountEvent = (id: string) => {
     window.dispatchEvent(new CustomEvent('pagescript', {

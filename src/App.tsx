@@ -34,6 +34,7 @@ export interface MatchRule {
     response?: any
     responseHeaders?: Record<string, string>
     code?: string
+    redirectUrl?: string
 }
 
 const __DEV__ = import.meta.env.DEV
@@ -47,7 +48,7 @@ if (! process.env.VITE_LOCAL) {
 }
 
 
-const fields = ['url', 'method', 'status', 'delay', 'params', 'sendReal', 'requestHeaders', 'responseHeaders', 'body', 'response']
+const fields = ['url', 'redirectUrl', 'method', 'status', 'delay', 'params', 'sendReal', 'requestHeaders', 'responseHeaders', 'body', 'response']
 
 const isDrakTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
 
@@ -399,7 +400,6 @@ function App() {
                                 const sel = selectedRowKeys.length ? rules.filter(item => !selectedRowKeys.find(id => id === item.id)) : rules
                                 const origin = originRef.current || 'data'
                                 download(origin + '.json', JSON.stringify(sel, null, 2))
-                                setSelectedRowKeys([])
                             }}></Button>
                         </Tooltip>
                         <Tooltip title='导入'>

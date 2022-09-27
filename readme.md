@@ -41,7 +41,8 @@
 - （v1.6+）扁平化数据，支持过滤字段，更加符合直觉
 - （v1.6+）支持修改响应头
 - （v1.6+）主动发送请求，支持修改请求参数（params、headers、body）
-- （v1.7+）添加了fake模式，用于适应不同的场景需求（默认关闭，部分场景下fake模式会失效）
+- （v1.7+）添加了fake模式，用于适应不同的场景需求（默认关闭，部分场景下fake模式可能会失效）
+- （v1.8+）添加了redirectUrl选项
 
 ## 📑 使用说明
 
@@ -66,24 +67,20 @@
 - 拦截功能：自定义responseText
 
 ### config面板
-```
-interface Config {
-    /** 延迟的毫秒数 */
-    delay?: number
-    /** 是否发送真实的xhr */
-    sendReal?: boolean
-    /** 定义返回的数据 */
-    response?: any
-    /** 匹配的请求地址，支持glob规则 */
-    url: string
-    method?: 'get' | 'post' | 'delete' | 'put'
-    body?: any
-    params?: [string, string][]
-    requestHeaders?: Record<string, string>
-    status?: number
-    responseHeaders?: Record<string, string>
-}
-```
+
+|属性|类型|说明|
+|---|---|---|
+|url|string|必选，匹配的请求地址，ant-path-matcher规则|
+|response|any|必选，响应数据|
+|delay|number|延迟的毫秒数|
+|sendReal|boolean|是否发送真实的请求|
+|method|enum get\|put\|post\|delete\|patch||
+|body|||
+|status|number|默认200|
+|params|[string, string][]||
+|requestHeaders|Record<string, string>||
+|responseHeaders|Record<string, string>||
+|redirectUrl|string||
 
 ### code面板
 通过定义\_\_map\_\_来动态的修改数据

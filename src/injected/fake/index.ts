@@ -1,38 +1,28 @@
-import { InterceptManager } from "../../utils";
+import { Options, __global__ } from "../globalVar";
 import FakeXMLHttpRequest from "./xhr";
 import { modifyProto } from "./xhr/handle";
-
-interface Options {
-    nativeXHR?: typeof XMLHttpRequest
-    faked?: boolean
-    onMatch?: (reqestInfo: { requestUrl: string; method: string }) => any
-    onIntercept?: (data: any) => InterceptManager<XMLHttpRequest, XMLHttpRequest>
-}
-
-export var __NativeXhr__: typeof XMLHttpRequest | undefined
-export let __Options__: Options | undefined
 
 let nativeProto
 
 export function unfake() {
-    if (__NativeXhr__) {
+    if (__global__.NativeXhr) {
         Object.entries(nativeProto || {}).forEach(([key, val]) => {
-            __NativeXhr__.prototype[key] = val
+            __global__.NativeXhr.prototype[key] = val
         })
         nativeProto = undefined
-        window.XMLHttpRequest = __NativeXhr__
+        window.XMLHttpRequest = __global__.NativeXhr
     }
 }
 
 export function fake(options: Options = {}) {
     unfake()
 
-    __Options__ = options
+    __global__.options = options
 
     if (! options.faked) {
         nativeProto = modifyProto()
     }
 
-    __NativeXhr__ = options.nativeXHR || XMLHttpRequest
+    __global__.NativeXhr = options.nativeXHR || XMLHttpRequest
     window.XMLHttpRequest = FakeXMLHttpRequest as unknown as typeof XMLHttpRequest
 }
