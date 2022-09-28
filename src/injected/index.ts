@@ -26,21 +26,18 @@ const app = {
             faked,
             onMatch({ method, requestUrl }) {
                 if (action === 'intercept') {
-                    const matchRule = matching(rules, requestUrl, method)
-                    if (matchRule) {
-                        const result: MatchRule = handleCode(matchRule, matchRule.response)
-                        return result
-                    }
+                    return matching(rules, requestUrl, method)
                 }
             },
             onFetchIntercept(data: MatchRule | undefined) {
                 return async (res) => {
                     if (data) {
                         triggerCountEvent(data.id)
-                        const status = data.status || 200
-                        return Promise.resolve(new Response(new Blob([data.response]), {
+                        const originResponseText = await res.clone().text()
+                        const { response, status = 200, responseHeaders } = handleCode(data, data.response === 'null' ? originResponseText : data.response)
+                        return Promise.resolve(new Response(new Blob([response]), {
                             status,
-                            headers: data.responseHeaders,
+                            headers: responseHeaders,
                             statusText: HttpStatusCodes[status],
                         }))
                     } else {
@@ -59,10 +56,11 @@ const app = {
                     if (data) {
                         if (this.readyState === 4) {
                             try {
-                                this.response = data.response
-                                this.responseText = data.response
-                                this.status = data.status || 200
-                                this.statusText = HttpStatusCodes[this.status]
+                                const { response, status = 200 } = handleCode(data, data.response === 'null' ? xhr.responseText : data.response)
+                                this.response = response
+                                this.responseText = response
+                                this.status = status || 200
+                                this.statusText = HttpStatusCodes[status]
                             } catch (error) {}
                             triggerCountEvent(data.id)
                         }

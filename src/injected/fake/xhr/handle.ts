@@ -40,16 +40,14 @@ export function handleReadyStateChange() {
     } else if (this.readyState === 4) {
         const { onXhrIntercept } = __global__.options
         if (this._matchItem) {
-            Object.defineProperty(this, 'responseText', {
+            const response = this._matchItem.response === 'null' ? this.responseText : this._matchItem.response
+            const attr = {
                 get() {
-                    return this._matchItem.response
-                },
-            }) 
-            Object.defineProperty(this, 'response', {
-                get() {
-                    return this._matchItem.response
-                },
-            })
+                    return response
+                }
+            }
+            Object.defineProperty(this, 'response', attr)
+            Object.defineProperty(this, 'responseText', attr) 
         }
 
         onXhrIntercept(this._matchItem).call(this, this)
