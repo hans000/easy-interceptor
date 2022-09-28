@@ -1,3 +1,9 @@
+## v.1.10.0
+- 添加了fetch
+
+## v1.8.0
+- 添加了redirectUrl
+
 ## v1.7.2
 
 - 替换minimatch

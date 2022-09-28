@@ -2,6 +2,7 @@ import { MatchRule } from '../App'
 import { createRunFunc, debounce, parseUrl, pathMatch } from '../utils'
 import { fake, unfake } from './fake'
 import { CountMsgKey, PagescriptMsgKey, ResponseMsgKey, StorageMsgKey, SyncDataMsgKey } from '../tools/constants'
+import { HttpStatusCodes } from './fake/xhr/constants'
 
 bindEvent()
 
@@ -36,9 +37,11 @@ const app = {
                 return async (res) => {
                     if (data) {
                         triggerCountEvent(data.id)
+                        const status = data.status || 200
                         return Promise.resolve(new Response(new Blob([data.response]), {
-                            status: data.status,
+                            status,
                             headers: data.responseHeaders,
+                            statusText: HttpStatusCodes[status],
                         }))
                     } else {
                         if (app.action === 'watch') {
@@ -58,7 +61,8 @@ const app = {
                             try {
                                 this.response = data.response
                                 this.responseText = data.response
-                                this.status = data.status
+                                this.status = data.status || 200
+                                this.statusText = HttpStatusCodes[this.status]
                             } catch (error) {}
                             triggerCountEvent(data.id)
                         }
