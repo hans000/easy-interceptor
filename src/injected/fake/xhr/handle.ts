@@ -1,5 +1,6 @@
+import { delayRun } from "../../../tools"
 import { parseUrl, parseXML } from "../../../utils"
-import { __global__ } from "../../globalVar"
+import { __global__ } from "../globalVar"
 
 export function modifyProto() {
     const { open, send, setRequestHeader } = XMLHttpRequest.prototype
@@ -10,8 +11,10 @@ export function modifyProto() {
     }
 
     XMLHttpRequest.prototype.send = function(data) {
-        this._requestData = data
-        send.apply(this, arguments)
+        delayRun(() => {
+            this._requestData = data
+            send.apply(this, arguments)
+        }, this._matchItem ? this._matchItem.delay : undefined)
     }
 
     XMLHttpRequest.prototype.setRequestHeader = function(header, value) {
@@ -27,31 +30,29 @@ export function modifyProto() {
 }
 
 export function handleReadyStateChange() {
-    if (this.readyState === 4) {
-        if (this.responseType === '' || this.responseType === 'text') {
-            const { onMatch, onIntercept } = __global__.options
-            const urlObj = this._url instanceof URL ? this._url : parseUrl(this._url)
-
-            const matchItem = onMatch({
-                method: this._method,
-                requestUrl: urlObj.origin + urlObj.pathname
+    if (this.readyState === 1) {
+        const { onMatch } = __global__.options
+        const urlObj = this._url instanceof URL ? this._url : parseUrl(this._url)
+        this._matchItem = onMatch({
+            method: this._method,
+            requestUrl: urlObj.origin + urlObj.pathname
+        })
+    } else if (this.readyState === 4) {
+        const { onXhrIntercept } = __global__.options
+        if (this._matchItem) {
+            Object.defineProperty(this, 'responseText', {
+                get() {
+                    return this._matchItem.response
+                },
+            }) 
+            Object.defineProperty(this, 'response', {
+                get() {
+                    return this._matchItem.response
+                },
             })
-
-            if (matchItem) {
-                Object.defineProperty(this, 'responseText', {
-                    get() {
-                        return matchItem.response
-                    },
-                })
-                Object.defineProperty(this, 'response', {
-                    get() {
-                        return matchItem.response
-                    },
-                })
-            }
-
-            onIntercept(matchItem).onload(this)
         }
+
+        onXhrIntercept(this._matchItem).call(this, this)
     }
 }
 
@@ -106,5 +107,5 @@ export function handleStateChange(state) {
 export function dispatchEvent(type: string) {
     const handle = this['on' + type]
     handle && handle()
-    return new Event(type)
+    this.dispatchEvent(new Event(type))
 }

@@ -23,7 +23,6 @@ export interface MatchRule {
     id: string
     count: number
     delay?: number
-    sendReal?: boolean
     enable?: boolean
     url: string
     method?: 'get' | 'post' | 'delete' | 'put' | 'patch'
@@ -48,7 +47,7 @@ if (! process.env.VITE_LOCAL) {
 }
 
 
-const fields = ['url', 'redirectUrl', 'method', 'status', 'delay', 'params', 'sendReal', 'requestHeaders', 'responseHeaders', 'body', 'response']
+const fields = ['url', 'redirectUrl', 'method', 'status', 'delay', 'params', 'requestHeaders', 'responseHeaders', 'body', 'response']
 
 const isDrakTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
 

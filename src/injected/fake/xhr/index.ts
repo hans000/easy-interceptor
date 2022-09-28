@@ -1,23 +1,22 @@
-import { __global__ } from "../../globalVar"
-import { hook, parseUrl, stringifyHeaders } from "../../../utils"
+import { __global__ } from "../globalVar"
+import { hook, stringifyHeaders } from "../../../utils"
 import { HttpStatusCodes } from "./constants"
 import { dispatchEvent, handleReadyStateChange, handleStateChange, setResponseBody, setResponseHeaders } from "./handle"
+import { delayRun } from "../../../tools"
 
 interface MatchItem {
     status?: number
-    sendReal?: boolean
     delay?: number
     response: string
     responseHeaders: Record<string, string>
 }
 
 class FakeXMLHttpRequest extends XMLHttpRequest {
-    private _matchItem: MatchItem
     private _async: boolean
     private _forceMimeType = ''
     private _requestHeaders = {}
     private _responseHeaders = {}
-    private _xhr: XMLHttpRequest | undefined
+    private _xhr: (XMLHttpRequest & { _matchItem?: MatchItem }) | undefined
 
     constructor() {
         super()
@@ -27,13 +26,21 @@ class FakeXMLHttpRequest extends XMLHttpRequest {
             const xhr = new __global__.NativeXhr()
             xhr.addEventListener(
                 "readystatechange",
-                handleReadyStateChange.bind(xhr),
-                false
+                handleReadyStateChange.bind(xhr)
             )
             return xhr as any
         }
 
         this._xhr = new __global__.NativeXhr()
+        this._xhr.addEventListener(
+            "readystatechange",
+            handleReadyStateChange.bind(this._xhr)
+        )
+        this.addEventListener("readystatechange", () => {
+            if (this.readyState === 4) {
+                __global__.options.onXhrIntercept(this._xhr._matchItem).call(this, this)
+            }
+        })
     }
 
     public overrideMimeType(mimeType: string) {
@@ -42,21 +49,13 @@ class FakeXMLHttpRequest extends XMLHttpRequest {
     }
 
     public open(method, url, async = true) {
-        const { onMatch, onIntercept } = __global__.options
-        const urlObj = url instanceof URL ? url : parseUrl(url)
-        this._matchItem = onMatch({
-            method,
-            requestUrl: urlObj.origin + urlObj.pathname
-        })
-        const xhr = this._xhr
         this._async = async
-        xhr.open.apply(xhr, arguments)
-
-        hook(this, xhr, onIntercept(this._matchItem))
+        this._xhr.open.apply(this._xhr, arguments)
+        hook(this, this._xhr)
     }
 
     public send(data) {
-        const matchItem = this._matchItem
+        const matchItem = this._xhr._matchItem
         const xhr = this._xhr
         if (! matchItem) {
             xhr.send(data)
@@ -66,10 +65,7 @@ class FakeXMLHttpRequest extends XMLHttpRequest {
         dispatchEvent.call(this, 'loadstart')
         handleStateChange.call(this, XMLHttpRequest.HEADERS_RECEIVED)
         handleStateChange.call(this, XMLHttpRequest.LOADING)
-        setTimeout(() => {
-            if (matchItem.sendReal) {
-                xhr.send(data)
-            }
+        delayRun(() => {
             const { status, responseHeaders, response } = matchItem
             setResponseHeaders.call(this, responseHeaders)
             // @ts-ignore this field has been proxy
@@ -77,20 +73,14 @@ class FakeXMLHttpRequest extends XMLHttpRequest {
             // @ts-ignore this field has been proxy
             this.statusText = HttpStatusCodes[this.status]
             setResponseBody.call(this, response)
-        }, matchItem.delay || 0)
+        }, matchItem.delay)
     }
 
     public setRequestHeader(name: string, value: string) {
         name = name.toLowerCase()
-        if (! this._matchItem) {
+        if (! this._xhr._matchItem) {
             this._xhr.setRequestHeader(name, value)
             return
-        }
-
-        if (this._matchItem.sendReal) {
-            this._xhr.setRequestHeader(name, value)
-            this._requestHeaders[name] = value
-            return 
         }
 
         this._requestHeaders[name] = value
@@ -98,14 +88,8 @@ class FakeXMLHttpRequest extends XMLHttpRequest {
 
     public getResponseHeader(name: string) {
         name = name.toLowerCase()
-        if (! this._matchItem) {
+        if (! this._xhr._matchItem) {
             return this._xhr.getResponseHeader(name)
-        }
-
-        if (this._matchItem.sendReal) {
-            return name in this._responseHeaders
-                ? this._responseHeaders[name]
-                : this._xhr.getResponseHeader(name)
         }
 
         if (this.readyState < XMLHttpRequest.HEADERS_RECEIVED) {
@@ -120,25 +104,17 @@ class FakeXMLHttpRequest extends XMLHttpRequest {
     }
 
     public getAllResponseHeaders() {
-        if (! this._matchItem) {
+        if (! this._xhr._matchItem) {
             return this._xhr.getAllResponseHeaders()
-        }
-
-        if (this._matchItem.sendReal) {
-            return this._xhr.getAllResponseHeaders() + stringifyHeaders(this._responseHeaders)
         }
 
         return stringifyHeaders(this._responseHeaders)
     }
 
     public abort() {
-        if (! this._matchItem) {
+        if (! this._xhr._matchItem) {
             this._xhr.abort()
             return
-        }
-
-        if (this._matchItem.sendReal) {
-            this._xhr.abort()
         }
 
         // @ts-ignore this field has been proxy

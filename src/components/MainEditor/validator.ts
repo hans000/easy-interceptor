@@ -20,9 +20,6 @@ export const ConfigSchema: JSONSchema7 = {
         delay: {
             type: "number"
         },
-        sendReal: {
-            type: "boolean"
-        },
         response: {
             required: ["response"],
             type: ["object", "null", "array"]

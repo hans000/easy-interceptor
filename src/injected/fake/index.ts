@@ -1,16 +1,20 @@
-import { Options, __global__ } from "../globalVar";
+import { Options, __global__ } from "./globalVar";
+import fakeFetch from "./fetch";
 import FakeXMLHttpRequest from "./xhr";
 import { modifyProto } from "./xhr/handle";
 
-let nativeProto
+let nativeXhrProto
 
 export function unfake() {
     if (__global__.NativeXhr) {
-        Object.entries(nativeProto || {}).forEach(([key, val]) => {
+        Object.entries(nativeXhrProto || {}).forEach(([key, val]) => {
             __global__.NativeXhr.prototype[key] = val
         })
-        nativeProto = undefined
+        nativeXhrProto = undefined
         window.XMLHttpRequest = __global__.NativeXhr
+    }
+    if (__global__.NativeFetch) {
+        window.fetch = __global__.NativeFetch
     }
 }
 
@@ -19,10 +23,10 @@ export function fake(options: Options = {}) {
 
     __global__.options = options
 
-    if (! options.faked) {
-        nativeProto = modifyProto()
-    }
+    nativeXhrProto = modifyProto()
 
     __global__.NativeXhr = options.nativeXHR || XMLHttpRequest
+    __global__.NativeFetch = options.nativeFetch || fetch
     window.XMLHttpRequest = FakeXMLHttpRequest as unknown as typeof XMLHttpRequest
+    window.fetch = fakeFetch
 }

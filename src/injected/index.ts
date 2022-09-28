@@ -28,22 +28,38 @@ const app = {
                     const matchRule = matching(rules, requestUrl, method)
                     if (matchRule) {
                         const result: MatchRule = handleCode(matchRule, matchRule.response)
-                        if (!result.sendReal && !faked) {
-                            setTimeout(() => {
-                                triggerCountEvent(matchRule.id)
-                            }, result.delay || 0)
-                        }
                         return result
                     }
                 }
             },
-            onIntercept(data: MatchRule) {
-                function handle(xhr) {
+            onFetchIntercept(data: MatchRule | undefined) {
+                return async (res) => {
+                    if (data) {
+                        triggerCountEvent(data.id)
+                        return Promise.resolve(new Response(new Blob([data.response]), {
+                            status: data.status,
+                            headers: data.responseHeaders,
+                        }))
+                    } else {
+                        if (app.action === 'watch') {
+                            try {
+                                const obj = JSON.parse(await res.clone().text())
+                                const urlObj = parseUrl(res.url)
+                                triggerResponseEvent(obj, urlObj.origin + urlObj.pathname)
+                            } catch (error) {}
+                        }
+                    }
+                }
+            },
+            onXhrIntercept(data: MatchRule | undefined) {
+                return function(xhr: XMLHttpRequest) {
                     if (data) {
                         if (this.readyState === 4) {
-                            this.response = data.response
-                            this.responseText = data.response
-                            this.status = data.status
+                            try {
+                                this.response = data.response
+                                this.responseText = data.response
+                                this.status = data.status
+                            } catch (error) {}
                             triggerCountEvent(data.id)
                         }
                     } else {
@@ -55,11 +71,6 @@ const app = {
                             } catch (error) {}
                         }
                     }
-                }
-                return {
-                    onload: handle,
-                    onloadend: handle,
-                    onreadystatechange: handle,
                 }
             }
         })

@@ -4,9 +4,10 @@ import styleImport from 'vite-plugin-style-import'
 import replace from '@rollup/plugin-replace';
 import * as path from 'path'
 import cdnImport from 'vite-plugin-cdn-import'
+import { version, name } from './public/manifest.json'
 
 const isLocal = !!process.env.VITE_LOCAL
-const dist = isLocal ? 'local' : 'cdn'
+const dist = name.toLowerCase().replace(' ', '-') + '-v' + version + (isLocal ? '-local' : '-cdn')
 
 // https://vitejs.dev/config/
 export default defineConfig({

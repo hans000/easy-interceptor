@@ -11,3 +11,7 @@ export function download(filename: string, data: string) {
 export function sizeof(object: Record<string, any> = {}) {
     return JSON.stringify(object).length
 }
+
+export function delayRun(fn: Function, delay: number | undefined) {
+    delay ? setTimeout(() => fn(), delay) : fn()
+}

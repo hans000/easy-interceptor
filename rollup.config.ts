@@ -6,9 +6,10 @@ import commonjs from '@rollup/plugin-commonjs';
 import replace from '@rollup/plugin-replace';
 import * as path from 'path'
 import externalGlobals from 'rollup-plugin-external-globals'
+import { version, name } from './public/manifest.json'
 
 const isLocal = !!process.env.VITE_LOCAL
-const dist = isLocal ? 'local' : 'cdn'
+const dist = name.toLowerCase().replace(' ', '-') + '-v' + version + (isLocal ? '-local' : '-cdn')
 
 function createConfig(input, filename) {
   return defineConfig({

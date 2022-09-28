@@ -75,7 +75,6 @@ const config: EditorProps[] = [
 //             const libSource = `
 // declare type Context = {
 //     delay?: number
-//     sendReal?: boolean
 //     requestInit: {
 //         url: string
 //         method?: 'get' | 'post' | 'delete' | 'put' | 'patch'
