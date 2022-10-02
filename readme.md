@@ -70,8 +70,11 @@
 
 |属性|类型|说明|
 |---|---|---|
-|url|string|必选，匹配的请求地址，ant-path-matcher规则|
-|response|any|必选，响应数据|
+|url|string|必选，请求地址|
+|test|string|必选，匹配的请求地址，ant-path-matcher规则|
+|type|xhr\|fetch|请求类型，默认xhr|
+|response|any|响应数据|
+|responseText|string|响应数据|
 |delay|number|延迟的毫秒数|
 |method|enum get\|put\|post\|delete\|patch||
 |body|||
@@ -84,24 +87,14 @@
 ### code面板
 通过定义\_\_map\_\_来动态的修改数据
 ```
-function __map__(data) {
+function __map__(data, inst: XMLHttpRequest | Response) {
     return {
         // 内部会做一个shallow merge
         response: Math.random().toString()
     }
 }
 ```
-原理如下
-```
-const dataStr = JSON.strigify({ ... })
-const raw = `
-    ;(function (ctx) {
-        ${code}
-        return __map__(ctx);
-    })(${dataStr})
-`
-eval(raw)
-```
+
 
 ## ⭐ 使用场景
 

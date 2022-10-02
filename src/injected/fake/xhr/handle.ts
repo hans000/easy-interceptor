@@ -1,8 +1,9 @@
 import { delayRun } from "../../../tools"
-import { parseUrl, parseXML } from "../../../utils"
+import { createSymbol, parseUrl, parseXML } from "../../../utils"
 import { __global__ } from "../globalVar"
+import { HttpStatusCodes } from "./constants"
 
-export function modifyProto() {
+export function modifyXhrProtoMethods() {
     const { open, send, setRequestHeader } = XMLHttpRequest.prototype
     XMLHttpRequest.prototype.open = function(method: string, url: string) {
         this._method = method
@@ -29,6 +30,25 @@ export function modifyProto() {
     }
 }
 
+export function modifyXhrProtoProps(config: {
+    response: string
+    responseText: string
+    status: number
+    statusText: string
+}) {
+    for (const attr in config) {
+        const key = createSymbol(attr)
+        Object.defineProperty(this, attr, {
+            get() {
+                return this[key] || config[attr]
+            },
+            set(val) {
+                this[key] = val
+            }
+        })
+    }
+}
+
 export function handleReadyStateChange() {
     if (this.readyState === 1) {
         const { onMatch } = __global__.options
@@ -40,14 +60,13 @@ export function handleReadyStateChange() {
     } else if (this.readyState === 4) {
         const { onXhrIntercept } = __global__.options
         if (this._matchItem) {
-            const response = this._matchItem.response === 'null' ? this.responseText : this._matchItem.response
-            const attr = {
-                get() {
-                    return response
-                }
-            }
-            Object.defineProperty(this, 'response', attr)
-            Object.defineProperty(this, 'responseText', attr) 
+            const { status = 200, response, responseText } = this._matchItem
+            modifyXhrProtoProps.call(this, {
+                response: response === undefined ? this.response : response,
+                responseText: responseText === undefined ? this.responseText : responseText,
+                status,
+                statusText: HttpStatusCodes[status],
+            })
         }
 
         onXhrIntercept(this._matchItem).call(this, this)

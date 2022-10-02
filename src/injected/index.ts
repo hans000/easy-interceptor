@@ -9,7 +9,7 @@ bindEvent()
 function matching(rules: MatchRule[], requestUrl: string, method: string): MatchRule | undefined {
     for(let rule of rules) {
         if (rule.enable &&
-            pathMatch(rule.url, requestUrl) &&
+            pathMatch(rule.test, requestUrl) &&
             (rule.method ? rule.method.toLowerCase() === method.toLowerCase() : true)) {
             return rule
         }
@@ -33,9 +33,8 @@ const app = {
                 return async (res) => {
                     if (data) {
                         triggerCountEvent(data.id)
-                        const originResponseText = await res.clone().text()
-                        const { response, status = 200, responseHeaders } = handleCode(data, data.response === 'null' ? originResponseText : data.response)
-                        return Promise.resolve(new Response(new Blob([response]), {
+                        const { responseText, status = 200, responseHeaders } = await handleCode(data, res)
+                        return Promise.resolve(new Response(new Blob([responseText]), {
                             status,
                             headers: responseHeaders,
                             statusText: HttpStatusCodes[status],
@@ -52,16 +51,18 @@ const app = {
                 }
             },
             onXhrIntercept(data: MatchRule | undefined) {
-                return function(xhr: XMLHttpRequest) {
+                return async function(xhr: XMLHttpRequest) {
                     if (data) {
                         if (this.readyState === 4) {
                             try {
-                                const { response, status = 200 } = handleCode(data, data.response === 'null' ? xhr.responseText : data.response)
-                                this.response = response
-                                this.responseText = response
-                                this.status = status || 200
+                                const { response, responseText, status = 200 } = await handleCode(data, xhr)
+                                
+                                this.responseText = this.response = response !== undefined ? JSON.stringify(response) : responseText
+                                this.status = status
                                 this.statusText = HttpStatusCodes[status]
-                            } catch (error) {}
+                            } catch (error) {
+                                console.error(error)
+                            }
                             triggerCountEvent(data.id)
                         }
                     } else {
@@ -108,13 +109,7 @@ function bindEvent() {
     window.addEventListener("message", (event) => {
         const data = event.data
         if (data.type === StorageMsgKey) {
-            if (data.key === 'rules') {
-                app.rules = data.value.map(item => ({ ...item, response: JSON.stringify(item.response) }))
-            } else if (data.key === 'action') {
-                app.action = data.value
-            } else if (data.key === 'faked') {
-                app.faked = data.value
-            }
+            app[data.key] = data.value
         }
         run()
     })
@@ -140,22 +135,21 @@ const triggerResponseEvent = (response: string, url: string) => {
     }))
 }
 
-const handleCode = (matchRule: MatchRule, responseText: string) => {
-    const { id, count, enable, code, response, ...restRule } = matchRule
+const handleCode = async (matchRule: MatchRule, inst: XMLHttpRequest | Response) => {
+    let { id, count, enable, code, ...restRule } = matchRule
+
     if (code) {
         try {
-            const data = {
-                ...restRule,
-                response: JSON.parse(response === 'null' ? responseText : response),
-            }
             const fn = createRunFunc(code)
+            const partialData = await fn(restRule, inst)
             return {
-                ...matchRule,
-                ...fn(data) || {},
+                ...restRule,
+                ...partialData || {},
+                id
             }
         } catch (error) {
             console.error(error)
         }
     }
-    return matchRule
+    return restRule
 }

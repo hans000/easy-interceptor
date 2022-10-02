@@ -11,7 +11,7 @@ export interface Options {
     nativeXHR?: typeof XMLHttpRequest
     nativeFetch?: typeof fetch
     onMatch?: (reqestInfo: { requestUrl: string; method: string }) => any
-    onXhrIntercept?: (data: any) => (xhr: XMLHttpRequest) => void
+    onXhrIntercept?: (data: any) => (xhr: XMLHttpRequest) => Promise<void>
     onFetchIntercept?: (data: any) => (res: Response) => (Promise<Response> | undefined)
 }
 

@@ -61,7 +61,12 @@ const MainEditor = React.forwardRef(function (props: IProps, ref) {
     const handle = useDebounce(() => {
         if (info.language === 'json' && info.schema !== false) {
             try {
-                JSON.parse(data[filename])
+                const json = JSON.parse(data[filename])
+                const validateResult = jsonschema.validate(json, info.schema)
+                if (validateResult.errors.length) {
+                    const { property: p, message: m } = validateResult.errors[0]
+                    throw `\`${p}\` ${m}`
+                }
                 props.onChange?.(data, false)
             } catch (error) {
                 msgRef.current = error + ''
@@ -83,7 +88,7 @@ const MainEditor = React.forwardRef(function (props: IProps, ref) {
                             const validateResult = jsonschema.validate(json, schema)
                             if (validateResult.errors.length) {
                                 const { property: p, message: m } = validateResult.errors[0]
-                                msgRef.current = `\`${p}\` ${m}`
+                                msgRef.current = p ? `property: \`${p}\`, ${m}` : m
                                 sendMsg()
                                 throw msgRef.current
                             }

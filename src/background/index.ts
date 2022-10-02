@@ -68,7 +68,7 @@ chrome.webRequest.onBeforeRequest.addListener(
             const urlObj = new URL(details.url)
             const url = urlObj.origin + urlObj.pathname
             for (const rule of __rules) {
-                if (rule.enable && rule.redirectUrl && pathMatch(rule.url, url)) {
+                if (rule.enable && rule.redirectUrl && pathMatch(rule.test, url)) {
                     return {
                         redirectUrl: rule.redirectUrl
                     }
@@ -185,6 +185,7 @@ chrome.webRequest.onResponseStarted.addListener(
                         id: Math.random().toString(36).slice(2),
                         count: 0,
                         url: urlObj.origin + urlObj.pathname,
+                        test: urlObj.origin + urlObj.pathname,
                         method: details.method.toLowerCase(),
                         body: data.body,
                         params: Array.from(urlObj.searchParams.entries()),

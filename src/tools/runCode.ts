@@ -3,6 +3,7 @@ import { MatchRule } from '../App'
 import { ExportSchema } from '../components/MainEditor/validator'
 import { createRunFunc } from '../utils'
 import { IframeMsgKey, LogMsgKey } from './constants'
+import { sendRequest } from './sendRequest'
 
 const __DEV__ = import.meta.env.DEV
 
@@ -25,19 +26,23 @@ export function sendLog(msg: any) {
     })
 }
 
-export function runCode(data: MatchRule) {
+export async function runCode(data: MatchRule, index: number) {
+    const { id, count, enable, code, ...restData } = data
     try {
-        const { id, count, enable, code, ...restData  } = data
-        const fn = createRunFunc(code)
-        let msg = {}
-        try {
-            msg = fn(restData) || {}
-        } catch (error) {
-            sendLog(error.message)
-            return
+
+        if (data.url === undefined) {
+            throw 'url option must be required.'
         }
 
-        const newMsg = { ...data, ...msg }
+        const fn = createRunFunc(code)
+        const inst = await sendRequest(data, index)
+        const msg = await fn(restData, inst)
+
+        const newMsg = {
+            ...restData,
+            ...msg || {},
+            id,
+        }
 
         const validateResult = jsonschema.validate(newMsg, ExportSchema)
 

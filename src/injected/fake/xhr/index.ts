@@ -17,6 +17,11 @@ class FakeXMLHttpRequest extends XMLHttpRequest {
     private _requestHeaders = {}
     private _responseHeaders = {}
     private _xhr: (XMLHttpRequest & { _matchItem?: MatchItem }) | undefined
+    public status: number
+    public statusText: string
+    public response: any
+    public responseText: string
+    public readyState: number
 
     constructor() {
         super()
@@ -51,7 +56,6 @@ class FakeXMLHttpRequest extends XMLHttpRequest {
     public open(method, url, async = true) {
         this._async = async
         this._xhr.open.apply(this._xhr, arguments)
-        hook(this, this._xhr)
     }
 
     public send(data) {

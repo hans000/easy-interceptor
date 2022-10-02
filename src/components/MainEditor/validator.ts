@@ -15,14 +15,23 @@ export function removeRequiredField(schema: JSONSchema7) {
 export const ConfigSchema: JSONSchema7 = {
     type: "object",
     additionalProperties: false,
-    required: ["url", "response"],
+    required: ["test"],
     properties: {
         delay: {
             type: "number"
         },
         response: {
-            required: ["response"],
             type: ["object", "null", "array"]
+        },
+        test: {
+            type: 'string'
+        },
+        type: {
+            type: "string",
+            enum: ["xhr", "fetch"]
+        },
+        responseText: {
+            type: 'string'
         },
         responseHeaders: {
             type: "object",
@@ -40,7 +49,6 @@ export const ConfigSchema: JSONSchema7 = {
         },
         url: {
             type: "string",
-            required: ["url"],
         },
         redirectUrl: {
             type: "string",

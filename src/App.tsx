@@ -16,7 +16,7 @@ import { FileType } from './components/MainEditor/config'
 import Quote from './components/Quote'
 import { runCode } from './tools/runCode'
 import { loader } from "@monaco-editor/react";
-import { sendRequest } from './tools/sendRequest'
+import { sendRequestLog } from './tools/sendRequest'
 import { ActionFieldKey, DarkFieldKey, FakedFieldKey, HiddenFieldsFieldKey, IndexFieldKey, RulesFieldKey, SelectedRowFieldKeys, UpdateMsgKey } from './tools/constants'
 
 export interface MatchRule {
@@ -24,13 +24,16 @@ export interface MatchRule {
     count: number
     delay?: number
     enable?: boolean
-    url: string
+    url?: string
+    test: string
+    type?: 'xhr' | 'fetch'
     method?: 'get' | 'post' | 'delete' | 'put' | 'patch'
     body?: any
     params?: [string, string][]
     requestHeaders?: Record<string, string>
     status?: number
     response?: any
+    responseText?: string
     responseHeaders?: Record<string, string>
     code?: string
     redirectUrl?: string
@@ -46,8 +49,7 @@ if (! process.env.VITE_LOCAL) {
     })
 }
 
-
-const fields = ['url', 'redirectUrl', 'method', 'status', 'delay', 'params', 'requestHeaders', 'responseHeaders', 'body', 'response']
+const fields = ['url', 'redirectUrl', 'test', 'type', 'method', 'status', 'delay', 'params', 'requestHeaders', 'responseHeaders', 'body', 'response', 'responseText']
 
 const isDrakTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
 
@@ -217,14 +219,14 @@ function App() {
                     ),
                     onFilter(value: string, record) {
                         const [k, e] = value.split('\n')
-                        const url = record.url
+                        const url = record.url || record.test
                         const include = record.url.includes(k)
                         const exclude = e ? e.split(',').some(el => pathMatch(el, url)) : false
                         return url ? (include && !exclude) : true
                     },
                     render: (value, record, index) => {
                         const origin = originRef.current
-                        const shortText = !!origin && value.startsWith(origin) ? '~' + value.slice(origin.length) : value
+                        // const shortText = !!origin && value.startsWith(origin) ? '~' + value.slice(origin.length) : value
                         const status = record.code
                             ? 'default'
                             : (['lime', 'lime', 'success', 'success', 'warning', 'error'][(record.status || 200) / 100 | 0] || 'default') as BadgeProps['status']
@@ -233,7 +235,7 @@ function App() {
                                 <Badge status={status} text={
                                     <span style={{ cursor: 'pointer' }} onClick={() => {
                                         setActiveIndex(index)
-                                    }}>{shortText}</span>}></Badge>
+                                    }}>{value || record.test}</span>}></Badge>
                             </Tooltip>
                         )
                     }
@@ -257,10 +259,10 @@ function App() {
                 {
                     dataIndex: 'count', key: 'count', width: 80, align: 'center',
                     title: <Tooltip title='debug • 拦截次数'><BugOutlined /></Tooltip>,
-                    render: (value, record) => (
+                    render: (value, record, index) => (
                         <>
                             { !!record.code ? <CodeOutlined onClick={() => {
-                                runCode(record)
+                                runCode(record, index)
                             }} /> : null } 
                             <span style={{ paddingLeft: 4 }}>{ value ? value : null }</span>
                         </>
@@ -288,7 +290,7 @@ function App() {
 
                         return (
                             <Tag style={{ cursor: canSend ? 'pointer' : 'text', borderStyle: canSend ? 'solid' : 'dashed' }} color={getMethodColor(value)} onClick={() => {
-                                sendRequest(record, index)
+                                sendRequestLog(record, index)
                             }}>{value}</Tag>
                         )
                     }
@@ -379,6 +381,7 @@ function App() {
                                         id: randID(),
                                         count: 0,
                                         url: '/api-' + rule.length,
+                                        test: '/api-' + rule.length,
                                         response: null,
                                     }]
                                     return result

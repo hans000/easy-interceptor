@@ -1,7 +1,7 @@
 import { Options, __global__ } from "./globalVar";
 import fakeFetch from "./fetch";
 import FakeXMLHttpRequest from "./xhr";
-import { modifyProto } from "./xhr/handle";
+import { modifyXhrProtoMethods } from "./xhr/handle";
 
 let nativeXhrProto
 
@@ -23,7 +23,7 @@ export function fake(options: Options = {}) {
 
     __global__.options = options
 
-    nativeXhrProto = modifyProto()
+    nativeXhrProto = modifyXhrProtoMethods()
 
     __global__.NativeXhr = options.nativeXHR || XMLHttpRequest
     __global__.NativeFetch = options.nativeFetch || fetch

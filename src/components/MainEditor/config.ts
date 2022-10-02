@@ -2,7 +2,7 @@ import { JSONSchema7 } from 'json-schema';
 import { MutableRefObject } from 'react';
 import { MatchRule } from '../../App';
 import { runCode } from '../../tools/runCode';
-import { sendRequest } from '../../tools/sendRequest';
+import { sendRequestLog } from '../../tools/sendRequest';
 import { ConfigSchema, removeRequiredField } from './validator';
 
 interface CustomEditorContext {
@@ -36,7 +36,7 @@ function createAction(id: string, label: string, handle: Function) {
 
 function createRequestAction(context: CustomEditorContext) {
     return createAction('send request', 'Send Request', () => {
-        sendRequest(context.rule, context.index)
+        sendRequestLog(context.rule, context.index)
     })
 }
 
@@ -44,7 +44,7 @@ function createRunCodeAction(context: CustomEditorContext) {
     return createAction('run code', 'Run Code', () => {
         const rawdata = context.rawdataRef.current
         const config = JSON.parse(rawdata.config) as any
-        runCode({ ...context.rule, ...config, code: rawdata.code })
+        runCode({ ...context.rule, ...config, code: rawdata.code }, context.index)
     })
 }
 

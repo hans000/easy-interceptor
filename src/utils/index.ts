@@ -165,7 +165,7 @@ export function hook<T extends object, P extends object>(proxyer: P, proxyee: T,
 }
 
 export function createRunFunc(code: string) {
-    return new Function('c', `${code};return __map__(c)`)
+    return new Function('c', 'i', `${code};return __map__(c, i)`)
 }
 
 export function debounce(func: Function, delay = 300, thisArg = null) {
@@ -179,6 +179,9 @@ export function debounce(func: Function, delay = 300, thisArg = null) {
 }
 
 export function pathMatch(pattern: string, path: string) {
+    if (typeof pattern !== 'string') {
+        return false
+    }
     let regStr = ''
     for (let i = 0; i < pattern.length; i++) {
         const ch = pattern[i]
