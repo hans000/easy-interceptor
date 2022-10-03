@@ -1,5 +1,5 @@
 import { __global__ } from "../globalVar"
-import { hook, stringifyHeaders } from "../../../utils"
+import { stringifyHeaders } from "../../../utils"
 import { HttpStatusCodes } from "./constants"
 import { dispatchEvent, handleReadyStateChange, handleStateChange, setResponseBody, setResponseHeaders } from "./handle"
 import { delayRun } from "../../../tools"
@@ -70,10 +70,10 @@ class FakeXMLHttpRequest extends XMLHttpRequest {
         handleStateChange.call(this, XMLHttpRequest.HEADERS_RECEIVED)
         handleStateChange.call(this, XMLHttpRequest.LOADING)
         delayRun(() => {
-            const { status, responseHeaders, response } = matchItem
+            const { status = 200, responseHeaders, response } = matchItem
             setResponseHeaders.call(this, responseHeaders)
             // @ts-ignore this field has been proxy
-            this.status = typeof status == "number" ? status : 200
+            this.status = status
             // @ts-ignore this field has been proxy
             this.statusText = HttpStatusCodes[this.status]
             setResponseBody.call(this, response)

@@ -73,16 +73,16 @@
 |url|string|必选，请求地址|
 |test|string|必选，匹配的请求地址，ant-path-matcher规则|
 |type|xhr\|fetch|请求类型，默认xhr|
-|response|any|响应数据|
+|response|object\|array\|null\boolean\|number|响应数据|
 |responseText|string|响应数据|
 |delay|number|延迟的毫秒数|
-|method|enum get\|put\|post\|delete\|patch||
-|body|||
+|method|enum get\|put\|post\|delete\|patch|请求类型|
+|body|Record<string, any>|请求主体|
 |status|number|默认200|
 |params|[string, string][]||
-|requestHeaders|Record<string, string>||
-|responseHeaders|Record<string, string>||
-|redirectUrl|string||
+|requestHeaders|Record<string, string>|请求头|
+|responseHeaders|Record<string, string>|响应头|
+|redirectUrl|string|重定向链接，不能和url一样，会死循环|
 
 ### code面板
 通过定义\_\_map\_\_来动态的修改数据
@@ -90,7 +90,9 @@
 function __map__(data, inst: XMLHttpRequest | Response) {
     return {
         // 内部会做一个shallow merge
-        response: Math.random().toString()
+        response: {
+            foo: Math.random().toString()
+        }
     }
 }
 ```
@@ -104,9 +106,7 @@ function __map__(data, inst: XMLHttpRequest | Response) {
 
 > 注意：
 >
-> 确保url和method字段匹配
->
-> 使用response字段来覆盖responseText
+> 使用response或responseText来覆盖真实值
 > 
 > 如果需要延迟接口响应可以使用delay字段
 

@@ -190,12 +190,12 @@ function App() {
                             })}/>
                         }>
                             <span>
-                                <span>地址url</span>
+                                <span>匹配规则</span>
                                 <FilterOutlined style={{ marginLeft: 8, padding: 4, color: '#bfbfbf' }} />
                             </span>
                         </Dropdown>
                     ),
-                    dataIndex: 'url', key: 'url', ellipsis: true,
+                    dataIndex: 'test', key: 'test', ellipsis: true,
                     filterIcon: filtered => <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />,
                     filterDropdown: ({ setSelectedKeys, selectedKeys, confirm }) => (
                         <div style={{ padding: 8 }}>
@@ -207,7 +207,7 @@ function App() {
                                     setSelectedKeys([[v, k].join('\n')])
                                     confirm({ closeDropdown: false });
                                 }} />
-                            <Input placeholder='排除选项 (glob规则)'
+                            <Input placeholder='排除选项 (ant path matcher规则)'
                                 style={{ display: 'block', width: 300 }}
                                 onChange={e => {
                                     const v = e.target.value
@@ -219,14 +219,13 @@ function App() {
                     ),
                     onFilter(value: string, record) {
                         const [k, e] = value.split('\n')
-                        const url = record.url || record.test
-                        const include = record.url.includes(k)
-                        const exclude = e ? e.split(',').some(el => pathMatch(el, url)) : false
-                        return url ? (include && !exclude) : true
+                        const include = value.includes(k)
+                        const exclude = e ? e.split(',').some(el => pathMatch(el, value)) : false
+                        return value ? (include && !exclude) : true
                     },
                     render: (value, record, index) => {
                         const origin = originRef.current
-                        // const shortText = !!origin && value.startsWith(origin) ? '~' + value.slice(origin.length) : value
+                        const shortText = !!origin && value.startsWith(origin) ? '~' + value.slice(origin.length) : value
                         const status = record.code
                             ? 'default'
                             : (['lime', 'lime', 'success', 'success', 'warning', 'error'][(record.status || 200) / 100 | 0] || 'default') as BadgeProps['status']
@@ -235,9 +234,17 @@ function App() {
                                 <Badge status={status} text={
                                     <span style={{ cursor: 'pointer' }} onClick={() => {
                                         setActiveIndex(index)
-                                    }}>{value || record.test}</span>}></Badge>
+                                    }}>{shortText}</span>
+                                    }></Badge>
                             </Tooltip>
                         )
+                    }
+                },
+                {
+                    dataIndex: 'type', key: 'type', width: 100, align: 'center',
+                    title: '拦截类型',
+                    render: (value) => {
+                        return value || 'xhr'
                     }
                 },
                 {
@@ -269,24 +276,17 @@ function App() {
                     )
                 },
                 {
-                    dataIndex: 'method', key: 'method', width: 50, align: 'center',
-                    // filters: [
-                    //     { text: 'get', value: 'get' },
-                    //     { text: 'post', value: 'post' },
-                    //     { text: 'put', value: 'put' },
-                    //     { text: 'delete', value: 'delete' },
-                    // ],
-                    // onFilter: (value, record) => record.method.includes(value),
+                    dataIndex: 'method', key: 'method', width: 60, align: 'center',
                     title: (
                         <Tooltip title='请求类型 • 发送'>
                             <TagOutlined />
                         </Tooltip>
                     ),
-                    render: (value, record, index) => {
+                    render: (value = 'get', record, index) => {
                         if (! value) {
                             return null
                         }
-                        const canSend = /https?/.test(record.url)
+                        const canSend = record.url !== undefined
 
                         return (
                             <Tag style={{ cursor: canSend ? 'pointer' : 'text', borderStyle: canSend ? 'solid' : 'dashed' }} color={getMethodColor(value)} onClick={() => {
@@ -297,11 +297,6 @@ function App() {
                 },
                 {
                     dataIndex: 'enable', key: 'enable', width: 50, align: 'center',
-                    // filters: [
-                    //     { text: '启用', value: true },
-                    //     { text: '停用', value: false },
-                    // ],
-                    // onFilter: (value, record) => record.enable === value,
                     title: (
                         <Tooltip title='启用拦截'>
                             <ControlOutlined />

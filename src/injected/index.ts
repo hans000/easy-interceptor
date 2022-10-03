@@ -3,14 +3,16 @@ import { createRunFunc, debounce, parseUrl, pathMatch } from '../utils'
 import { fake, unfake } from './fake'
 import { CountMsgKey, PagescriptMsgKey, ResponseMsgKey, StorageMsgKey, SyncDataMsgKey } from '../tools/constants'
 import { HttpStatusCodes } from './fake/xhr/constants'
+import { CustomRequestInfo } from './fake/globalVar'
 
 bindEvent()
 
-function matching(rules: MatchRule[], requestUrl: string, method: string): MatchRule | undefined {
+function matching(rules: MatchRule[], req: CustomRequestInfo): MatchRule | undefined {
     for(let rule of rules) {
         if (rule.enable &&
-            pathMatch(rule.test, requestUrl) &&
-            (rule.method ? rule.method.toLowerCase() === method.toLowerCase() : true)) {
+            req.type === (rule.type || 'xhr') &&
+            pathMatch(rule.test, req.requestUrl) &&
+            req.method.toLowerCase() === (rule.method || 'get')) {
             return rule
         }
     }
@@ -24,9 +26,9 @@ const app = {
         const { action, rules, faked } = app
         fake({
             faked,
-            onMatch({ method, requestUrl }) {
+            onMatch(req) {
                 if (action === 'intercept') {
-                    return matching(rules, requestUrl, method)
+                    return matching(rules, req)
                 }
             },
             onFetchIntercept(data: MatchRule | undefined) {

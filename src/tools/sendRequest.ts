@@ -29,7 +29,12 @@ export async function sendRequest(rule: MatchRule, index: number) {
 }
 
 export function sendRequestLog(rule: MatchRule, index: number) {
-    if (typeof rule.test !== 'string') {
+    if (! rule.url) {
+        sendLog('url option must be required')
+        return
+    }
+    if (rule.url === rule.redirectUrl) {
+        sendLog('url and redirectUrl cannot be the same')
         return
     }
     sendRequest(rule, index).then(inst => {

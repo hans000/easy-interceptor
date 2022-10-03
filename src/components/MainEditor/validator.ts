@@ -21,10 +21,11 @@ export const ConfigSchema: JSONSchema7 = {
             type: "number"
         },
         response: {
-            type: ["object", "null", "array"]
+            type: ["object", "null", "array", "number", "boolean"]
         },
         test: {
-            type: 'string'
+            type: 'string',
+            required: ['test'],
         },
         type: {
             type: "string",

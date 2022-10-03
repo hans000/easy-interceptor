@@ -8,6 +8,7 @@ export default async function fakeFetch(input: RequestInfo | URL, init?: Request
     const matchItem = onMatch({
         method: req.method,
         requestUrl: req.url,
+        type: 'fetch',
     })
 
     const realResponse = faked ? new Response(new Blob(['null'])) : await __global__.NativeFetch.call(null, input, init)
