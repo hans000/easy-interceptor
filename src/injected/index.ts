@@ -1,22 +1,12 @@
 import { MatchRule } from '../App'
 import { createRunFunc, debounce, parseUrl, pathMatch } from '../utils'
 import { fake, unfake } from './fake'
-import { CountMsgKey, PagescriptMsgKey, ResponseMsgKey, StorageMsgKey, SyncDataMsgKey } from '../tools/constants'
+import { CountMsgKey, ResponseMsgKey, StorageMsgKey, SyncDataMsgKey } from '../tools/constants'
 import { HttpStatusCodes } from './fake/xhr/constants'
 import { CustomRequestInfo } from './fake/globalVar'
+import { createPagescriptAction, EventProps } from '../tools/message'
 
 bindEvent()
-
-function matching(rules: MatchRule[], req: CustomRequestInfo): MatchRule | undefined {
-    for(let rule of rules) {
-        if (rule.enable &&
-            req.type === (rule.type || 'xhr') &&
-            pathMatch(rule.test, req.requestUrl) &&
-            req.method.toLowerCase() === (rule.method || 'get')) {
-            return rule
-        }
-    }
-}
 
 const app = {
     rules: [] as MatchRule[],
@@ -99,45 +89,39 @@ const app = {
 
 const run = debounce(() => app.run())
 
+function matching(rules: MatchRule[], req: CustomRequestInfo): MatchRule | undefined {
+    for(let rule of rules) {
+        if (rule.enable &&
+            req.type === (rule.type || 'xhr') &&
+            pathMatch(rule.test, req.requestUrl) &&
+            req.method.toLowerCase() === (rule.method || 'get')) {
+            return rule
+        }
+    }
+}
+
 function bindEvent() {
     // get data
-    window.dispatchEvent(new CustomEvent('pagescript', {
-        detail: {
-            type: SyncDataMsgKey,
-            from: PagescriptMsgKey,
-        }
-    }))
+    window.dispatchEvent(new CustomEvent('pagescript', createPagescriptAction(SyncDataMsgKey)))
     // register event
-    window.addEventListener("message", (event) => {
+    window.addEventListener("message", (event: MessageEvent<EventProps>) => {
         const data = event.data
         if (data.type === StorageMsgKey) {
             app[data.key] = data.value
+            run()
         }
-        run()
     })
 }
 
-const triggerCountEvent = (id: string) => {
-    window.dispatchEvent(new CustomEvent('pagescript', {
-        detail: {
-            type: CountMsgKey,
-            from: PagescriptMsgKey,
-            data: { id },
-        }
-    }))
+function triggerCountEvent(id: string) {
+    window.dispatchEvent(new CustomEvent('pagescript', createPagescriptAction(CountMsgKey, { id })))
 }
 
-const triggerResponseEvent = (response: string, url: string) => {
-    window.dispatchEvent(new CustomEvent('pagescript', {
-        detail: {
-            type: ResponseMsgKey,
-            from: PagescriptMsgKey,
-            data: { response, url },
-        }
-    }))
+function triggerResponseEvent(response: string, url: string) {
+    window.dispatchEvent(new CustomEvent('pagescript', createPagescriptAction(ResponseMsgKey, { response, url })))
 }
 
-const handleCode = async (matchRule: MatchRule, inst: XMLHttpRequest | Response) => {
+async function handleCode(matchRule: MatchRule, inst: XMLHttpRequest | Response) {
     let { id, count, enable, code, ...restRule } = matchRule
 
     if (code) {

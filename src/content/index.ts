@@ -1,4 +1,4 @@
-import { BackgroundMsgKey, CountMsgKey, LogMsgKey, PagescriptMsgKey, ResponseMsgKey, RulesFieldKey, StorageMsgKey, SyncDataMsgKey, UpdateMsgKey } from '../tools/constants'
+import { BackgroundMsgKey, CountMsgKey, LogMsgKey, ResponseMsgKey, RulesFieldKey, StorageMsgKey, SyncDataMsgKey, UpdateMsgKey } from '../tools/constants'
 import { createScript, syncData } from './utils'
 
 async function loadScripts() {
@@ -14,9 +14,9 @@ chrome.runtime.onMessage.addListener(msg => {
         return
     }
 
-    // 转发给pageScript
+    // 转发给pagescript
     if (msg.type === StorageMsgKey) {
-        postMessage({ ...msg })
+        postMessage(msg)
         return
     }
 

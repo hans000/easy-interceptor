@@ -1,5 +1,5 @@
 import { MatchRule } from "../App"
-import { ActionFieldKey, BackgroundMsgKey, IframeMsgKey, RulesFieldKey, StorageMsgKey } from "../tools/constants"
+import { ActionFieldKey, BackgroundMsgKey, PopupMsgKey, RulesFieldKey, StorageMsgKey } from "../tools/constants"
 import { pathMatch } from "../utils"
 import { updateIcon } from "./utils"
 
@@ -38,14 +38,14 @@ chrome.tabs.onUpdated.addListener((_, __, info) => {
     })
 })
 
-/** 接收iframe传来的信息，并转发给content.js */
+/** 接收popup传来的信息，并转发给content.js */
 chrome.runtime.onMessage.addListener(msg => {
     // 过滤非本插件的消息
-    if (msg.from !== IframeMsgKey) return;
+    if (msg.from !== PopupMsgKey) return;
 
     updateIcon()
     
-    if (msg.from === IframeMsgKey) {
+    if (msg.from === PopupMsgKey) {
         // 重置result
         if (msg.type === StorageMsgKey) {
             __result = {}

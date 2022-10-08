@@ -1,5 +1,6 @@
 import { FakedFieldKey } from './../tools/constants';
-import { ActionFieldKey, RulesFieldKey, StorageMsgKey } from "../tools/constants"
+import { ActionFieldKey, RulesFieldKey } from "../tools/constants"
+import { createBackgroudAction } from '../tools/message';
 
 /** 在页面上插入js */
 export function createScript(path: string) {
@@ -18,13 +19,13 @@ export function syncData() {
     chrome.storage.local.get([ActionFieldKey, RulesFieldKey, FakedFieldKey], (result) => {
         const { [ActionFieldKey]: action, [RulesFieldKey]: rules, [FakedFieldKey]: faked } = result
         if (result.hasOwnProperty(ActionFieldKey)) {
-            postMessage({ type: StorageMsgKey, to: 'pagescript', key: 'action', value: action })
+            postMessage(createBackgroudAction('action', action))
         }
         if (rules) {
-            postMessage({ type: StorageMsgKey, to: 'pagescript', key: 'rules', value: rules })
+            postMessage(createBackgroudAction('rules', rules))
         }
         if (faked) {
-            postMessage({ type: StorageMsgKey, to: 'pagescript', key: 'faked', value: faked })
+            postMessage(createBackgroudAction('faked', faked))
         }
     })
 }

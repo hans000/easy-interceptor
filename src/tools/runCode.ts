@@ -2,7 +2,7 @@ import jsonschema from 'json-schema'
 import { MatchRule } from '../App'
 import { ExportSchema } from '../components/MainEditor/validator'
 import { createRunFunc } from '../utils'
-import { IframeMsgKey, LogMsgKey } from './constants'
+import { PopupMsgKey, LogMsgKey } from './constants'
 import { sendRequest } from './sendRequest'
 
 const __DEV__ = import.meta.env.DEV
@@ -20,7 +20,7 @@ export function sendLog(msg: any) {
     }
     chrome.runtime.sendMessage(chrome.runtime.id, {
         type: LogMsgKey,
-        from: IframeMsgKey,
+        from: PopupMsgKey,
         key: 'log',
         value: msg,
     })

@@ -1,13 +1,39 @@
-import { IframeMsgKey, StorageMsgKey } from "./constants";
+import { BackgroundMsgKey, PagescriptMsgKey, PopupMsgKey, StorageMsgKey } from "./constants";
 
-/**
- * 构造storage类型的消息对象
- */
-export function buildStorageMsg(key: 'rules' | 'action' | 'faked', value: any) {
+export interface EventProps {
+    type: string
+    from: string
+    to: string
+    key: string
+    value: any
+}
+
+export function createBackgroudAction(key: 'rules' | 'action' | 'faked', value: any) {
     return {
         type: StorageMsgKey,
-        from: IframeMsgKey,
+        from: BackgroundMsgKey,
+        to: PagescriptMsgKey,
+        key,
+        value
+    }
+}
+
+export function createStorageAction(key: 'rules' | 'action' | 'faked', value: any) {
+    return {
+        type: StorageMsgKey,
+        from: PopupMsgKey,
+        to: BackgroundMsgKey,
         key,
         value,
+    }
+}
+
+export function createPagescriptAction(type: string, data?: any) {
+    return {
+        detail: {
+            type,
+            from: PagescriptMsgKey,
+            data,
+        }
     }
 }

@@ -6,7 +6,7 @@ import { ColumnsType } from 'antd/lib/table'
 import { pathMatch, randID, renderSize } from './utils'
 import { getConfigText, getMethodColor } from './tools/mappings'
 import { download, sizeof } from './tools'
-import { buildStorageMsg } from './tools/message'
+import { createStorageAction } from './tools/message'
 import jsonschema from 'json-schema'
 import { ConfigSchema, TransformResultSchema } from './components/MainEditor/validator'
 import getStorage from './tools/getStorage'
@@ -91,7 +91,7 @@ function App() {
     useEffect(
         () => {
             if (! __DEV__) {
-                chrome.runtime.sendMessage(chrome.runtime.id, buildStorageMsg('rules', rules))
+                chrome.runtime.sendMessage(chrome.runtime.id, createStorageAction('rules', rules))
             }
         },
         [rules]
@@ -100,7 +100,7 @@ function App() {
     useEffect(
         () => {
             if (! __DEV__) {
-                chrome.runtime.sendMessage(chrome.runtime.id, buildStorageMsg('faked', faked))
+                chrome.runtime.sendMessage(chrome.runtime.id, createStorageAction('faked', faked))
             }
         },
         [faked]
@@ -109,7 +109,7 @@ function App() {
     useEffect(
         () => {
             if (! __DEV__) {
-                chrome.runtime.sendMessage(chrome.runtime.id, buildStorageMsg('action', action))
+                chrome.runtime.sendMessage(chrome.runtime.id, createStorageAction('action', action))
             }
         },
         [action]
@@ -290,7 +290,9 @@ function App() {
 
                         return (
                             <Tag style={{ cursor: canSend ? 'pointer' : 'text', borderStyle: canSend ? 'solid' : 'dashed' }} color={getMethodColor(value)} onClick={() => {
-                                sendRequestLog(record, index)
+                                if (canSend) {
+                                    sendRequestLog(record, index)
+                                }
                             }}>{value}</Tag>
                         )
                     }
