@@ -7,8 +7,9 @@ import { delayRun } from "../../../tools"
 interface MatchItem {
     status?: number
     delay?: number
-    response: string
-    responseHeaders: Record<string, string>
+    response: any
+    responseText: string
+    responseHeaders?: Record<string, string>
 }
 
 class FakeXMLHttpRequest extends XMLHttpRequest {
@@ -70,13 +71,13 @@ class FakeXMLHttpRequest extends XMLHttpRequest {
         handleStateChange.call(this, XMLHttpRequest.HEADERS_RECEIVED)
         handleStateChange.call(this, XMLHttpRequest.LOADING)
         delayRun(() => {
-            const { status = 200, responseHeaders, response } = matchItem
+            const { status = 200, responseHeaders, response, responseText } = matchItem
             setResponseHeaders.call(this, responseHeaders)
             // @ts-ignore this field has been proxy
             this.status = status
             // @ts-ignore this field has been proxy
             this.statusText = HttpStatusCodes[this.status]
-            setResponseBody.call(this, response)
+            setResponseBody.call(this, response ? JSON.stringify(response) : responseText)
         }, matchItem.delay)
     }
 
