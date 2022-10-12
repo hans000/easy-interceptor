@@ -1,95 +1,89 @@
 # Easy Interceptor
 
-中文 | [**English**](./readme-EN.md)
+[中文](./readme-zh_CN.md) | **English**
 
-## 📑 摘要
-一款集成了模拟和拦截请求并拥有一定编程能力的谷歌浏览器插件，其中存储容量、大小用颜色做了指示，界面简洁，交互友好。由于对项目没有依赖性、侵入性，所以开发、测试、生产环境都适用。
+## abstract
+Easy Interceptor is a Chrome extension that intercepts HTTP requests in the form of XMLHttpRequest data requests. It intercepts and modifs data by overwriting the Response and responseText fields. It is mainly used for debugging Web pages.
 
-<img src="./assets/cover.png" alt="演示" style="width:80%;padding-left:10%" />
 
-## 🚀 使用场景
-设想一下明明是要验证一个很简单的东西，但是这个问题复现的前置条件实在太难完成了，导致自己很痛苦。这里的太难完成可能是：
+## 🚀 Scenarios
+Imagine that it is obviously to verify a very simple thing, but the preconditions for the recurrence of this problem are too difficult to complete, causing pain. The difficulty may be:
 
-- 业务流程太长（不熟悉流程或不想重走一遍）
-- 要验证的是测试环境，不能通过前端硬编码解决
-- 修改数据库困难（没有条件改、不会改或者不想麻烦后端改）
-- 不想使用代理软件（没必要、没用过或者安装、配置麻烦等）
+- The working process is too long (not familiar with the process or do not want to go through it again)
+- The test environment to be verified cannot be solved through front-end hard coding
+- It is difficult to modify the database (without conditions, will not change, or does not want to bother the back-end)
+- Do not want to use the agent software (unnecessary, unused, or difficult to install and configure)
 
-如何解决上述问题呢？如果可以在客户端接收数据前拦截并加以修改再返回就可以达到目的。Easy Interceptor就是利用上述思路，它可以拦截XMLHttpRequest，fetch数据请求方式的http请求，通过覆盖response，responseText字段，从而达到对数据的修改。作为一个chrome插件，天然的集成在用户测试环境，因此对使用者的心智负担极小。
+How to solve the above problems? If you can intercept and modify the data before the client receives it, you can achieve the goal. Easy Interceptor makes use of the above ideas. It can intercept http requests in XMLHttpRequest and fetch data requests, and modify data by overwriting the response and responseText fields. As a chrome extension, it is naturally integrated in the user test environment, so the mental burden on users is minimal.
 
-- xhr: 内部实现了一个FakeXMLHttpRequest，因此使用xhr类型的请求方式可以不向后端发出请求，也无须后端服务支持
+- xhr: a fake XMLHttpRequest is implemented
 
-- fetch: 内部实现了一个fakeFetch
+- fetch: a fake fetch is implemented
 
-> 注意：
+> Notice: 
 > 
-> 插件仅针对content-type: json类型有效，在不用时请关闭该插件防止出现页面加载异常
+> The extension is only valid for content type: json type. Please close the extension when do not use
 >
-> 如果你是一个熟练度拉满，有着完善的代理环境大可不必使用，仅作为特定场合的补充
+> If you are skilled and have a perfect agent environment, you don't need to use it
 > 
-> 如果使用cdn版本，请保证能访问unpkg.com，首次加载会比较慢。或者直接使用local版本
+> If you use the cdn version, make sure you can access https://unpkg.com. The first load will be slow. Or use the local version directly
 
-## 🎉 特点
+## 🎉 Feature
 
-- 免费无广告推广，较好的用户体验，暗色模式
-- 提供监听当前请求（省略手动填写的麻烦）
-- 导入导出，工程序列化
-- 拥有一定的js编程能力，可以动态处理数据，可打印输出信息
-- 集成monaco-editor，更方便的编辑处理文本（10W行数据也不会卡顿）
-- 更加友好的交互，用颜色法突出当前状态
-- 使用cdn，大幅度缩减安装包
-- 扁平化数据，支持过滤字段，更加符合直觉
-- 支持修改响应头
-- 主动发送请求，支持修改请求参数（params、headers、body）
-- fake模式，用于适应不同的场景需求（默认关闭，部分场景下fake模式可能会失效）
+- Free advertising free promotion, better user interaction, and dark mode
+- Provide monitoring of current requests (omit the trouble of manual filling)
+- Import/export, project serialization - has certain js programming ability, can dynamically process data, and can print and output information
+- Integrated monaco editor for more convenient text editing and processing
+- Use cdn to greatly reduce the installation package (only cdn version)
+- Support modifying response headers, actively sending requests, and modifying request parameters (params, headers, body)
+- Fake mode, which is used to adapt to different scenarios (it is closed by default and may fail in some scenarios)
 
-## 📑 使用说明
 
-> 部分操作查看老版本使用说明
+## 📑 Usage
 
-### 图标状态
-- 灰色：关闭状态（数字角标展示当前列表共有多少条数据）
-- 橙色：监听状态（数字角标展示当前列表共有多少条数据）
-- 紫色：拦截状态（数字角标展示当前列表共启用拦截多少条数据）
-- 黑色：拦截状态-Fake模式（数字角标展示当前列表共启用拦截多少条数据）
+### Icon Status
+- gray: Closed（The number corner shows how many pieces of data are in the current list）
+- orange: Watching（The number corner shows how many pieces of data are in the current list）
+- purple: Intercepting（The digital corner shows how many pieces of data are intercepted in the current list）
+- black: Intercepting-Fake Mode（The digital corner shows how many pieces of data are intercepted in the current list）
 
-### 左上方工具栏
-- 【新增】：添加一条数据
-- 【删除】：删除
-- 【导入、导出】：对当前工程的序列化
-- 【刷新】：刷新数据
-- 【切换主题】：亮色模式 | 暗色模式
-- 【fake模式】：是否启用fake，默认关闭，仅对请求进行拦截，依赖后端服务；开启后会使用一个模拟的对象，可以不依赖后端服务
+### Left Top Tools
+- 【新增】: add a datum
+- 【删除】: remove a datum
+- 【导入、导出】: serialize project
+- 【刷新】: refresh, will reset `count` field 
+- 【切换主题】: light | dark
+- 【fake模式】: turn on fake mode, default turn off, Only intercept requests, relying on back-end services; When enabled, a simulated object will be used, which can be independent of back-end services
 
-### 右上角菜单
-- 关闭状态：关闭插件
-- 监听功能：监听请求（仅对Content-Type为json类型的请求有效）
-- 拦截功能：自定义responseText
+### Right Top Menu
+- 关闭: close this extension
+- 启用监听: watching fetch（just work on Content-Type is json）
+- 启用拦截: custome responseText
 
-### config面板
+### Config Panel
 
-|属性|类型|说明|
+|field|type|description|
 |---|---|---|
-|url|string|必选，请求地址|
-|test|string|必选，匹配的请求地址，ant-path-matcher规则|
-|type|xhr\|fetch|请求类型，默认xhr|
-|response|object\|array\|null\boolean\|number|响应数据|
-|responseText|string|响应数据|
-|delay|number|延迟的毫秒数|
-|method|enum get\|put\|post\|delete\|patch|请求类型|
-|body|Record<string, any>|请求主体|
-|status|number|默认200|
+|url|string|request url|
+|test|string|required, match request url, ant-path-matcher rule|
+|type|xhr\|fetch|request type，default xhr|
+|response|object\|array\|null\boolean\|number||
+|responseText|string||
+|delay|number||
+|method|enum get\|put\|post\|delete\|patch|request type|
+|body|Record<string, any>||
+|status|number|default 200|
 |params|[string, string][]||
-|requestHeaders|Record<string, string>|请求头|
-|responseHeaders|Record<string, string>|响应头|
-|redirectUrl|string|重定向链接，不能和url一样，会死循环|
+|requestHeaders|Record<string, string>||
+|responseHeaders|Record<string, string>||
+|redirectUrl|string|cannot be the same as the url, will cause a loop|
 
-### code面板
-通过定义\_\_map\_\_来动态的修改数据
+### Code Panel
+declare \_\_map\_\_ function to modify response by js
 ```
-function __map__(data, inst: XMLHttpRequest | Response) {
+function __map__(context, inst: XMLHttpRequest | Response) {
     return {
-        // 内部会做一个shallow merge
+        // will be shallow merge
         response: {
             foo: Math.random().toString()
         }
@@ -98,97 +92,47 @@ function __map__(data, inst: XMLHttpRequest | Response) {
 ```
 
 
-## ⭐ 使用场景
+## ⭐ Usage Scenarios
 
-### 拦截数据
+### Watching
 
-选择拦截模式，勾选需要拦截的接口，刷新页面即可
+It can help you quickly fill in the interface information to be intercepted, and then re request the interface
 
-> 注意：
->
-> 使用response或responseText来覆盖真实值
-> 
-> 如果需要延迟接口响应可以使用delay字段
+### Intercepting
 
-### 测试后端接口
+Select the interception mode, tick the interface to be intercepted, and then re request the interface
 
-插件提供了测试后端接口的功能，你可以理解为是一个简单的postman，由于插件端不存在跨域的问题，因此无需代理，设置好相应的请求头即可。
+### Test back-end api
 
-> 注意：确保是一个完整的url（可以从请求类型表框是否为实线看出）
-
-
-## 📜 后期计划
-
-- ⚪ 支持indexeddb
-- ⚪ 支持通过cdn来增强code面板
-- ⚪ 使用v3版本（chrome88+）
-- ⚪ 支持环境变量等
-- ⚪ 支持本地化
-
+The extension provides the function of testing the back-end interface. You can understand it as a simple postman. Since the extension side does not have the problem of cross domain, no proxy is required, and the corresponding request header can be set.
 
 
 ## 💬 Q&A
 
-### 🔹 为什么会有两个安装包
-推荐使用cdn版本，带local字眼的为离线版，适合内网用户
+### 🔹 Why there are two installation packages
+It is recommended to use the cdn version (ensure access to https://unpkg.com). The offline version with local is more suitable for LAN users
 
 
-### 🔹 为什么插件窗口只有800x600
-这个是由于浏览器限制的，popup的形式最大支持800x600，该形式的好处在于尽可能不影响项目本身（不足在于每次都会重新加载页面，因此插件做了很多的序列化以保证较好的用户体验）
+### 🔹 Why is the extension window only 800x600
+This is due to browser restrictions. The maximum support for the form of popup is 800x600. The advantage of this form is that it does not affect the project itself as much as possible (the disadvantage is that the page will be reloaded every time, so the extension does a lot of serialization to ensure a better user interaction)
 
 
-### 🔹 存储只有5M，如何突破限制
-主要response数据量太大导致的，可以把response面板设置为 `null` , code面板通过js修改数据（未来会加入indexeddb）
+### 🔹 The storage is only 5M, how to break the limit
+There are two ways to deal with some scenarios:
 
-
-
-### 🔹 为什么是262kb
-这里是为了方便写程序，y = f(x) = log2(x)，取了个公差为2的等差数列18 20 22；也就是2^18 = 262144，并且这些值也比较合适。
-
-
-
-### 🔹 为什么仅支持json类型的请求
-起初是为了解决自测阶段部分场景的复现问题（现在的应用前后端交互基本都是json类型），期间使用了几个类似的插件发现用户体验不是很好，一些代理软件功能很强，但是个人也不太喜欢太重的配置，使用的环境要尽可能单一。如果无法满足您的个人需要可以pr或fork
+-If a single piece of data is relatively large and the number of fields to be changed is relatively small, you can modify the real data through js in the code panel to achieve the modification effect
+-Use the redirectUrl option
 
 
 
-## 📑 老版本使用说明
-> 强烈建议使用最新版本
-<details>
-    <summary>（v1.5）展开 / 折叠</summary>
-<img src="./assets/demo-v1.5.0.gif" alt="演示" style="width:80%;padding-left:10%" />
-</details>
+### 🔹 Why is 262kb
+Here, for the convenience of writing programs, y=f(x)=log2(x), an equal difference number sequence 18, 20, 22 with a tolerance of 2 is taken; That is, 2^18=262144, and these values are also appropriate.
 
-<details>
-    <summary>（v1.4之前）展开 / 折叠</summary>
-    
-<img src="./assets/demo.png" alt="演示" style="width:80%;padding-left:10%" />
 
-### 如何使用
 
-**方式1**：新建一个数据然后手动填写general和response选项，如下
+### 🔹 Why only json type requests are supported
+At first, it was intended to solve the problem of the recurrence of some scenarios in the self-test phase (the modern project of front-end and back-end interactions are basically of the json type). Some agent software had strong functions, but I didn't like too much configuration, and the use environment should be as single as possible.
 
-<img src="./assets/demo-add.gif" alt="演示" style="width:80%;padding-left:10%" />
-
-**方式2**：使用监听形式，重新请求接口，然后修改数据
-
-<img src="./assets/demo-watch.gif" alt="演示2" style="width:80%;padding-left:10%" />
-
-**方式3**：使用监听形式，控制台replay，然后修改数据（注意：使用此方式无法获取response，需要手动填写）
-
-<img src="./assets/demo-replay.gif" alt="演示3" style="width:80%;padding-left:10%" />
-
-**方式4**：可以在code面板中定义一个匿名函数用于转换数据，(response, config) => response
-
-<img src="./assets/demo-code.gif" alt="演示4" style="width:80%;padding-left:10%" />
-
-### 注意事项
-- 仅在开发时使用，不使用时请关闭
-- 因为存储仅有5M，插件使用shorten函数对单条数据做精简（规则：数据超过50000字符时启用，当满足数组超过10项或字符串超过200字符时会通过递归折半精简数据）
-- 你可以书写js对象，程序会尝试修复，如下
-
-<img src="./assets/demo-repair.gif" alt="演示4" style="width:80%;padding-left:10%" />
-</details>
 
 ## License
 [MIT](./LICENSE)
