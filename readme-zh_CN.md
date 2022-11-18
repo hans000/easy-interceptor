@@ -71,7 +71,7 @@
 |---|---|---|
 |url|string|请求地址|
 |test|string|必选，匹配的请求地址，ant-path-matcher规则|
-|type|xhr\|fetch|请求类型，默认xhr|
+|type|xhr\|fetch|请求类型，缺省时\_\_map\_\_的第二个参数为空|
 |response|object\|array\|null\boolean\|number|响应数据|
 |responseText|string|响应数据|
 |delay|number|延迟的毫秒数|
@@ -86,7 +86,7 @@
 ### code面板
 通过定义\_\_map\_\_来动态的修改数据
 ```
-function __map__(context, inst: XMLHttpRequest | Response) {
+function __map__(context, inst: XMLHttpRequest | Response | undefined) {
     return {
         // 内部会做一个shallow merge
         response: {

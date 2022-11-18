@@ -66,7 +66,7 @@ How to solve the above problems? If you can intercept and modify the data before
 |---|---|---|
 |url|string|request url|
 |test|string|required, match request url, ant-path-matcher rule|
-|type|xhr\|fetch|request type，default xhr|
+|type|xhr\|fetch|request type, \_\_map\_\_'s second arg will be undefined if uninitialized|
 |response|object\|array\|null\boolean\|number||
 |responseText|string||
 |delay|number||
@@ -81,7 +81,7 @@ How to solve the above problems? If you can intercept and modify the data before
 ### Code Panel
 declare \_\_map\_\_ function to modify response by js
 ```
-function __map__(context, inst: XMLHttpRequest | Response) {
+function __map__(context, inst: XMLHttpRequest | Response | undefined) {
     return {
         // will be shallow merge
         response: {

@@ -243,9 +243,6 @@ function App() {
                 {
                     dataIndex: 'type', key: 'type', width: 100, align: 'center',
                     title: '拦截类型',
-                    render: (value) => {
-                        return value || 'xhr'
-                    }
                 },
                 {
                     dataIndex: 'count', key: 'count', width: 100, align: 'center',

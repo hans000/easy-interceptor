@@ -25,8 +25,8 @@ const app = {
                 return async (res) => {
                     if (data) {
                         triggerCountEvent(data.id)
-                        const { responseText, status = 200, responseHeaders } = await handleCode(data, res)
-                        return Promise.resolve(new Response(new Blob([responseText]), {
+                        const { responseText, response, status = 200, responseHeaders } = await handleCode(data, data.type ? res : undefined)
+                        return Promise.resolve(new Response(new Blob([response !== undefined ? JSON.stringify(response) : responseText]), {
                             status,
                             headers: responseHeaders,
                             statusText: HttpStatusCodes[status],
@@ -47,7 +47,7 @@ const app = {
                     if (data) {
                         if (this.readyState === 4) {
                             try {
-                                const { response, responseText, status = 200 } = await handleCode(data, xhr)
+                                const { response, responseText, status = 200 } = await handleCode(data, data.type ? xhr : undefined)
                                 
                                 this.responseText = this.response = response !== undefined ? JSON.stringify(response) : responseText
                                 this.status = status
@@ -92,7 +92,7 @@ const run = debounce(() => app.run())
 function matching(rules: MatchRule[], req: CustomRequestInfo): MatchRule | undefined {
     for(let rule of rules) {
         if (rule.enable &&
-            req.type === (rule.type || 'xhr') &&
+            (rule.type ? req.type === rule.type : true) &&
             pathMatch(rule.test, req.requestUrl) &&
             req.method.toLowerCase() === (rule.method || 'get')) {
             return rule
