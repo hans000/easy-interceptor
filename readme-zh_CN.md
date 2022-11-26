@@ -70,7 +70,7 @@
 |属性|类型|说明|
 |---|---|---|
 |url|string|请求地址|
-|test|string|必选，匹配的请求地址，ant-path-matcher规则|
+|test|string|必选，匹配的请求地址，ant-path-matcher规则，不允许写query参数|
 |type|xhr\|fetch|请求类型，缺省时\_\_map\_\_的第二个参数为空|
 |response|object\|array\|null\boolean\|number|响应数据|
 |responseText|string|响应数据|
@@ -78,7 +78,7 @@
 |method|enum get\|put\|post\|delete\|patch|请求类型|
 |body|Record<string, any>|请求主体|
 |status|number|默认200|
-|params|[string, string][]||
+|params|[string, string][]|query参数写在这里|
 |requestHeaders|Record<string, string>|请求头|
 |responseHeaders|Record<string, string>|响应头|
 |redirectUrl|string|重定向链接，不能和url一样，会死循环|
@@ -88,7 +88,7 @@
 ```
 function __map__(context, inst: XMLHttpRequest | Response | undefined) {
     return {
-        // 内部会做一个shallow merge
+        // 内部会做shallow merge
         response: {
             foo: Math.random().toString()
         }

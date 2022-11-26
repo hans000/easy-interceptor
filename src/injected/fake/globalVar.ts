@@ -10,6 +10,7 @@ export interface CustomRequestInfo {
     requestUrl: string
     method: string
     type: 'xhr' | 'fetch'
+    params: [string, string][]
 }
 
 export interface Options {

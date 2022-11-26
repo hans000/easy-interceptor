@@ -27,6 +27,9 @@ export const ConfigSchema: JSONSchema7 = {
             type: 'string',
             required: ['test'],
         },
+        description: {
+            type: 'string',
+        },
         type: {
             type: "string",
             enum: ["xhr", "fetch"]

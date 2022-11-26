@@ -65,7 +65,7 @@ How to solve the above problems? If you can intercept and modify the data before
 |field|type|description|
 |---|---|---|
 |url|string|request url|
-|test|string|required, match request url, ant-path-matcher rule|
+|test|string|required, match request url, ant-path-matcher rule, cannot set query|
 |type|xhr\|fetch|request type, \_\_map\_\_'s second arg will be undefined if uninitialized|
 |response|object\|array\|null\boolean\|number||
 |responseText|string||
@@ -73,7 +73,7 @@ How to solve the above problems? If you can intercept and modify the data before
 |method|enum get\|put\|post\|delete\|patch|request type|
 |body|Record<string, any>||
 |status|number|default 200|
-|params|[string, string][]||
+|params|[string, string][]|set query|
 |requestHeaders|Record<string, string>||
 |responseHeaders|Record<string, string>||
 |redirectUrl|string|cannot be the same as the url, will cause a loop|

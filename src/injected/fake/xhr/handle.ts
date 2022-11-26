@@ -52,11 +52,12 @@ export function modifyXhrProtoProps(config: {
 export function handleReadyStateChange() {
     if (this.readyState === 1) {
         const { onMatch } = __global__.options
-        const urlObj = this._url instanceof URL ? this._url : parseUrl(this._url)
+        const urlObj: URL = this._url instanceof URL ? this._url : parseUrl(this._url)
         this._matchItem = onMatch({
             method: this._method,
             requestUrl: urlObj.origin + urlObj.pathname,
             type: 'xhr',
+            params: [...urlObj.searchParams.entries()]
         })
     } else if (this.readyState === 4) {
         const { onXhrIntercept } = __global__.options

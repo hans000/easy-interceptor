@@ -22,7 +22,7 @@ export function syncData() {
             postMessage(createBackgroudAction('action', action))
         }
         if (rules) {
-            postMessage(createBackgroudAction('rules', rules))
+            postMessage(createBackgroudAction('rules', rules.filter(e => e.enable)))
         }
         if (faked) {
             postMessage(createBackgroudAction('faked', faked))

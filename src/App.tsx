@@ -1,7 +1,7 @@
 import './App.less'
 import { Badge, Checkbox, BadgeProps, Button, Dropdown, Input, Menu, message, Modal, Spin, Table, Tag, Tooltip, Upload } from 'antd'
 import React, { useEffect, useRef, useState } from 'react'
-import { TagOutlined, ControlOutlined, CodeOutlined, DeleteOutlined, PlusOutlined, SearchOutlined, DownOutlined, VerticalAlignBottomOutlined, UploadOutlined, SyncOutlined, RollbackOutlined, BugOutlined, FilterOutlined } from '@ant-design/icons'
+import { TagOutlined, ControlOutlined, CodeOutlined, DeleteOutlined, PlusOutlined, SearchOutlined, DownOutlined, VerticalAlignBottomOutlined, UploadOutlined, SyncOutlined, RollbackOutlined, BugOutlined, FilterOutlined, MenuOutlined, UnorderedListOutlined, EllipsisOutlined } from '@ant-design/icons'
 import { ColumnsType } from 'antd/lib/table'
 import { pathMatch, randID, renderSize } from './utils'
 import { getConfigText, getMethodColor } from './tools/mappings'
@@ -25,6 +25,7 @@ export interface MatchRule {
     delay?: number
     enable?: boolean
     url?: string
+    description?: string
     test: string
     type?: 'xhr' | 'fetch'
     method?: 'get' | 'post' | 'delete' | 'put' | 'patch'
@@ -49,7 +50,7 @@ if (! process.env.VITE_LOCAL) {
     })
 }
 
-const fields = ['url', 'redirectUrl', 'test', 'type', 'method', 'status', 'delay', 'params', 'requestHeaders', 'responseHeaders', 'body', 'response', 'responseText']
+const fields = ['url', 'redirectUrl', 'test', 'type', 'method', 'status', 'delay', 'params', 'requestHeaders', 'responseHeaders', 'body', 'response', 'responseText', 'description']
 
 const isDrakTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
 
@@ -91,7 +92,7 @@ function App() {
     useEffect(
         () => {
             if (! __DEV__) {
-                chrome.runtime.sendMessage(chrome.runtime.id, createStorageAction('rules', rules))
+                chrome.runtime.sendMessage(chrome.runtime.id, createStorageAction('rules', rules.filter(e => e.enable)))
             }
         },
         [rules]
@@ -169,28 +170,26 @@ function App() {
             return [
                 {
                     title: (
-                        <Dropdown visible={visible} onVisibleChange={setVisible} overlay={
-                            <Menu items={fields.map(field => {
-                                const disabled = (ConfigSchema.properties[field] as any).required
-                                return {
-                                    key: field,
-                                    label: (
-                                        <Checkbox disabled={disabled} key={field} defaultChecked={!hiddenFields.includes(field)} onChange={(e) => {
-                                            const checked = e.target.checked
-                                            setHiddenFields(fields => {
-                                                if (checked) {
-                                                    return fields.filter(item => item !== field)
-                                                } else {
-                                                    return [...fields, field]
-                                                }
-                                            })
-                                        }}>{field}</Checkbox>
-                                    ),
-                                }
-                            })}/>
-                        }>
+                        <Dropdown open={visible} onOpenChange={setVisible} menu={{ items: fields.map(field => {
+                            const disabled = (ConfigSchema.properties[field] as any).required
+                            return {
+                                key: field,
+                                label: (
+                                    <Checkbox disabled={disabled} key={field} defaultChecked={!hiddenFields.includes(field)} onChange={(e) => {
+                                        const checked = e.target.checked
+                                        setHiddenFields(fields => {
+                                            if (checked) {
+                                                return fields.filter(item => item !== field)
+                                            } else {
+                                                return [...fields, field]
+                                            }
+                                        })
+                                    }}>{field}</Checkbox>
+                                ),
+                            }
+                        })}}>
                             <span>
-                                <span>匹配规则</span>
+                                <span>匹配规则 / 备注</span>
                                 <FilterOutlined style={{ marginLeft: 8, padding: 4, color: '#bfbfbf' }} />
                             </span>
                         </Dropdown>
@@ -219,30 +218,68 @@ function App() {
                     ),
                     onFilter(value: string, record) {
                         const [k, e] = value.split('\n')
-                        const include = value.includes(k)
-                        const exclude = e ? e.split(',').some(el => pathMatch(el, value)) : false
+                        const include = record.test.includes(k) || record.description?.includes(k)
+                        const exclude = e ? e.split(',').some(pattern => pathMatch(pattern, record.test)) : false
                         return value ? (include && !exclude) : true
                     },
                     render: (value, record, index) => {
-                        const origin = originRef.current
-                        const shortText = !!origin && value.startsWith(origin) ? '~' + value.slice(origin.length) : value
                         const status = record.code
                             ? 'default'
                             : (['lime', 'lime', 'success', 'success', 'warning', 'error'][(record.status || 200) / 100 | 0] || 'default') as BadgeProps['status']
                         return (
-                            <Tooltip placement="topLeft" title={value}>
+                            <Dropdown trigger={['contextMenu']} menu={{ items: [
+                                {
+                                    label: '拷贝',
+                                    key: 'copy',
+                                    onClick: () => {
+                                        setRules(r => {
+                                            const rules = [...r]
+                                            const rule = { ...rules[index], id: randID(), count: 0, enable: false }
+                                            rule.description = '拷贝' + (rule.description || '')
+                                            rules.splice(index + 1, 0, rule)
+                                            return rules
+                                        })
+                                    }
+                                },
+                                {
+                                    label: '删除',
+                                    key: 'remove',
+                                    onClick() {
+                                        setRules(r => {
+                                            const rules = [...r]
+                                            rules.splice(index, 1)
+                                            return rules
+                                        })
+                                    }
+                                },
+                                {
+                                    label: '刷新',
+                                    key: 'fresh',
+                                    onClick() {
+                                        setRules(r => {
+                                            const rules = [...r]
+                                            rules[index].count = 0
+                                            return rules
+                                        })
+                                    }
+                                },
+                            ]}}>
                                 <Badge status={status} text={
-                                    <span style={{ cursor: 'pointer' }} onClick={() => {
-                                        setActiveIndex(index)
-                                    }}>{shortText}</span>
-                                    }></Badge>
-                            </Tooltip>
+                                    <>
+                                        <a title={value} onClick={() => {
+                                            setActiveIndex(index)
+                                        }}>{value}</a>
+                                        <span title={record.description} className='row__desc'>{record.description}</span>
+                                    </>
+                                }></Badge>
+                            </Dropdown>
                         )
                     }
                 },
                 {
                     dataIndex: 'type', key: 'type', width: 100, align: 'center',
                     title: '拦截类型',
+                    render: (type) => type || 'xhr / fetch'
                 },
                 {
                     dataIndex: 'count', key: 'count', width: 100, align: 'center',
@@ -286,7 +323,7 @@ function App() {
                         const canSend = record.url !== undefined
 
                         return (
-                            <Tag style={{ cursor: canSend ? 'pointer' : 'text', borderStyle: canSend ? 'solid' : 'dashed' }} color={getMethodColor(value)} onClick={() => {
+                            <Tag title={ canSend ? '点击发送请求' : '' } style={{ cursor: canSend ? 'pointer' : 'text', borderStyle: canSend ? 'solid' : 'dashed' }} color={getMethodColor(value)} onClick={() => {
                                 if (canSend) {
                                     sendRequestLog(record, index)
                                 }
@@ -295,22 +332,31 @@ function App() {
                     }
                 },
                 {
-                    dataIndex: 'enable', key: 'enable', width: 50, align: 'center',
+                    dataIndex: 'enable', key: 'enable', width: 40, align: 'center',
                     title: (
                         <Tooltip title='启用拦截'>
-                            <ControlOutlined />
+                            <ControlOutlined onClick={() => {
+                                setRules(rules => {
+                                    const allChecked = rules.every(rule => rule.enable)
+                                    return rules.map(rule => {
+                                        return { ...rule, enable: !allChecked }
+                                    })
+                                })
+                            }} />
                         </Tooltip>
                     ),
-                    render: (value, record, index) => <Checkbox checked={value} onChange={(e) => {
-                        if (! value) {
-                            setAction('intercept')
-                        }
-                        setRules(data => {
-                            const result = [...data]
-                            result[index].enable = e.target.checked
-                            return result
-                        })
-                    }}></Checkbox>
+                    render: (value, record, index) => (
+                        <Checkbox checked={value} onChange={(e) => {
+                            if (! value) {
+                                setAction('intercept')
+                            }
+                            setRules(data => {
+                                const result = [...data]
+                                result[index].enable = e.target.checked
+                                return result
+                            })
+                        }}></Checkbox>
+                    )
                 },
             ]	
         },
@@ -374,9 +420,10 @@ function App() {
                                     const result = [...rule, {
                                         id: randID(),
                                         count: 0,
-                                        url: '/api-' + rule.length,
                                         test: '/api-' + rule.length,
-                                        response: null,
+                                        response: {
+                                            foo: 'xxx'
+                                        },
                                     }]
                                     return result
                                 })
@@ -482,8 +529,9 @@ function App() {
                         }
                     </Button.Group>
                     <div>
-                        <Dropdown overlay={
-                            <Menu activeKey={action} onClick={(info) => {
+                        <Dropdown menu={{
+                            activeKey: action,
+                            onClick: info => {
                                 setAction(info.key)
                                 if (info.key === 'intercept' && activeIndex !== -1) {
                                     setRules(rules => {
@@ -492,21 +540,21 @@ function App() {
                                         return newRules
                                     })
                                 }
-                            }} items={[
-                                {
-                                    label: <Badge status='default' text='关闭'></Badge>,
-                                    key: 'close',
-                                },
-                                {
-                                    label: <Badge color={'orange'} status='default' text='启用监听'></Badge>,
-                                    key: 'watch',
-                                },
-                                {
-                                    label: <Badge color={'purple'} status='default' text='启用拦截'></Badge>,
-                                    key: 'intercept',
-                                }
-                            ]} />
-                        }>
+                            },
+                            items: [
+                            {
+                                label: <Badge status='default' text='关闭'></Badge>,
+                                key: 'close',
+                            },
+                            {
+                                label: <Badge color={'orange'} status='default' text='启用监听'></Badge>,
+                                key: 'watch',
+                            },
+                            {
+                                label: <Badge color={'purple'} status='default' text='启用拦截'></Badge>,
+                                key: 'intercept',
+                            }
+                        ]}}>
                             <a className="ant-dropdown-link" onClick={e => e.preventDefault()}>
                                 <span>{getConfigText(action as ActionType)}</span> <DownOutlined />
                             </a>

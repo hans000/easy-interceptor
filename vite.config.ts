@@ -1,5 +1,5 @@
 import { defineConfig } from 'vite'
-import reactRefresh from '@vitejs/plugin-react-refresh'
+import react from '@vitejs/plugin-react'
 import styleImport from 'vite-plugin-style-import'
 import replace from '@rollup/plugin-replace';
 import * as path from 'path'
@@ -21,7 +21,7 @@ export default defineConfig({
     target: 'esnext',
   },
   plugins: [
-    reactRefresh(),
+    react(),
     !isLocal && cdnImport({
       modules: [
         {
@@ -43,10 +43,17 @@ export default defineConfig({
           ],
         },
         {
+          name: 'state-local',
+          var: 'state',
+          path: [
+            'https://unpkg.com/state-local@1.0.7/lib/umd/state-local.min.js'
+          ]
+        },
+        {
           name: 'react',
           var: 'React',
           path: [
-            'https://unpkg.com/react@17.0.2/umd/react.production.min.js',
+            'https://unpkg.com/react@18.2.0/umd/react.production.min.js',
             // 'https://cdn.jsdelivr.net/npm/react@17.0.2/umd/react.production.min.js',
             // 'https://cdnjs.cloudflare.com/ajax/libs/react/17.0.2/umd/react.production.min.js',
           ],
@@ -55,7 +62,7 @@ export default defineConfig({
           name: 'react-dom',
           var: 'ReactDOM',
           path: [
-            'https://unpkg.com/react-dom@17.0.2/umd/react-dom.production.min.js',
+            'https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js',
             // 'https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js',
             // 'https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js',
           ],
@@ -80,12 +87,12 @@ export default defineConfig({
           name: 'antd',
           var: 'antd',
           path: [
-            'https://unpkg.com/antd@4.21.0/dist/antd.min.js',
-            // 'https://cdn.jsdelivr.net/npm/antd@4.21.0/dist/antd.min.js',
+            'https://unpkg.com/antd@4.24.4/dist/antd.min.js',
+            // 'https://cdn.jsdelivr.net/npm/antd@4.24.4/dist/antd.min.js',
           ],
           css: [
-            'https://unpkg.com/antd@4.21.0/dist/antd.min.css',
-            // 'https://cdn.jsdelivr.net/npm/antd@4.21.0/dist/antd.min.css',
+            'https://unpkg.com/antd@4.24.4/dist/antd.min.css',
+            // 'https://cdn.jsdelivr.net/npm/antd@4.24.4/dist/antd.min.css',
           ],
         },
         {
@@ -105,7 +112,7 @@ export default defineConfig({
           ]
         },
       ]
-    }),
+    }) as any,
     isLocal && styleImport({
       libs: [
         {

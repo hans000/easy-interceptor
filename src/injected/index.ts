@@ -1,5 +1,5 @@
 import { MatchRule } from '../App'
-import { createRunFunc, debounce, parseUrl, pathMatch } from '../utils'
+import { createRunFunc, debounce, equal, parseUrl, pathMatch } from '../utils'
 import { fake, unfake } from './fake'
 import { CountMsgKey, ResponseMsgKey, StorageMsgKey, SyncDataMsgKey } from '../tools/constants'
 import { HttpStatusCodes } from './fake/xhr/constants'
@@ -25,7 +25,7 @@ const app = {
                 return async (res) => {
                     if (data) {
                         triggerCountEvent(data.id)
-                        const { responseText, response, status = 200, responseHeaders } = await handleCode(data, data.type ? res : undefined)
+                        const { responseText, response, status = 200, responseHeaders } = await handleCode(data, res)
                         return Promise.resolve(new Response(new Blob([response !== undefined ? JSON.stringify(response) : responseText]), {
                             status,
                             headers: responseHeaders,
@@ -47,7 +47,7 @@ const app = {
                     if (data) {
                         if (this.readyState === 4) {
                             try {
-                                const { response, responseText, status = 200 } = await handleCode(data, data.type ? xhr : undefined)
+                                const { response, responseText, status = 200 } = await handleCode(data, xhr)
                                 
                                 this.responseText = this.response = response !== undefined ? JSON.stringify(response) : responseText
                                 this.status = status
@@ -94,7 +94,8 @@ function matching(rules: MatchRule[], req: CustomRequestInfo): MatchRule | undef
         if (rule.enable &&
             (rule.type ? req.type === rule.type : true) &&
             pathMatch(rule.test, req.requestUrl) &&
-            req.method.toLowerCase() === (rule.method || 'get')) {
+            req.method.toLowerCase() === (rule.method || 'get') &&
+            (rule.params ? equal(rule.params, req.params) : true)) {
             return rule
         }
     }
@@ -124,10 +125,13 @@ function triggerResponseEvent(response: string, url: string) {
 async function handleCode(matchRule: MatchRule, inst: XMLHttpRequest | Response) {
     let { id, count, enable, code, ...restRule } = matchRule
 
+    const text = await (inst instanceof Response ? inst.text() : inst.responseText)
+    restRule.responseText = text
+
     if (code) {
         try {
             const fn = createRunFunc(code)
-            const partialData = await fn(restRule, inst)
+            const partialData = await fn(restRule, matchRule.type ? inst : undefined)
             return {
                 ...restRule,
                 ...partialData || {},
