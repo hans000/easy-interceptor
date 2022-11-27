@@ -61,9 +61,9 @@
 - 【fake模式】：是否启用fake，默认关闭，仅对请求进行拦截，依赖后端服务；开启后会使用一个模拟的对象，可以不依赖后端服务
 
 ### 右上角菜单
-- 关闭状态：关闭插件
-- 监听功能：监听请求（仅对Content-Type为json类型的请求有效）
-- 拦截功能：自定义responseText
+- 【关闭状态】：关闭插件
+- 【监听功能】：监听请求（仅对Content-Type为json类型的请求有效）
+- 【拦截功能】：自定义responseText
 
 ### config面板
 
@@ -113,6 +113,11 @@ function __map__(context, inst: XMLHttpRequest | Response | undefined) {
 
 
 ## 💬 Q&A
+
+### 🔹 为什么有时候刷新页面数据没有拦截成功
+开发环境网页加载比较快，插件可能还有生效就请求就结束了，可以适当延迟请求执行
+
+
 
 ### 🔹 为什么会有两个安装包
 推荐使用cdn版本（确保可以访问https://unpkg.com），带local的为离线版，更适合局域网的用户

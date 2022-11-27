@@ -7,11 +7,3 @@ export function getMethodColor(method: string) {
 		put: 'lime',
 	}[method]
 }
-
-export function getConfigText(action: ActionType) {
-	return {
-		intercept: '启用拦截',
-		watch: '启用监听',
-		close: '关闭',
-	}[action]
-}

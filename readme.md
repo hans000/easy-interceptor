@@ -48,17 +48,17 @@ How to solve the above problems? If you can intercept and modify the data before
 - black: Intercepting-Fake Mode（The digital corner shows how many pieces of data are intercepted in the current list）
 
 ### Left Top Tools
-- 【新增】: add a datum
-- 【删除】: remove a datum
-- 【导入、导出】: serialize project
-- 【刷新】: refresh, will reset `count` field 
-- 【切换主题】: light | dark
-- 【fake模式】: turn on fake mode, default turn off, Only intercept requests, relying on back-end services; When enabled, a simulated object will be used, which can be independent of back-end services
+- [Add]: add a datum
+- [Remove]: remove a datum
+- [Export, Import]: serialize project
+- [Refresh]: refresh, will reset `count` field 
+- [Switch Theme]: light | dark
+- [Fake Mode]: turn on fake mode, default turn off, Only intercept requests, relying on back-end services; When enabled, a simulated object will be used, which can be independent of back-end services
 
 ### Right Top Menu
-- 关闭: close this extension
-- 启用监听: watching fetch（just work on Content-Type is json）
-- 启用拦截: custome responseText
+- [Close]: close this extension
+- [Watching]: watching fetch（just work on Content-Type is json）
+- [Intercepting]: custome responseText
 
 ### Config Panel
 
@@ -108,6 +108,10 @@ The extension provides the function of testing the back-end interface. You can u
 
 
 ## 💬 Q&A
+
+### 🔹 Sometimes not intercepted fetch when refresh the page
+The dev environment page is loaded faster, The script has not been injected yet but the request has been finished. You can appropriately delay the request
+
 
 ### 🔹 Why there are two installation packages
 It is recommended to use the cdn version (ensure access to https://unpkg.com). The offline version with local is more suitable for LAN users

@@ -1,0 +1,105 @@
+{
+    "description": {
+        "message": "Easy Interceptor——一款集成了模拟和拦截请求并拥有一定编程能力的谷歌浏览器插件，前端开发者的好帮手"
+    },
+    "action_add": {
+        "message": "关闭"
+    },
+    "action_remove": {
+        "message": "删除"
+    },
+    "action_export": {
+        "message": "导出"
+    },
+    "action_import": {
+        "message": "导入"
+    },
+    "action_refresh": {
+        "message": "刷新数据"
+    },
+    "action_theme": {
+        "message": "切换主题"
+    },
+    "action_mode": {
+        "message": "fake模式"
+    },
+    "action_back": {
+        "message": "返回"
+    },
+    "intercept": {
+        "message": "启用拦截"
+    },
+    "watch": {
+        "message": "启用监听"
+    },
+    "close": {
+        "message": "关闭"
+    },
+    "menu_copy": {
+        "message": "拷贝"
+    },
+    "menu_refresh": {
+        "message": "刷新"
+    },
+    "menu_remove": {
+        "message": "删除"
+    },
+    "row_rule": {
+        "message": "配置规则 / 备注"
+    },
+    "row_type": {
+        "message": "拦截类型"
+    },
+    "row_size": {
+        "message": "大小"
+    },
+    "tip_debug_count": {
+        "message": "调试 • 拦截次数"
+    },
+    "tip_tag": {
+        "message": "请求类型 • 发送"
+    },
+    "import_modal_title": {
+        "message": "导入说明"
+    },
+    "import_modal_content": {
+        "message": "请选择覆盖数据还是追加数据"
+    },
+    "import_modal_add": {
+        "message": "追加"
+    },
+    "import_modal_override": {
+        "message": "覆盖"
+    },
+    "import_modal_err": {
+        "message": "文件格式错误！仅支持json文本"
+    },
+    "import_modal_filter": {
+        "message": "重复$count$条数据，已过滤",
+        "placeholders": {
+            "count": {
+              "content": "$1"
+            }
+        }
+    },
+    "tip_send": {
+        "message": "点击发送请求"
+    },
+    "keyword": {
+        "message": "搜索关键字"
+    },
+    "exclude": {
+        "message": "排除选项 (ant path matcher规则)"
+    },
+    "items": {
+        "message": "项"
+    },
+    "total": {
+        "message": "所有，共$total$项",
+        "placeholders": {
+            "total": {
+              "content": "$1"
+            }
+        }
+    }
+}

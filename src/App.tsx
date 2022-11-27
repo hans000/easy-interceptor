@@ -1,10 +1,10 @@
 import './App.less'
-import { Badge, Checkbox, BadgeProps, Button, Dropdown, Input, Menu, message, Modal, Spin, Table, Tag, Tooltip, Upload } from 'antd'
+import { Badge, Checkbox, BadgeProps, Button, Dropdown, Input, message, Modal, Spin, Table, Tag, Tooltip, Upload } from 'antd'
 import React, { useEffect, useRef, useState } from 'react'
 import { TagOutlined, ControlOutlined, CodeOutlined, DeleteOutlined, PlusOutlined, SearchOutlined, DownOutlined, VerticalAlignBottomOutlined, UploadOutlined, SyncOutlined, RollbackOutlined, BugOutlined, FilterOutlined, MenuOutlined, UnorderedListOutlined, EllipsisOutlined } from '@ant-design/icons'
 import { ColumnsType } from 'antd/lib/table'
 import { pathMatch, randID, renderSize } from './utils'
-import { getConfigText, getMethodColor } from './tools/mappings'
+import { getMethodColor } from './tools/mappings'
 import { download, sizeof } from './tools'
 import { createStorageAction } from './tools/message'
 import jsonschema from 'json-schema'
@@ -18,6 +18,7 @@ import { runCode } from './tools/runCode'
 import { loader } from "@monaco-editor/react";
 import { sendRequestLog } from './tools/sendRequest'
 import { ActionFieldKey, DarkFieldKey, FakedFieldKey, HiddenFieldsFieldKey, IndexFieldKey, RulesFieldKey, SelectedRowFieldKeys, UpdateMsgKey } from './tools/constants'
+import useTranslate from './hooks/useTranslate'
 
 export interface MatchRule {
     id: string
@@ -67,6 +68,7 @@ function App() {
     const [visible, setVisible] = useState(false)
     const [hiddenFields, setHiddenFields] = useStorage(HiddenFieldsFieldKey, [])
     const editorRef = useRef()
+    const t = useTranslate()
 
     useEffect(
         () => {
@@ -189,7 +191,7 @@ function App() {
                             }
                         })}}>
                             <span>
-                                <span>匹配规则 / 备注</span>
+                                <span>{t('row_rule')}</span>
                                 <FilterOutlined style={{ marginLeft: 8, padding: 4, color: '#bfbfbf' }} />
                             </span>
                         </Dropdown>
@@ -198,7 +200,7 @@ function App() {
                     filterIcon: filtered => <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />,
                     filterDropdown: ({ setSelectedKeys, selectedKeys, confirm }) => (
                         <div style={{ padding: 8 }}>
-                            <Input placeholder='搜索关键字'
+                            <Input placeholder={t('keyword')}
                                 style={{ display: 'block', marginBottom: 8, width: 300 }}
                                 onChange={e => {
                                     const v = e.target.value
@@ -206,7 +208,7 @@ function App() {
                                     setSelectedKeys([[v, k].join('\n')])
                                     confirm({ closeDropdown: false });
                                 }} />
-                            <Input placeholder='排除选项 (ant path matcher规则)'
+                            <Input placeholder={t('exclude')}
                                 style={{ display: 'block', width: 300 }}
                                 onChange={e => {
                                     const v = e.target.value
@@ -229,20 +231,20 @@ function App() {
                         return (
                             <Dropdown trigger={['contextMenu']} menu={{ items: [
                                 {
-                                    label: '拷贝',
+                                    label: t('menu_copy'),
                                     key: 'copy',
                                     onClick: () => {
                                         setRules(r => {
                                             const rules = [...r]
                                             const rule = { ...rules[index], id: randID(), count: 0, enable: false }
-                                            rule.description = '拷贝' + (rule.description || '')
+                                            rule.description = t('refresh') + (rule.description || '')
                                             rules.splice(index + 1, 0, rule)
                                             return rules
                                         })
                                     }
                                 },
                                 {
-                                    label: '删除',
+                                    label: t('menu_remove'),
                                     key: 'remove',
                                     onClick() {
                                         setRules(r => {
@@ -253,7 +255,7 @@ function App() {
                                     }
                                 },
                                 {
-                                    label: '刷新',
+                                    label: t('menu_refresh'),
                                     key: 'fresh',
                                     onClick() {
                                         setRules(r => {
@@ -278,12 +280,12 @@ function App() {
                 },
                 {
                     dataIndex: 'type', key: 'type', width: 100, align: 'center',
-                    title: '拦截类型',
+                    title: t('row_type'),
                     render: (type) => type || 'xhr / fetch'
                 },
                 {
                     dataIndex: 'count', key: 'count', width: 100, align: 'center',
-                    title: '大小',
+                    title: t('row_size'),
                     sorter: {
                         compare: (a, b) => sizeof(a) - sizeof(b),
                     },
@@ -299,7 +301,7 @@ function App() {
                 },
                 {
                     dataIndex: 'count', key: 'count', width: 80, align: 'center',
-                    title: <Tooltip title='debug • 拦截次数'><BugOutlined /></Tooltip>,
+                    title: <Tooltip title={t('tip_debug_count')}><BugOutlined /></Tooltip>,
                     render: (value, record, index) => (
                         <>
                             { !!record.code ? <CodeOutlined onClick={() => {
@@ -312,7 +314,7 @@ function App() {
                 {
                     dataIndex: 'method', key: 'method', width: 60, align: 'center',
                     title: (
-                        <Tooltip title='请求类型 • 发送'>
+                        <Tooltip title={t('tip_tag')}>
                             <TagOutlined />
                         </Tooltip>
                     ),
@@ -323,7 +325,7 @@ function App() {
                         const canSend = record.url !== undefined
 
                         return (
-                            <Tag title={ canSend ? '点击发送请求' : '' } style={{ cursor: canSend ? 'pointer' : 'text', borderStyle: canSend ? 'solid' : 'dashed' }} color={getMethodColor(value)} onClick={() => {
+                            <Tag title={ canSend ? t('tip_send') : '' } style={{ cursor: canSend ? 'pointer' : 'text', borderStyle: canSend ? 'solid' : 'dashed' }} color={getMethodColor(value)} onClick={() => {
                                 if (canSend) {
                                     sendRequestLog(record, index)
                                 }
@@ -334,7 +336,7 @@ function App() {
                 {
                     dataIndex: 'enable', key: 'enable', width: 40, align: 'center',
                     title: (
-                        <Tooltip title='启用拦截'>
+                        <Tooltip title={t('intercept')}>
                             <ControlOutlined onClick={() => {
                                 setRules(rules => {
                                     const allChecked = rules.every(rule => rule.enable)
@@ -385,7 +387,7 @@ function App() {
         (type: string) => {
             const count = selectedRowKeys.length
             const total = rules.length
-            return count ? `${type}${count}项` : total ? `${type}所有，共${total}项` : ''
+            return count ? `${type}${count}${t('items')}` : total ? `${type}${t('total', [total])}` : ''
         },
         [selectedRowKeys.length, rules.length]
     )
@@ -414,7 +416,7 @@ function App() {
             <div className="app">
                 <div className={'app__top'}>
                     <Button.Group style={{ paddingRight: 8 }}>
-                        <Tooltip title={'添加'}>
+                        <Tooltip title={t('action_add')}>
                             <Button disabled={editable} icon={<PlusOutlined />} onClick={() => {
                                 setRules(rule => {
                                     const result = [...rule, {
@@ -429,7 +431,7 @@ function App() {
                                 })
                             }}></Button>
                         </Tooltip>
-                        <Tooltip title={getActionText('删除')}>
+                        <Tooltip title={getActionText(t('menu_remove'))}>
                             <Button disabled={editable} icon={<DeleteOutlined />} onClick={() => {
                                 if (! selectedRowKeys.length) {
                                     return setRules([])
@@ -438,18 +440,18 @@ function App() {
                                 setSelectedRowKeys([])
                             }}></Button>
                         </Tooltip>
-                        <Tooltip title={getActionText('下载')}>
+                        <Tooltip title={getActionText(t('action_export'))}>
                             <Button disabled={editable} icon={<VerticalAlignBottomOutlined />} onClick={() => {
                                 const sel = selectedRowKeys.length ? rules.filter(item => !selectedRowKeys.find(id => id === item.id)) : rules
                                 const origin = originRef.current || 'data'
                                 download(origin + '.json', JSON.stringify(sel, null, 2))
                             }}></Button>
                         </Tooltip>
-                        <Tooltip title='导入'>
+                        <Tooltip title={t('action_import')}>
                             <Upload disabled={editable} showUploadList={false} beforeUpload={(file) => {
                                 setLoading(true)
                                 if (! ['application/json', 'text/plain'].includes(file.type)) {
-                                    message.error('文件格式错误！仅支持json文本')
+                                    message.error(t('import_modal_err'))
                                     setLoading(false)
                                 } else {
                                     file.text().then(text => {
@@ -463,9 +465,9 @@ function App() {
                                             return
                                         }
                                         Modal.confirm({
-                                            title: '导入说明',
-                                            content: '请选择覆盖数据还是追加数据',
-                                            cancelText: '覆盖',
+                                            title: t('import_modal_title'),
+                                            content: t('import_modal_content'),
+                                            cancelText: t('import_modal_override'),
                                             closable: true,
                                             onCancel: (close) => {
                                                 if (typeof close === 'function') {
@@ -473,7 +475,7 @@ function App() {
                                                     close()
                                                 }
                                             },
-                                            okText: '追加',
+                                            okText: t('import_modal_append'),
                                             onOk: () => {
                                                 let count = 0
                                                 setRules((data) => {
@@ -491,7 +493,7 @@ function App() {
                                                     )
                                                 })
                                                 if (count) {
-                                                    message.warn(`重复${count}条数据，已过滤`)
+                                                    message.warn(t('import_modal_filter', [count]))
                                                 }
                                             },
                                         })
@@ -507,22 +509,22 @@ function App() {
                                 <Button disabled={editable} icon={<UploadOutlined />}></Button>
                             </Upload>
                         </Tooltip>
-                        <Tooltip title='刷新数据'>
+                        <Tooltip title={t('action_refresh')}>
                             <Button disabled={editable} icon={<SyncOutlined />} onClick={() => reload(true)}></Button>
                         </Tooltip>
-                        <Tooltip title='切换主题'>
+                        <Tooltip title={t('action_theme')}>
                             <Button icon={<span>{ dark ? '🌜' : '🌞'}</span>} onClick={() => {
                                 setDark(dark => !dark)
                             }}></Button>
                         </Tooltip>
-                        <Tooltip title='fake模式'>
+                        <Tooltip title={t('action_mode')}>
                             <Button type={ faked ? 'primary' : 'default' } icon={<BugOutlined />} onClick={() => {
                                 setFaked(faked => !faked)
                             }}></Button>
                         </Tooltip>
                         {
                             editable && (
-                                <Tooltip title='返回'>
+                                <Tooltip title={t('action_back')}>
                                     <Button icon={<RollbackOutlined />} onClick={back}></Button>
                                 </Tooltip>
                             )
@@ -543,20 +545,20 @@ function App() {
                             },
                             items: [
                             {
-                                label: <Badge status='default' text='关闭'></Badge>,
+                                label: <Badge status='default' text={t('close')}></Badge>,
                                 key: 'close',
                             },
                             {
-                                label: <Badge color={'orange'} status='default' text='启用监听'></Badge>,
+                                label: <Badge color={'orange'} status='default' text={t('watch')}></Badge>,
                                 key: 'watch',
                             },
                             {
-                                label: <Badge color={'purple'} status='default' text='启用拦截'></Badge>,
+                                label: <Badge color={'purple'} status='default' text={t('intercept')}></Badge>,
                                 key: 'intercept',
                             }
                         ]}}>
                             <a className="ant-dropdown-link" onClick={e => e.preventDefault()}>
-                                <span>{getConfigText(action as ActionType)}</span> <DownOutlined />
+                                <span>{t(action)}</span> <DownOutlined />
                             </a>
                         </Dropdown>
                     </div>

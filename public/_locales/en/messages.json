@@ -1,0 +1,105 @@
+{
+    "description": {
+        "message": "Easy Interceptor is a Chrome extension that intercepts HTTP requests in the form of XMLHttpRequest data requests. It's a good helper for developer"
+    },
+    "action_add": {
+        "message": "Add"
+    },
+    "action_remove": {
+        "message": "Remove"
+    },
+    "action_export": {
+        "message": "Export"
+    },
+    "action_import": {
+        "message": "Import"
+    },
+    "action_refresh": {
+        "message": "Refresh Data"
+    },
+    "action_theme": {
+        "message": "Switch Theme"
+    },
+    "action_mode": {
+        "message": "Fake Mode"
+    },
+    "action_back": {
+        "message": "Back"
+    },
+    "intercept": {
+        "message": "Intercepting"
+    },
+    "watch": {
+        "message": "Watching"
+    },
+    "close": {
+        "message": "Close"
+    },
+    "menu_copy": {
+        "message": "Copy"
+    },
+    "menu_refresh": {
+        "message": "Refresh"
+    },
+    "menu_remove": {
+        "message": "Remove"
+    },
+    "row_rule": {
+        "message": "Match Rule / Note"
+    },
+    "row_type": {
+        "message": "Type"
+    },
+    "row_size": {
+        "message": "Size"
+    },
+    "tip_debug_count": {
+        "message": "Debug • Intercept Count"
+    },
+    "tip_tag": {
+        "message": "Fetch Type • Request"
+    },
+    "import_modal_title": {
+        "message": "Import Note"
+    },
+    "import_modal_content": {
+        "message": "Please select append data or override data"
+    },
+    "import_modal_append": {
+        "message": "append"
+    },
+    "import_modal_override": {
+        "message": "Override"
+    },
+    "import_modal_err": {
+        "message": "File format error! only support json file"
+    },
+    "import_modal_filter": {
+        "message": "repeat $count$ data, have been filtered",
+        "placeholders": {
+            "count": {
+              "content": "$1"
+            }
+        }
+    },
+    "tip_send": {
+        "message": "Click to fetch request"
+    },
+    "keyword": {
+        "message": "Search keyword"
+    },
+    "exclude": {
+        "message": "Exclude options (ant path matcher rule)"
+    },
+    "items": {
+        "message": " items"
+    },
+    "total": {
+        "message": " all, total $total$ items",
+        "placeholders": {
+            "total": {
+              "content": "$1"
+            }
+        }
+    }
+}
