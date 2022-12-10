@@ -1,3 +1,7 @@
+/*
+ * The GPL License (GPL)
+ * Copyright (c) 2022 hans000
+ */
 import { MatchRule } from "../App"
 import { ActionFieldKey, BackgroundMsgKey, PopupMsgKey, RulesFieldKey, StorageMsgKey } from "../tools/constants"
 import { pathMatch } from "../utils"

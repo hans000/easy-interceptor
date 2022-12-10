@@ -144,4 +144,4 @@ function __map__(context, inst: XMLHttpRequest | Response | undefined) {
 
 
 ## License
-[MIT](./LICENSE)
+[GPL 3.0](./LICENSE)

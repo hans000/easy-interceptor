@@ -139,4 +139,4 @@ At first, it was intended to solve the problem of the recurrence of some scenari
 
 
 ## License
-[MIT](./LICENSE)
+[GPL 3.0](./LICENSE)

@@ -1,3 +1,7 @@
+/*
+ * The GPL License (GPL)
+ * Copyright (c) 2022 hans000
+ */
 export default async function getStorage(keys: string[]): Promise<Record<string, any>> {
     const __DEV__ = import.meta.env.DEV
     if (__DEV__) {

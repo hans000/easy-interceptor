@@ -1,3 +1,7 @@
+/*
+ * The GPL License (GPL)
+ * Copyright (c) 2022 hans000
+ */
 import { delayRun } from "../../../tools"
 import { createSymbol, parseUrl, parseXML } from "../../../utils"
 import { __global__ } from "../globalVar"

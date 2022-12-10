@@ -1,3 +1,7 @@
+/*
+ * The GPL License (GPL)
+ * Copyright (c) 2022 hans000
+ */
 import zh_CN from '../../public/_locales/zh_CN/messages.json'
 import en from '../../public/_locales/en/messages.json'
 

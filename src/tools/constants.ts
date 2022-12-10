@@ -1,3 +1,7 @@
+/*
+ * The GPL License (GPL)
+ * Copyright (c) 2022 hans000
+ */
 
 export const RulesFieldKey = '__hs_rules__'
 export const ActionFieldKey = '__hs_action__'

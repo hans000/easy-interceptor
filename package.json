@@ -41,5 +41,5 @@
     "vite-plugin-cdn-import": "^0.3.5",
     "vite-plugin-style-import": "^1.2.1"
   },
-  "license": "MIT"
+  "license": "GPL"
 }

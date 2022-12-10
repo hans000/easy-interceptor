@@ -1,3 +1,7 @@
+/*
+ * The GPL License (GPL)
+ * Copyright (c) 2022 hans000
+ */
 import { useState } from 'react';
 
 const mapKey = '__hs_map__'

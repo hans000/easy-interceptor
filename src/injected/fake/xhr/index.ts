@@ -1,3 +1,7 @@
+/*
+ * The GPL License (GPL)
+ * Copyright (c) 2022 hans000
+ */
 import { __global__ } from "../globalVar"
 import { stringifyHeaders } from "../../../utils"
 import { HttpStatusCodes } from "./constants"

@@ -1,3 +1,7 @@
+/*
+ * The GPL License (GPL)
+ * Copyright (c) 2022 hans000
+ */
 import { terser } from 'rollup-plugin-terser'
 import { defineConfig } from 'rollup'
 import typescript from 'rollup-plugin-typescript2'

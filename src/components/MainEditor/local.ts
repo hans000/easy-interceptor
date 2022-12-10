@@ -1,3 +1,7 @@
+/*
+ * The GPL License (GPL)
+ * Copyright (c) 2022 hans000
+ */
 
 import * as monaco from 'monaco-editor'
 import { loader } from "@monaco-editor/react";

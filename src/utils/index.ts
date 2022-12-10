@@ -1,3 +1,7 @@
+/*
+ * The GPL License (GPL)
+ * Copyright (c) 2022 hans000
+ */
 export function equal(obj1, obj2) {
     return JSON.stringify(obj1) === JSON.stringify(obj2)
 }

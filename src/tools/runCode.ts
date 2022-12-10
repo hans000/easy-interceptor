@@ -1,3 +1,7 @@
+/*
+ * The GPL License (GPL)
+ * Copyright (c) 2022 hans000
+ */
 import jsonschema from 'json-schema'
 import { MatchRule } from '../App'
 import { ExportSchema } from '../components/MainEditor/validator'

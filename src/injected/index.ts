@@ -1,3 +1,7 @@
+/*
+ * The GPL License (GPL)
+ * Copyright (c) 2022 hans000
+ */
 import { MatchRule } from '../App'
 import { createRunFunc, debounce, equal, parseUrl, pathMatch } from '../utils'
 import { fake, unfake } from './fake'

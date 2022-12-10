@@ -1,3 +1,7 @@
+/*
+ * The GPL License (GPL)
+ * Copyright (c) 2022 hans000
+ */
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import styleImport from 'vite-plugin-style-import'

@@ -1,3 +1,7 @@
+/*
+ * The GPL License (GPL)
+ * Copyright (c) 2022 hans000
+ */
 import { FakedFieldKey } from './../tools/constants';
 import { MatchRule } from "../App"
 import { ActionFieldKey, RulesFieldKey } from "../tools/constants"

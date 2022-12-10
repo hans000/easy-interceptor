@@ -1,3 +1,7 @@
+/*
+ * The GPL License (GPL)
+ * Copyright (c) 2022 hans000
+ */
 import { BackgroundMsgKey, PagescriptMsgKey, PopupMsgKey, StorageMsgKey } from "./constants";
 
 export interface EventProps {

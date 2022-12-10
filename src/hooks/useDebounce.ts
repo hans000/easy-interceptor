@@ -1,3 +1,7 @@
+/*
+ * The GPL License (GPL)
+ * Copyright (c) 2022 hans000
+ */
 import { useRef, useEffect, useCallback } from "react"
 
 export function useDebounce(fn: any, delay = 300, dep = []) {

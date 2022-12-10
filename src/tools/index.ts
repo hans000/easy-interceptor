@@ -1,3 +1,7 @@
+/*
+ * The GPL License (GPL)
+ * Copyright (c) 2022 hans000
+ */
 export function download(filename: string, data: string) {
     const a = document.createElement('a')
     const url = URL.createObjectURL(new Blob([data]))

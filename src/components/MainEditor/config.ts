@@ -1,3 +1,7 @@
+/*
+ * The GPL License (GPL)
+ * Copyright (c) 2022 hans000
+ */
 import { JSONSchema7 } from 'json-schema';
 import { MutableRefObject } from 'react';
 import { MatchRule } from '../../App';
@@ -18,7 +22,7 @@ interface EditorProps {
     language: string
     value?: string
     readonly?: boolean
-    schema?: JSONSchema7
+    schema?: JSONSchema7 | false
     beforeMount?: (monaco) => void
     onMount?: (context: CustomEditorContext) => void
 }
