@@ -70,7 +70,7 @@
 |属性|类型|说明|
 |---|---|---|
 |url|string|请求地址|
-|test|string|必选，匹配的请求地址，ant-path-matcher规则，不允许写query参数|
+|test|string|必选，匹配的请求地址，ant-path-matcher规则或字符串匹配，不允许写query参数|
 |type|xhr\|fetch|请求类型，缺省时\_\_map\_\_的第二个参数为空|
 |response|object\|array\|null\boolean\|number|响应数据|
 |responseText|string|响应数据|

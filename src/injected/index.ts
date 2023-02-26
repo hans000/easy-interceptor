@@ -3,12 +3,14 @@
  * Copyright (c) 2022 hans000
  */
 import { MatchRule } from '../App'
-import { createRunFunc, debounce, equal, parseUrl, pathMatch } from '../utils'
+import { createRunFunc, debounce, equal, parseUrl } from '../utils'
 import { fake, unfake } from './fake'
 import { CountMsgKey, ResponseMsgKey, StorageMsgKey, SyncDataMsgKey } from '../tools/constants'
 import { HttpStatusCodes } from './fake/xhr/constants'
 import { CustomRequestInfo } from './fake/globalVar'
 import { createPagescriptAction, EventProps } from '../tools/message'
+import { log } from '../tools/log'
+import { matchPath } from '../tools'
 
 bindEvent()
 
@@ -95,11 +97,20 @@ const run = debounce(() => app.run())
 
 function matching(rules: MatchRule[], req: CustomRequestInfo): MatchRule | undefined {
     for(let rule of rules) {
-        if (rule.enable &&
-            (rule.type ? req.type === rule.type : true) &&
-            pathMatch(rule.test, req.requestUrl) &&
-            req.method.toLowerCase() === (rule.method || 'get') &&
-            (rule.params ? equal(rule.params, req.params) : true)) {
+        if (rule.enable && matchPath(rule.test, req.requestUrl)) {
+            if (!(rule.type ? req.type === rule.type : true)) {
+                log('not work? please check `type` option', 'warn')
+                console.log('%c Easy Interceptor %c log ', 'color:white;background-color:orange', 'color:green;background-color:black', 'not work? please check `type` option')
+                continue
+            }
+            if (req.method.toLowerCase() !== (rule.method || 'get')) {
+                log('not work? please check `method` option', 'warn')
+                continue
+            }
+            if (!(rule.params ? equal(rule.params, req.params) : true)) {
+                log('not work? please check `params` option', 'warn')
+                continue
+            }
             return rule
         }
     }

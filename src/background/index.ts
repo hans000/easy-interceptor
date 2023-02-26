@@ -3,44 +3,26 @@
  * Copyright (c) 2022 hans000
  */
 import { MatchRule } from "../App"
-import { ActionFieldKey, BackgroundMsgKey, PopupMsgKey, RulesFieldKey, StorageMsgKey } from "../tools/constants"
-import { pathMatch } from "../utils"
+import { matchPath } from "../tools"
+import { ActionFieldKey, BackgroundMsgKey, PopupMsgKey, RulesFieldKey, StorageMsgKey, WatchFilterKey } from "../tools/constants"
 import { updateIcon } from "./utils"
 
-let __result = {}
+let __result = new Map<string, any>()
 let __action: ActionType
-let __origin = ''
 let __rules: MatchRule[] = []
 
 updateIcon()
 
-// 更新origin
-chrome.tabs.onActivated.addListener((info) => {
-    __result = {}
-    chrome.tabs.query({ windowId: info.windowId, active: true }, (tabs) => {
-        try {
-            const [, a, b] = tabs[0].url.match(/^(https?:\/\/)?(.+?)(\/|$)/)
-            __origin = a + b
-        } catch (error) {}
-    })
+function update() {
+    __result.clear()
 
     chrome.storage.local.get([ActionFieldKey], (result) => {
         __action = result[ActionFieldKey]
     })
-})
-chrome.tabs.onUpdated.addListener((_, __, info) => {
-    __result = {}
-    chrome.tabs.query({ windowId: info.windowId, active: true }, (tabs) => {
-        try {
-            const [, a, b] = tabs[0].url.match(/^(https?:\/\/)?(.+?)(\/|$)/)
-            __origin = a + b
-        } catch (error) {}
-    })
+}
 
-    chrome.storage.local.get([ActionFieldKey], (result) => {
-        __action = result[ActionFieldKey]
-    })
-})
+chrome.tabs.onActivated.addListener(update)
+chrome.tabs.onUpdated.addListener(update)
 
 /** 接收popup传来的信息，并转发给content.js */
 chrome.runtime.onMessage.addListener(msg => {
@@ -52,7 +34,7 @@ chrome.runtime.onMessage.addListener(msg => {
     if (msg.from === PopupMsgKey) {
         // 重置result
         if (msg.type === StorageMsgKey) {
-            __result = {}
+            __result.clear()
         }
         // 更新action
         if (msg.key === 'action') {
@@ -67,12 +49,12 @@ chrome.runtime.onMessage.addListener(msg => {
 // 获取body数据
 chrome.webRequest.onBeforeRequest.addListener(
     details => {
+        const urlObj = new URL(details.url)
+        const url = urlObj.origin + urlObj.pathname
 
         if (__action === 'intercept') {
-            const urlObj = new URL(details.url)
-            const url = urlObj.origin + urlObj.pathname
             for (const rule of __rules) {
-                if (rule.enable && rule.redirectUrl && pathMatch(rule.test, url)) {
+                if (rule.enable && rule.redirectUrl && matchPath(rule.test, url)) {
                     return {
                         redirectUrl: rule.redirectUrl
                     }
@@ -85,16 +67,20 @@ chrome.webRequest.onBeforeRequest.addListener(
                 details.requestBody = { formData: {} }
             }
     
-            if (details.requestBody.raw) {
-                return;
-            }
-    
-            const formData = details.requestBody.formData
-            const body = Object.keys(formData).reduce((acc, key) => {
-                acc[key] = formData[key][0]
-                return acc
-            }, {})
-            __result[details.requestId] = { body }
+            if (details.requestBody.raw) return
+
+            chrome.storage.local.get([WatchFilterKey], (result) => {
+                const filter = result[WatchFilterKey]
+
+                if (!filter || matchPath(filter, url)) {
+                    const formData = details.requestBody.formData
+                    const body = Object.keys(formData).reduce((acc, key) => {
+                        acc[key] = formData[key][0]
+                        return acc
+                    }, {})
+                    __result.set(details.requestId, { body })
+                }
+            })
         }
     },
     {
@@ -117,9 +103,7 @@ chrome.storage.local.get([RulesFieldKey], (result) => {
 // 获取requestHeaders
 chrome.webRequest.onBeforeSendHeaders.addListener(
     (details) => {
-        if (__action === 'close') {
-            return
-        }
+        if (__action === 'close') return
 
         const objectHeaders = details.requestHeaders.reduce((acc, { name, value }) => {
             acc[name] = value
@@ -139,9 +123,9 @@ chrome.webRequest.onBeforeSendHeaders.addListener(
         }
 
         if (__action === 'watch') {
-            if (! __result[details.requestId]) return;
+            if (! __result.has(details.requestId)) return;
     
-            __result[details.requestId].requestHeaders = objectHeaders
+            __result.get(details.requestId).requestHeaders = objectHeaders
         }
     },
     {
@@ -156,11 +140,7 @@ chrome.webRequest.onResponseStarted.addListener(
     details => {
         if (__action !== 'watch') return;
 
-        // 要求id匹配，域名相同，
-        if (!__result[details.requestId] || !__origin || !details.url.startsWith(__origin)) {
-            delete __result[details.requestId]
-            return
-        }
+        if (! __result.has(details.requestId)) return
 
         const responseHeaders = Object.create(null)
         for (const { name, value } of details.responseHeaders) {
@@ -168,16 +148,16 @@ chrome.webRequest.onResponseStarted.addListener(
             // 过滤非json
             if (lower === 'content-type') {
                 if (! value.includes('json')) {
-                    delete __result[details.requestId]
+                    __result.delete(details.requestId)
                     return
                 }
             }
             responseHeaders[name] = value
         }
 
-        __result[details.requestId].responseHeaders = responseHeaders
+        const data = __result.get(details.requestId)
 
-        const data = __result[details.requestId]
+        data.responseHeaders = responseHeaders
 
         const urlObj = new URL(details.url)
         
@@ -200,7 +180,7 @@ chrome.webRequest.onResponseStarted.addListener(
                 ],
             })
             updateIcon()
-            delete __result[details.requestId]
+            __result.delete(details.requestId)
         })
     },
     {

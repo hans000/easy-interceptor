@@ -5,7 +5,7 @@
 import './App.less'
 import { Badge, Checkbox, BadgeProps, Button, Dropdown, Input, message, Modal, Spin, Table, Tag, Tooltip, Upload } from 'antd'
 import React, { useEffect, useRef, useState } from 'react'
-import { TagOutlined, ControlOutlined, CodeOutlined, DeleteOutlined, PlusOutlined, SearchOutlined, DownOutlined, VerticalAlignBottomOutlined, UploadOutlined, SyncOutlined, RollbackOutlined, BugOutlined, FilterOutlined, MenuOutlined, UnorderedListOutlined, EllipsisOutlined } from '@ant-design/icons'
+import { TagOutlined, ControlOutlined, CodeOutlined, DeleteOutlined, PlusOutlined, SearchOutlined, DownOutlined, VerticalAlignBottomOutlined, UploadOutlined, SyncOutlined, RollbackOutlined, BugOutlined, FilterOutlined, MenuOutlined, UnorderedListOutlined, EllipsisOutlined, FormOutlined } from '@ant-design/icons'
 import { ColumnsType } from 'antd/lib/table'
 import { pathMatch, randID, renderSize } from './utils'
 import { getMethodColor } from './tools/mappings'
@@ -21,7 +21,7 @@ import Quote from './components/Quote'
 import { runCode } from './tools/runCode'
 import { loader } from "@monaco-editor/react";
 import { sendRequestLog } from './tools/sendRequest'
-import { ActionFieldKey, DarkFieldKey, FakedFieldKey, HiddenFieldsFieldKey, IndexFieldKey, RulesFieldKey, SelectedRowFieldKeys, UpdateMsgKey } from './tools/constants'
+import { ActionFieldKey, DarkFieldKey, FakedFieldKey, HiddenFieldsFieldKey, IndexFieldKey, RulesFieldKey, SelectedRowFieldKeys, UpdateMsgKey, WatchFilterKey } from './tools/constants'
 import useTranslate from './hooks/useTranslate'
 
 export interface MatchRule {
@@ -57,12 +57,13 @@ if (! process.env.VITE_LOCAL) {
 
 const fields = ['url', 'redirectUrl', 'test', 'type', 'method', 'status', 'delay', 'params', 'requestHeaders', 'responseHeaders', 'body', 'response', 'responseText', 'description']
 
-const isDrakTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
+const isDarkTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
 
 function App() {
     const originRef = useRef('')
-    const [dark, setDark] = useStorage(DarkFieldKey, isDrakTheme)
+    const [dark, setDark] = useStorage(DarkFieldKey, isDarkTheme)
     const [action, setAction] = useStorage(ActionFieldKey, 'close')
+    const [watchFilter, setWatchFilter] = useStorage(WatchFilterKey, '')
     const [faked, setFaked] = useStorage(FakedFieldKey, false)
     const [rules, setRules] = useStorage<MatchRule[]>(RulesFieldKey, [])
     const [selectedRowKeys, setSelectedRowKeys] = useStorage(SelectedRowFieldKeys, [])
@@ -138,13 +139,14 @@ function App() {
     const reload = (clean = false) => {
         setLoading(true)
         getStorage([
-            ActionFieldKey, RulesFieldKey, SelectedRowFieldKeys, DarkFieldKey,  IndexFieldKey, HiddenFieldsFieldKey, FakedFieldKey
+            WatchFilterKey, ActionFieldKey, RulesFieldKey, SelectedRowFieldKeys, DarkFieldKey,  IndexFieldKey, HiddenFieldsFieldKey, FakedFieldKey
         ]).then(result => {
             setLoading(false)
             setDark(result[DarkFieldKey])
             setFaked(result[FakedFieldKey])
             setAction(result[ActionFieldKey])
             setHiddenFields(result[HiddenFieldsFieldKey])
+            setWatchFilter(result[WatchFilterKey])
             if (clean) {
                 setSelectedRowKeys([])
                 setRules(result[RulesFieldKey].map(item => ({ ...item, count: 0 })))
@@ -166,6 +168,8 @@ function App() {
                     originRef.current = origin
                 } catch (error) {}
             })
+        } else {
+            originRef.current = location.origin
         }
     }
 
@@ -535,6 +539,19 @@ function App() {
                         }
                     </Button.Group>
                     <div>
+                        {
+                            action === 'watch' && (
+                                <Input value={watchFilter} onChange={e => setWatchFilter(e.target.value)}
+                                    style={{ width: 300, marginRight: 24 }}
+                                    suffix={
+                                        <Tooltip title={t('button_fill_title')}>
+                                            <FormOutlined onClick={() => setWatchFilter(originRef.current + '/**')}/>
+                                        </Tooltip>
+                                    }
+                                    placeholder={t('placeholder_watch_filter')}
+                                    allowClear/>
+                            )
+                        }
                         <Dropdown menu={{
                             activeKey: action,
                             onClick: info => {

@@ -2,6 +2,12 @@
     "description": {
         "message": "Easy Interceptor is a Chrome extension that intercepts HTTP requests in the form of XMLHttpRequest data requests. It's a good helper for developer"
     },
+    "placeholder_watch_filter": {
+        "message": "filter rule"
+    },
+    "button_fill_title": {
+        "message": "Fill current origin"
+    },
     "action_add": {
         "message": "Add"
     },

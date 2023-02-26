@@ -3,10 +3,12 @@
  * Copyright (c) 2022 hans000
  */
 import { BackgroundMsgKey, CountMsgKey, LogMsgKey, ResponseMsgKey, RulesFieldKey, StorageMsgKey, SyncDataMsgKey, UpdateMsgKey } from '../tools/constants'
+import { log } from '../tools/log'
 import { createScript, syncData } from './utils'
 
 async function loadScripts() {
     await createScript('injected.js')
+    log('✅ Injected successfully')
 }
 
 loadScripts()
@@ -25,7 +27,7 @@ chrome.runtime.onMessage.addListener(msg => {
     }
 
     if (msg.type === LogMsgKey) {
-        console.log('[EI]', msg.value)
+        log(msg.value)
         return
     }
 })

@@ -1,3 +1,5 @@
+import { pathMatch } from "../utils"
+
 /*
  * The GPL License (GPL)
  * Copyright (c) 2022 hans000
@@ -18,4 +20,8 @@ export function sizeof(object: Record<string, any> = {}) {
 
 export function delayRun(fn: Function, delay: number | undefined) {
     delay ? setTimeout(() => fn(), delay) : fn()
+}
+
+export function matchPath(pattern: string, path: string) {
+    return /[?*]/.test(pattern) ? pathMatch(pattern, path) : path.includes(pattern)
 }
