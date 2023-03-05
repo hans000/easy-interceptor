@@ -3,7 +3,7 @@
  * Copyright (c) 2022 hans000
  */
 import { MatchRule } from '../App'
-import { createRunFunc, debounce, equal, parseUrl } from '../utils'
+import { createRunFunc, debounce, equal, parseUrl, TransformMethodKind } from '../utils'
 import { fake, unfake } from './fake'
 import { CountMsgKey, ResponseMsgKey, StorageMsgKey, SyncDataMsgKey } from '../tools/constants'
 import { HttpStatusCodes } from './fake/xhr/constants'
@@ -97,6 +97,20 @@ const run = debounce(() => app.run())
 
 function matching(rules: MatchRule[], req: CustomRequestInfo): MatchRule | undefined {
     for(let rule of rules) {
+        const { code, id, enable, count, ...restRule } = rule
+        if (code) {
+            const fn = createRunFunc(code, TransformMethodKind.onMatching)
+            const result = fn(restRule)
+            if (result) {
+                return {
+                    ...restRule,
+                    ...result,
+                    id,
+                    enable,
+                    count,
+                }
+            }
+        }
         if (rule.enable && matchPath(rule.test, req.requestUrl)) {
             if (!(rule.type ? req.type === rule.type : true)) {
                 log('not work? please check `type` option', 'warn')
@@ -140,17 +154,25 @@ function triggerResponseEvent(response: string, url: string) {
 async function handleCode(matchRule: MatchRule, inst: XMLHttpRequest | Response) {
     let { id, count, enable, code, ...restRule } = matchRule
 
-    const text = await (inst instanceof Response ? inst.text() : inst.responseText)
+    const isResponse = inst instanceof Response
+    const text = await (isResponse ? inst.text() : inst.responseText)
     restRule.responseText = text
 
     if (code) {
         try {
-            const fn = createRunFunc(code)
-            const partialData = await fn(restRule, matchRule.type ? inst : undefined)
+            const fn = createRunFunc(code, TransformMethodKind.onResponding)
+            const partialData = await fn({
+                rule: restRule,
+                xhr: isResponse ? undefined : inst,
+                response: isResponse ? inst : undefined,
+            })
             return {
                 ...restRule,
                 ...partialData || {},
-                id
+                id,
+                count,
+                enable,
+                code,
             }
         } catch (error) {
             console.error(error)

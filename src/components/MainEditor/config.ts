@@ -75,35 +75,54 @@ const config: EditorProps[] = [
         name: 'code',
         language: 'javascript',
         value: 'code',
-//         beforeMount: (monaco) => {
-//             const libSource = `
-// declare type Context = {
-//     delay?: number
-//     requestInit: {
-//         url: string
-//         method?: 'get' | 'post' | 'delete' | 'put' | 'patch'
-//         body?: any
-//         params?: Record<string, string>
-//         headers?: Record<string, string>
-//     }
-//     responseInit: {
-//         status?: number
-//         response?: any
-//         headers?: Record<string, string>
-//     }
-// }
+        beforeMount: (monaco) => {
+            const libSource = `
+declare interface Rule {
+    count?: number
+    delay?: number
+    url?: string
+    description?: string
+    test: string
+    type?: 'xhr' | 'fetch'
+    method?: 'get' | 'post' | 'delete' | 'put' | 'patch'
+    body?: any
+    params?: [string, string][]
+    requestHeaders?: Record<string, string>
+    status?: number
+    response?: any
+    responseText?: string
+    responseHeaders?: Record<string, string>
+    redirectUrl?: string
+}
+interface Context {
+    xhr?: XMLHttpRequest
+    response?: Response
+    rule: Rule
+}
+declare function onMatching(fn: (rule: Rule) => MatchingRule | void): void
+declare function onResponding(fn: (context: Context) => ResponseRule | void): void
 
-// declare module "fake" {
-//     export = $
-// }
-
-// declare type Handle = (context: Context) => Context
-
-// declare var $: (handle: Handle) => Context
-// `
-//             const libUri = 'ts:typings/fake.d.ts';
-//             monaco.languages.typescript.javascriptDefaults.addExtraLib(libSource, libUri);
-//         },
+interface ResponseRule {
+    response?: any
+    responseText?: string
+    status?: number
+}
+interface MatchingRule extends ResponseRule {
+    delay?: number
+    responseHeaders?: Record<string, string>
+}
+`
+            const libUri = 'ts:typings/fake.d.ts';
+            monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
+                noSemanticValidation: false,
+                noSyntaxValidation: false,
+            });
+            monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
+                target: monaco.languages.typescript.ScriptTarget.ESNext,
+                allowNonTsExtensions: true,
+            });
+            monaco.languages.typescript.javascriptDefaults.addExtraLib(libSource, libUri);
+        },
         onMount: (context) => {
             const { editor } = context
             editor.addAction(createRunCodeAction(context))

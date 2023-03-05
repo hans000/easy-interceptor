@@ -5,6 +5,7 @@
 import { MatchRule } from "../App"
 import { matchPath } from "../tools"
 import { ActionFieldKey, BackgroundMsgKey, PopupMsgKey, RulesFieldKey, StorageMsgKey, WatchFilterKey } from "../tools/constants"
+import { arrayBufferToString } from "../utils"
 import { updateIcon } from "./utils"
 
 let __result = new Map<string, any>()
@@ -67,7 +68,15 @@ chrome.webRequest.onBeforeRequest.addListener(
                 details.requestBody = { formData: {} }
             }
     
-            if (details.requestBody.raw) return
+            if (details.requestBody.raw) {
+                try {
+                    const body = JSON.parse(arrayBufferToString(details.requestBody.raw[0].bytes))
+                    __result[details.requestId] = { body }
+                } catch (error) {
+                    console.error(error)
+                    return
+                }
+            }
 
             chrome.storage.local.get([WatchFilterKey], (result) => {
                 const filter = result[WatchFilterKey]
