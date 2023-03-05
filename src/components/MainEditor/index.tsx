@@ -16,10 +16,6 @@ import { MatchRule } from '../../App'
 import { PathFieldKey } from '../../tools/constants'
 
 //#region loadConfig
-import { loadLocalMocano } from './local';
-if (! import.meta.env.DEV) {
-    loadLocalMocano()
-}
 //#endregion
 
 
@@ -102,6 +98,7 @@ const MainEditor = React.forwardRef(function (props: IProps, ref) {
                             }
                         }
                     } catch (error) {
+                        sendMsg()
                         msgRef.current = error + ''
                         props.onChange?.(props.value, true)
                         return

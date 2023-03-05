@@ -84,15 +84,54 @@
 |redirectUrl|string|重定向链接，不能和url一样，会死循环|
 
 ### code面板
-通过定义\_\_map\_\_来动态的修改数据
+通过onMatching和onResponding来动态的修改数据
 ```
-function __map__(context, inst: XMLHttpRequest | Response | undefined) {
+onMatching((rule: Rule) => {
+    // 内部会shallow merge
     return {
-        // 内部会做shallow merge
-        response: {
-            foo: Math.random().toString()
-        }
+        delay: 1000
     }
+})
+
+onResponding((context: Context) => {
+    // 内部会shallow merge
+    return {
+        status: 504
+    }
+})
+
+declare interface Rule {
+    count?: number
+    delay?: number
+    url?: string
+    description?: string
+    test: string
+    type?: 'xhr' | 'fetch'
+    method?: 'get' | 'post' | 'delete' | 'put' | 'patch'
+    body?: any
+    params?: [string, string][]
+    requestHeaders?: Record<string, string>
+    status?: number
+    response?: any
+    responseText?: string
+    responseHeaders?: Record<string, string>
+    redirectUrl?: string
+}
+interface Context {
+    xhr?: XMLHttpRequest
+    response?: Response
+    rule: Rule
+}
+declare function onMatching(fn: (rule: Rule) => MatchingRule | void): void
+declare function onResponding(fn: (context: Context) => ResponseRule | void): void
+interface ResponseRule {
+    response?: any
+    responseText?: string
+    status?: number
+}
+interface MatchingRule extends ResponseRule {
+    delay?: number
+    responseHeaders?: Record<string, string>
 }
 ```
 

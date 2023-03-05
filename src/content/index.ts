@@ -2,13 +2,22 @@
  * The GPL License (GPL)
  * Copyright (c) 2022 hans000
  */
-import { BackgroundMsgKey, CountMsgKey, LogMsgKey, ResponseMsgKey, RulesFieldKey, StorageMsgKey, SyncDataMsgKey, UpdateMsgKey } from '../tools/constants'
+import { ActionFieldKey, BackgroundMsgKey, CountMsgKey, LogMsgKey, ResponseMsgKey, RulesFieldKey, StorageMsgKey, SyncDataMsgKey, UpdateMsgKey } from '../tools/constants'
 import { log } from '../tools/log'
+import { noop } from '../utils'
 import { createScript, syncData } from './utils'
 
-async function loadScripts() {
-    await createScript('injected.js')
-    log('✅ Injected successfully')
+function loadScripts() {
+    chrome.storage.local.get([ActionFieldKey], result => {
+        const action = result[ActionFieldKey] || 'close'
+        if (action !== 'close') {
+            createScript('injected.js').then(() => {
+                log('✅ Injected successfully')
+                // @ts-ignore 覆盖原函数
+                loadScripts = noop
+            })
+        }
+    })
 }
 
 loadScripts()
@@ -23,6 +32,9 @@ chrome.runtime.onMessage.addListener(msg => {
     // 转发给pagescript
     if (msg.type === StorageMsgKey) {
         postMessage(msg)
+        if (msg.key === 'action') {
+            loadScripts()
+        }
         return
     }
 

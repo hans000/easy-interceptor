@@ -3,7 +3,8 @@
  * Copyright (c) 2022 hans000
  */
 import { delayRun } from "../../../tools"
-import { createSymbol, parseUrl, parseXML } from "../../../utils"
+import { parseUrl, parseXML } from "../../../utils"
+import { createSymbol } from "../../../utils/proxy"
 import { __global__ } from "../globalVar"
 import { HttpStatusCodes } from "./constants"
 

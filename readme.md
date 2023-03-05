@@ -79,15 +79,54 @@ How to solve the above problems? If you can intercept and modify the data before
 |redirectUrl|string|cannot be the same as the url, will cause a loop|
 
 ### Code Panel
-declare \_\_map\_\_ function to modify response by js
+call onMatching and onResponding functions to modify data
 ```
-function __map__(context, inst: XMLHttpRequest | Response | undefined) {
+onMatching((rule: Rule) => {
+    // shallow merge
     return {
-        // will be shallow merge
-        response: {
-            foo: Math.random().toString()
-        }
+        delay: 1000
     }
+})
+
+onResponding((context: Context) => {
+    // shallow merge
+    return {
+        status: 504
+    }
+})
+
+declare interface Rule {
+    count?: number
+    delay?: number
+    url?: string
+    description?: string
+    test: string
+    type?: 'xhr' | 'fetch'
+    method?: 'get' | 'post' | 'delete' | 'put' | 'patch'
+    body?: any
+    params?: [string, string][]
+    requestHeaders?: Record<string, string>
+    status?: number
+    response?: any
+    responseText?: string
+    responseHeaders?: Record<string, string>
+    redirectUrl?: string
+}
+interface Context {
+    xhr?: XMLHttpRequest
+    response?: Response
+    rule: Rule
+}
+declare function onMatching(fn: (rule: Rule) => MatchingRule | void): void
+declare function onResponding(fn: (context: Context) => ResponseRule | void): void
+interface ResponseRule {
+    response?: any
+    responseText?: string
+    status?: number
+}
+interface MatchingRule extends ResponseRule {
+    delay?: number
+    responseHeaders?: Record<string, string>
 }
 ```
 

@@ -5,7 +5,7 @@
 import jsonschema from 'json-schema'
 import { MatchRule } from '../App'
 import { ExportSchema } from '../components/MainEditor/validator'
-import { createRunFunc } from '../utils'
+import { createRunFunc, TransformMethodKind } from '../utils'
 import { PopupMsgKey, LogMsgKey } from './constants'
 import { sendRequest } from './sendRequest'
 
@@ -38,7 +38,7 @@ export async function runCode(data: MatchRule, index: number) {
             throw 'url option must be required.'
         }
 
-        const fn = createRunFunc(code)
+        const fn = createRunFunc(code, TransformMethodKind.onResponding)
         const inst = await sendRequest(data, index)
         const msg = await fn(restData, inst)
 
