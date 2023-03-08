@@ -148,30 +148,28 @@ function App() {
         [dark]
     )
 
-    const reload = (clean = false) => {
+    const reload = async (clean = false) => {
+        const map = {
+            [ActionFieldKey]: setAction,
+            [RulesFieldKey]: setRules,
+            [SelectedRowFieldKeys]: setSelectedRowKeys,
+            [DarkFieldKey]: setDark,
+            [IndexFieldKey]: setActiveIndex,
+            [HiddenFieldsFieldKey]: setHiddenFields,
+            [FakedFieldKey]: setFaked,
+            [WatchFilterKey]: setWatchFilter,
+            [BootLogKey]: setBootLog,
+            [FakedLogKey]: setFakedLog,
+        }
         setLoading(true)
-        getStorage([
-            ActionFieldKey, RulesFieldKey, SelectedRowFieldKeys, DarkFieldKey,  IndexFieldKey, HiddenFieldsFieldKey, FakedFieldKey,
-            WatchFilterKey, BootLogKey, FakedLogKey,
-        ]).then(result => {
-            setLoading(false)
-            setDark(result[DarkFieldKey])
-            setFaked(result[FakedFieldKey])
-            setAction(result[ActionFieldKey])
-            setHiddenFields(result[HiddenFieldsFieldKey])
-            setWatchFilter(result[WatchFilterKey])
-            setBootLog(result[BootLogKey])
-            setFakedLog(result[FakedLogKey])
-            if (clean) {
-                setSelectedRowKeys([])
-                setRules(result[RulesFieldKey].map(item => ({ ...item, count: 0 })))
-                setActiveIndex(-1)
-            } else {
-                setSelectedRowKeys(result[SelectedRowFieldKeys])
-                setRules(result[RulesFieldKey])
-                setActiveIndex(result[IndexFieldKey])
-            }
-        })
+        const result = await getStorage(Object.keys(map))
+        setLoading(false)
+        Object.entries(map).forEach(([key, fn]) => fn(result[key]))
+        if (clean) {
+            setSelectedRowKeys([])
+            setRules(result[RulesFieldKey].map(item => ({ ...item, count: 0 })))
+            setActiveIndex(-1)
+        }
     }
 
     const updateOrigin = () => {

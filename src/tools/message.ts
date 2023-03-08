@@ -12,7 +12,9 @@ export interface EventProps {
     value: any
 }
 
-export function createBackgroudAction(key: 'rules' | 'action' | 'faked' | 'fakedLog', value: any) {
+export type SyncFields = 'rules' | 'action' | 'faked' | 'fakedLog'
+
+export function createBackgroudAction(key: SyncFields, value: any) {
     return {
         type: StorageMsgKey,
         from: BackgroundMsgKey,
@@ -22,7 +24,7 @@ export function createBackgroudAction(key: 'rules' | 'action' | 'faked' | 'faked
     }
 }
 
-export function createStorageAction(key: 'rules' | 'action' | 'faked' | 'fakedLog', value: any) {
+export function createStorageAction(key: SyncFields, value: any) {
     return {
         type: StorageMsgKey,
         from: PopupMsgKey,

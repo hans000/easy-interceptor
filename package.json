@@ -37,7 +37,7 @@
     "rollup-plugin-external-globals": "^0.6.1",
     "rollup-plugin-terser": "^7.0.2",
     "rollup-plugin-typescript2": "^0.32.1",
-    "typescript": "^4.3.2",
+    "typescript": "^4.9.5",
     "vite": "^3.2.3",
     "vite-plugin-cdn-import": "^0.3.5",
     "vite-plugin-style-import": "^1.2.1"

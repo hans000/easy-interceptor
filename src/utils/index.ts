@@ -130,6 +130,23 @@ export function pathMatch(pattern: string, path: string) {
     return new RegExp(`^${regStr}$`).test(path)
 }
 
+/**
+ * 解析浏览器的raw数据
+ */
 export function arrayBufferToString(arrayBuffer: ArrayBuffer) {
     return decodeURIComponent(escape(new Uint8Array(arrayBuffer).reduce((acc, b) => acc += String.fromCharCode(b), '')))
+}
+
+/**
+ * 在页面上插入js
+ */
+export function createScript(path: string) {
+    const script = document.createElement('script')
+    script.setAttribute('type', 'text/javascript')
+    script.setAttribute('src', chrome.extension.getURL(path))
+    document.documentElement.appendChild(script)
+    return new Promise(resolve => script.addEventListener('load', () => {
+        script.remove()
+        resolve(void 0)
+    }))
 }
