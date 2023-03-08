@@ -2,7 +2,7 @@
  * The GPL License (GPL)
  * Copyright (c) 2022 hans000
  */
-import { FakedFieldKey } from './../tools/constants';
+import { FakedFieldKey, FakedLogKey } from './../tools/constants';
 import { ActionFieldKey, RulesFieldKey } from "../tools/constants"
 import { createBackgroudAction } from '../tools/message';
 
@@ -20,8 +20,8 @@ export function createScript(path: string) {
 
 /** 初始化数据 */
 export function syncData() {
-    chrome.storage.local.get([ActionFieldKey, RulesFieldKey, FakedFieldKey], (result) => {
-        const { [ActionFieldKey]: action, [RulesFieldKey]: rules, [FakedFieldKey]: faked } = result
+    chrome.storage.local.get([ActionFieldKey, RulesFieldKey, FakedFieldKey, FakedLogKey], (result) => {
+        const { [ActionFieldKey]: action, [RulesFieldKey]: rules, [FakedFieldKey]: faked, [FakedLogKey]: fakedLog } = result
         if (result.hasOwnProperty(ActionFieldKey)) {
             postMessage(createBackgroudAction('action', action))
         }
@@ -30,6 +30,9 @@ export function syncData() {
         }
         if (faked) {
             postMessage(createBackgroudAction('faked', faked))
+        }
+        if (fakedLog) {
+            postMessage(createBackgroudAction('fakedLog', fakedLog))
         }
     })
 }

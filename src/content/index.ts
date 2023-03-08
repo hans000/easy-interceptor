@@ -2,17 +2,20 @@
  * The GPL License (GPL)
  * Copyright (c) 2022 hans000
  */
-import { ActionFieldKey, BackgroundMsgKey, CountMsgKey, LogMsgKey, ResponseMsgKey, RulesFieldKey, StorageMsgKey, SyncDataMsgKey, UpdateMsgKey } from '../tools/constants'
+import { ActionFieldKey, BackgroundMsgKey, BootLogKey, CountMsgKey, LogMsgKey, ResponseMsgKey, RulesFieldKey, StorageMsgKey, SyncDataMsgKey, UpdateMsgKey } from '../tools/constants'
 import { log } from '../tools/log'
 import { noop } from '../utils'
 import { createScript, syncData } from './utils'
 
 function loadScripts() {
-    chrome.storage.local.get([ActionFieldKey], result => {
+    chrome.storage.local.get([ActionFieldKey, BootLogKey], result => {
         const action = result[ActionFieldKey] || 'close'
+        const bootLog = result[BootLogKey]
         if (action !== 'close') {
             createScript('injected.js').then(() => {
-                log('✅ Injected successfully')
+                if (bootLog) {
+                    log('✅ Injected successfully')
+                }
                 // @ts-ignore 覆盖原函数
                 loadScripts = noop
             })

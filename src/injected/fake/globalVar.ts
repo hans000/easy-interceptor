@@ -19,6 +19,7 @@ export interface CustomRequestInfo {
 
 export interface Options {
     faked?: boolean
+    fakedLog?: boolean
     nativeXHR?: typeof XMLHttpRequest
     nativeFetch?: typeof fetch
     onMatch?: (reqestInfo: CustomRequestInfo) => MatchRule
