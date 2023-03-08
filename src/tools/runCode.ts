@@ -2,9 +2,7 @@
  * The GPL License (GPL)
  * Copyright (c) 2022 hans000
  */
-import jsonschema from 'json-schema'
 import { MatchRule } from '../App'
-import { ExportSchema } from '../components/MainEditor/validator'
 import { createRunFunc, TransformMethodKind } from '../utils'
 import { PopupMsgKey, LogMsgKey } from './constants'
 import { sendRequest } from './sendRequest'
@@ -35,7 +33,7 @@ export async function runCode(data: MatchRule, index: number) {
     try {
 
         if (data.url === undefined) {
-            throw 'url option must be required.'
+            throw '`url` option must be required.'
         }
 
         const fn = createRunFunc(code, TransformMethodKind.onResponding)
@@ -46,15 +44,6 @@ export async function runCode(data: MatchRule, index: number) {
             ...restData,
             ...msg || {},
             id,
-        }
-
-        const validateResult = jsonschema.validate(newMsg, ExportSchema)
-
-        if (validateResult.errors.length) {
-            const { property: p, message: m } = validateResult.errors[0]
-            const msg = `\`${p}\` ${m}`
-            sendLog('__map__ function must be return an object, ' + msg)
-            return
         }
 
         sendLog(newMsg)
