@@ -1,11 +1,11 @@
 # Easy Interceptor
 
+<img src="./assets/header-zh_CN.svg" width="800" height="300">
+
 中文 | [**English**](./readme.md)
 
 ## 📑 摘要
 一款集成了模拟和拦截请求并拥有一定编程能力的谷歌浏览器插件，其中存储容量、大小用颜色做了指示，界面简洁，交互友好。由于对项目没有依赖性、侵入性，所以开发、测试、生产环境都适用。
-
-<img src="./assets/cover.png" alt="演示" style="float:right;width:30%;padding-left:16px" />
 
 
 ## 🚀 使用场景
