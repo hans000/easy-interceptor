@@ -258,7 +258,7 @@ function App() {
                                         setRules(r => {
                                             const rules = [...r]
                                             const rule = { ...rules[index], id: randID(), count: 0, enable: false }
-                                            rule.description = t('refresh') + (rule.description || '')
+                                            rule.description = t('menu_copy') + (rule.description || '')
                                             rules.splice(index + 1, 0, rule)
                                             return rules
                                         })
