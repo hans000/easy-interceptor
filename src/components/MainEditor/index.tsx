@@ -22,6 +22,7 @@ import { PathFieldKey } from '../../tools/constants'
 interface IProps {
     rule: MatchRule
     index: number
+    isDark?: boolean
     value?: Record<FileType, string>
     onChange?: (value: Record<FileType, string>, invalid: boolean) => void
 }
@@ -113,8 +114,9 @@ const MainEditor = React.forwardRef(function (props: IProps, ref) {
                 {
                     config.map(info => {
                         return (
-                            <div key={info.name} style={{ position: 'absolute', height: 510, background: '#fff', width: '100%', zIndex: filename === info.name ? 1 : 0 }} className={info.name}>
+                            <div key={info.name} className={info.name} style={{ position: 'absolute', height: 510, background: props.isDark ? '#000' : '#fff', width: '100%', zIndex: filename === info.name ? 1 : 0 }}>
                                 <Editor
+                                    theme={props.isDark ? 'vs-dark' : 'light'}
                                     height="510px"
                                     path={info.name}
                                     value={data[info.name]}

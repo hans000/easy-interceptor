@@ -141,8 +141,14 @@ function App() {
             const cls = 'theme--dark'
             if (dark && !html.classList.contains(cls)) {
                 html.classList.add(cls)
+                const link = document.createElement('link')
+                link.setAttribute('dark', '')
+                link.href = 'https://unpkg.com/antd@4.24.8/dist/antd.dark.css'
+                link.rel = 'stylesheet'
+                document.head.appendChild(link)
             } else {
                 html.classList.remove(cls)
+                document.head.querySelector('link[dark]')?.remove()
             }
         },
         [dark]
@@ -618,6 +624,7 @@ function App() {
                     editable && (
                         <div className='app__editor'>
                             <MainEditor
+                                isDark={dark}
                                 ref={editorRef}
                                 index={activeIndex}
                                 rule={rules[activeIndex]}
