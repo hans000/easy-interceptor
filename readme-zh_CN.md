@@ -1,14 +1,11 @@
 # Easy Interceptor
 
+<img src="./assets/header-zh_CN.svg" width="800" height="300">
+
 中文 | [**English**](./readme.md)
 
 ## 📑 摘要
 一款集成了模拟和拦截请求并拥有一定编程能力的谷歌浏览器插件，其中存储容量、大小用颜色做了指示，界面简洁，交互友好。由于对项目没有依赖性、侵入性，所以开发、测试、生产环境都适用。
-
-<details>
-    <summary>预览</summary>
-    <img src="./assets/cover.png" alt="演示" style="width:80%;padding-left:10%" />
-</details>
 
 
 ## 🚀 使用场景
@@ -59,6 +56,7 @@
 - 【刷新】：刷新数据，会重置count字段
 - 【切换主题】：亮色模式 | 暗色模式
 - 【fake模式】：是否启用fake，默认关闭，仅对请求进行拦截，依赖后端服务；开启后会使用一个模拟的对象，可以不依赖后端服务
+- 【设置】：设置选项
 
 ### 右上角菜单
 - 【关闭状态】：关闭插件

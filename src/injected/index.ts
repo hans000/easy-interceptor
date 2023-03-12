@@ -3,25 +3,27 @@
  * Copyright (c) 2022 hans000
  */
 import { MatchRule } from '../App'
-import { createRunFunc, debounce, equal, parseUrl, TransformMethodKind } from '../utils'
+import { debounce, parseUrl } from '../utils'
 import { fake, unfake } from './fake'
-import { CountMsgKey, ResponseMsgKey, StorageMsgKey, SyncDataMsgKey } from '../tools/constants'
+import { StorageMsgKey, SyncDataMsgKey } from '../tools/constants'
 import { HttpStatusCodes } from './fake/xhr/constants'
-import { CustomRequestInfo } from './fake/globalVar'
 import { createPagescriptAction, EventProps } from '../tools/message'
-import { log } from '../tools/log'
-import { matchPath } from '../tools'
+import { handleCode, matching, triggerCountEvent, triggerResponseEvent } from './tool'
 
 bindEvent()
+
+const run = debounce(() => app.run())
 
 const app = {
     rules: [] as MatchRule[],
     action: 'close' as ActionType,
     faked: false,
+    fakedLog: false,
     intercept() {
-        const { action, rules, faked } = app
+        const { action, rules, faked, fakedLog } = app
         fake({
             faked,
+            fakedLog,
             onMatch(req) {
                 if (action === 'intercept') {
                     return matching(rules, req)
@@ -93,43 +95,6 @@ const app = {
     },
 }
 
-const run = debounce(() => app.run())
-
-function matching(rules: MatchRule[], req: CustomRequestInfo): MatchRule | undefined {
-    for(let rule of rules) {
-        const { code, id, enable, count, ...restRule } = rule
-        if (code) {
-            const fn = createRunFunc(code, TransformMethodKind.onMatching)
-            const result = fn(restRule)
-            if (result) {
-                return {
-                    ...restRule,
-                    ...result,
-                    id,
-                    enable,
-                    count,
-                }
-            }
-        }
-        if (rule.enable && matchPath(rule.test, req.requestUrl)) {
-            if (!(rule.type ? req.type === rule.type : true)) {
-                log('not work? please check `type` option', 'warn')
-                console.log('%c Easy Interceptor %c log ', 'color:white;background-color:orange', 'color:green;background-color:black', 'not work? please check `type` option')
-                continue
-            }
-            if (req.method.toLowerCase() !== (rule.method || 'get')) {
-                log('not work? please check `method` option', 'warn')
-                continue
-            }
-            if (!(rule.params ? equal(rule.params, req.params) : true)) {
-                log('not work? please check `params` option', 'warn')
-                continue
-            }
-            return rule
-        }
-    }
-}
-
 function bindEvent() {
     // get data
     window.dispatchEvent(new CustomEvent('pagescript', createPagescriptAction(SyncDataMsgKey)))
@@ -141,42 +106,4 @@ function bindEvent() {
             run()
         }
     })
-}
-
-function triggerCountEvent(id: string) {
-    window.dispatchEvent(new CustomEvent('pagescript', createPagescriptAction(CountMsgKey, { id })))
-}
-
-function triggerResponseEvent(response: string, url: string) {
-    window.dispatchEvent(new CustomEvent('pagescript', createPagescriptAction(ResponseMsgKey, { response, url })))
-}
-
-async function handleCode(matchRule: MatchRule, inst: XMLHttpRequest | Response) {
-    let { id, count, enable, code, ...restRule } = matchRule
-
-    const isResponse = inst instanceof Response
-    const text = await (isResponse ? inst.text() : inst.responseText)
-    restRule.responseText = text
-
-    if (code) {
-        try {
-            const fn = createRunFunc(code, TransformMethodKind.onResponding)
-            const partialData = await fn({
-                rule: restRule,
-                xhr: isResponse ? undefined : inst,
-                response: isResponse ? inst : undefined,
-            })
-            return {
-                ...restRule,
-                ...partialData || {},
-                id,
-                count,
-                enable,
-                code,
-            }
-        } catch (error) {
-            console.error(error)
-        }
-    }
-    return restRule
 }

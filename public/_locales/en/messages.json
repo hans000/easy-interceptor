@@ -29,6 +29,18 @@
     "action_mode": {
         "message": "Fake Mode"
     },
+    "action_reset": {
+        "message": "Reset"
+    },
+    "action_setting": {
+        "message": "Setting"
+    },
+    "action_boot_log": {
+        "message": "Print Boot Log"
+    },
+    "action_faked_log": {
+        "message": "Print Faked Log"
+    },
     "action_back": {
         "message": "Back"
     },

@@ -7,6 +7,7 @@ import { stringifyHeaders } from "../../../utils"
 import { HttpStatusCodes } from "./constants"
 import { dispatchEvent, handleReadyStateChange, handleStateChange, setResponseBody, setResponseHeaders } from "./handle"
 import { delayRun } from "../../../tools"
+import { log } from "../../../tools/log"
 
 interface MatchItem {
     status?: number
@@ -21,6 +22,8 @@ class FakeXMLHttpRequest extends XMLHttpRequest {
     private _forceMimeType = ''
     private _requestHeaders = {}
     private _responseHeaders = {}
+    private _url = ''
+    private _method = ''
     private _xhr: (XMLHttpRequest & { _matchItem?: MatchItem }) | undefined
     public status: number
     public statusText: string
@@ -60,6 +63,8 @@ class FakeXMLHttpRequest extends XMLHttpRequest {
 
     public open(method, url, async = true) {
         this._async = async
+        this._url = url
+        this._method = method
         this._xhr.open.apply(this._xhr, arguments)
     }
 
@@ -69,6 +74,16 @@ class FakeXMLHttpRequest extends XMLHttpRequest {
         if (! matchItem) {
             xhr.send(data)
             return
+        }
+
+        if (__global__.options.faked && __global__.options.fakedLog) {
+            log({
+                type: 'xhr:request',
+                url: this._url,
+                method: this._method,
+                headers: this._requestHeaders,
+                body: data,
+            })
         }
 
         dispatchEvent.call(this, 'loadstart')
@@ -82,6 +97,15 @@ class FakeXMLHttpRequest extends XMLHttpRequest {
             // @ts-ignore this field has been proxy
             this.statusText = HttpStatusCodes[this.status]
             setResponseBody.call(this, response ? JSON.stringify(response) : responseText)
+            log({
+                type: 'xhr:response',
+                url: this._url,
+                method: this._method,
+                status,
+                headers: responseHeaders,
+                response,
+                responseText,
+            })
         }, matchItem.delay)
     }
 

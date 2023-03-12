@@ -71,7 +71,7 @@ chrome.webRequest.onBeforeRequest.addListener(
             if (details.requestBody.raw) {
                 try {
                     const body = JSON.parse(arrayBufferToString(details.requestBody.raw[0].bytes))
-                    __result[details.requestId] = { body }
+                    __result.set(details.requestId, { body })
                 } catch (error) {
                     console.error(error)
                     return

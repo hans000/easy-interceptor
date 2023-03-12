@@ -3,9 +3,9 @@
  * Copyright (c) 2022 hans000
  */
 import './App.less'
-import { Badge, Checkbox, BadgeProps, Button, Dropdown, Input, message, Modal, Spin, Table, Tag, Tooltip, Upload } from 'antd'
+import { Badge, Checkbox, BadgeProps, Button, Dropdown, Input, message, Modal, Spin, Table, Tag, Tooltip, Upload, Form, Switch, Row, Col, Space, Divider } from 'antd'
 import React, { useEffect, useRef, useState } from 'react'
-import { TagOutlined, ControlOutlined, CodeOutlined, DeleteOutlined, PlusOutlined, SearchOutlined, DownOutlined, VerticalAlignBottomOutlined, UploadOutlined, SyncOutlined, RollbackOutlined, BugOutlined, FilterOutlined, MenuOutlined, UnorderedListOutlined, EllipsisOutlined, FormOutlined } from '@ant-design/icons'
+import { TagOutlined, ControlOutlined, CodeOutlined, DeleteOutlined, PlusOutlined, SearchOutlined, DownOutlined, VerticalAlignBottomOutlined, UploadOutlined, SyncOutlined, RollbackOutlined, BugOutlined, FilterOutlined, MenuOutlined, UnorderedListOutlined, EllipsisOutlined, FormOutlined, SettingOutlined } from '@ant-design/icons'
 import { ColumnsType } from 'antd/lib/table'
 import { pathMatch, randID, renderSize } from './utils'
 import { getMethodColor } from './tools/mappings'
@@ -21,7 +21,7 @@ import Quote from './components/Quote'
 import { runCode } from './tools/runCode'
 import { loader } from "@monaco-editor/react";
 import { sendRequestLog } from './tools/sendRequest'
-import { ActionFieldKey, DarkFieldKey, FakedFieldKey, HiddenFieldsFieldKey, IndexFieldKey, RulesFieldKey, SelectedRowFieldKeys, UpdateMsgKey, WatchFilterKey } from './tools/constants'
+import { ActionFieldKey, BootLogKey, DarkFieldKey, FakedFieldKey, FakedLogKey, HiddenFieldsFieldKey, IndexFieldKey, RulesFieldKey, SelectedRowFieldKeys, UpdateMsgKey, WatchFilterKey } from './tools/constants'
 import useTranslate from './hooks/useTranslate'
 
 export interface MatchRule {
@@ -60,7 +60,6 @@ const fields = ['url', 'redirectUrl', 'test', 'type', 'method', 'status', 'delay
 const isDarkTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
 
 function App() {
-    const originRef = useRef('')
     const [dark, setDark] = useStorage(DarkFieldKey, isDarkTheme)
     const [action, setAction] = useStorage(ActionFieldKey, 'close')
     const [watchFilter, setWatchFilter] = useStorage(WatchFilterKey, '')
@@ -72,8 +71,12 @@ function App() {
     const [invalid, setInvalid] = useState(false)
     const [visible, setVisible] = useState(false)
     const [hiddenFields, setHiddenFields] = useStorage(HiddenFieldsFieldKey, [])
+    const [bootLog, setBootLog] = useStorage(BootLogKey, true)
+    const [fakedLog, setFakedLog] = useStorage(FakedLogKey, true)
+    const [setting, setSetting] = useState(false)
     const editorRef = useRef()
     const t = useTranslate()
+    const originRef = useRef('')
 
     useEffect(
         () => {
@@ -125,38 +128,54 @@ function App() {
 
     useEffect(
         () => {
+            if (! __DEV__) {
+                chrome.runtime.sendMessage(chrome.runtime.id, createStorageAction('fakedLog', fakedLog))
+            }
+        },
+        [fakedLog]
+    )
+
+    useEffect(
+        () => {
             const html = document.querySelector('html')
             const cls = 'theme--dark'
             if (dark && !html.classList.contains(cls)) {
                 html.classList.add(cls)
+                const link = document.createElement('link')
+                link.setAttribute('dark', '')
+                link.href = 'https://unpkg.com/antd@4.24.8/dist/antd.dark.css'
+                link.rel = 'stylesheet'
+                document.head.appendChild(link)
             } else {
                 html.classList.remove(cls)
+                document.head.querySelector('link[dark]')?.remove()
             }
         },
         [dark]
     )
 
-    const reload = (clean = false) => {
+    const reload = async (clean = false) => {
+        const map = {
+            [ActionFieldKey]: setAction,
+            [RulesFieldKey]: setRules,
+            [SelectedRowFieldKeys]: setSelectedRowKeys,
+            [DarkFieldKey]: setDark,
+            [IndexFieldKey]: setActiveIndex,
+            [HiddenFieldsFieldKey]: setHiddenFields,
+            [FakedFieldKey]: setFaked,
+            [WatchFilterKey]: setWatchFilter,
+            [BootLogKey]: setBootLog,
+            [FakedLogKey]: setFakedLog,
+        }
         setLoading(true)
-        getStorage([
-            WatchFilterKey, ActionFieldKey, RulesFieldKey, SelectedRowFieldKeys, DarkFieldKey,  IndexFieldKey, HiddenFieldsFieldKey, FakedFieldKey
-        ]).then(result => {
-            setLoading(false)
-            setDark(result[DarkFieldKey])
-            setFaked(result[FakedFieldKey])
-            setAction(result[ActionFieldKey])
-            setHiddenFields(result[HiddenFieldsFieldKey])
-            setWatchFilter(result[WatchFilterKey])
-            if (clean) {
-                setSelectedRowKeys([])
-                setRules(result[RulesFieldKey].map(item => ({ ...item, count: 0 })))
-                setActiveIndex(-1)
-            } else {
-                setSelectedRowKeys(result[SelectedRowFieldKeys])
-                setRules(result[RulesFieldKey])
-                setActiveIndex(result[IndexFieldKey])
-            }
-        })
+        const result = await getStorage(Object.keys(map))
+        setLoading(false)
+        Object.entries(map).forEach(([key, fn]) => fn(result[key]))
+        if (clean) {
+            setSelectedRowKeys([])
+            setRules(result[RulesFieldKey].map(item => ({ ...item, count: 0 })))
+            setActiveIndex(-1)
+        }
     }
 
     const updateOrigin = () => {
@@ -245,7 +264,7 @@ function App() {
                                         setRules(r => {
                                             const rules = [...r]
                                             const rule = { ...rules[index], id: randID(), count: 0, enable: false }
-                                            rule.description = t('refresh') + (rule.description || '')
+                                            rule.description = t('menu_copy') + (rule.description || '')
                                             rules.splice(index + 1, 0, rule)
                                             return rules
                                         })
@@ -400,15 +419,9 @@ function App() {
         [selectedRowKeys.length, rules.length]
     )
 
-    const back = () => {
-        if (invalid) {
-            (editorRef.current as any).sendMsg()
-            return
-        }
-        setActiveIndex(-1)
-    }
-
     const editable = React.useMemo(() => activeIndex !== -1, [activeIndex])
+
+    const disabled = React.useMemo(() => editable || setting, [editable, setting])
 
     const formatResult = (record: MatchRule) => {
         const { code, } = record
@@ -425,7 +438,7 @@ function App() {
                 <div className={'app__top'}>
                     <Button.Group style={{ paddingRight: 8 }}>
                         <Tooltip title={t('action_add')}>
-                            <Button disabled={editable} icon={<PlusOutlined />} onClick={() => {
+                            <Button disabled={disabled} icon={<PlusOutlined />} onClick={() => {
                                 setRules(rule => {
                                     const result = [...rule, {
                                         id: randID(),
@@ -440,7 +453,7 @@ function App() {
                             }}></Button>
                         </Tooltip>
                         <Tooltip title={getActionText(t('menu_remove'))}>
-                            <Button disabled={editable} icon={<DeleteOutlined />} onClick={() => {
+                            <Button disabled={disabled} icon={<DeleteOutlined />} onClick={() => {
                                 if (! selectedRowKeys.length) {
                                     return setRules([])
                                 }
@@ -449,14 +462,14 @@ function App() {
                             }}></Button>
                         </Tooltip>
                         <Tooltip title={getActionText(t('action_export'))}>
-                            <Button disabled={editable} icon={<VerticalAlignBottomOutlined />} onClick={() => {
+                            <Button disabled={disabled} icon={<VerticalAlignBottomOutlined />} onClick={() => {
                                 const sel = selectedRowKeys.length ? rules.filter(item => !selectedRowKeys.find(id => id === item.id)) : rules
                                 const origin = originRef.current || 'data'
                                 download(origin + '.json', JSON.stringify(sel, null, 2))
                             }}></Button>
                         </Tooltip>
                         <Tooltip title={t('action_import')}>
-                            <Upload disabled={editable} showUploadList={false} beforeUpload={(file) => {
+                            <Upload disabled={disabled} showUploadList={false} beforeUpload={(file) => {
                                 setLoading(true)
                                 if (! ['application/json', 'text/plain'].includes(file.type)) {
                                     message.error(t('import_modal_err'))
@@ -514,31 +527,30 @@ function App() {
                                 }
                                 return false
                             }}>
-                                <Button disabled={editable} icon={<UploadOutlined />}></Button>
+                                <Button disabled={disabled} icon={<UploadOutlined />}></Button>
                             </Upload>
                         </Tooltip>
                         <Tooltip title={t('action_refresh')}>
-                            <Button disabled={editable} icon={<SyncOutlined />} onClick={() => reload(true)}></Button>
-                        </Tooltip>
-                        <Tooltip title={t('action_theme')}>
-                        
-                            <Button icon={<span style={{ width: 16, height: 16, lineHeight: 1.75 }}>{
-                            dark
-                                ? <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12.1,22c-0.3,0-0.6,0-0.9,0c-5.5-0.5-9.5-5.4-9-10.9c0.4-4.8,4.2-8.6,9-9c0.4,0,0.8,0.2,1,0.5c0.2,0.3,0.2,0.8-0.1,1.1c-2,2.7-1.4,6.4,1.3,8.4c2.1,1.6,5,1.6,7.1,0c0.3-0.2,0.7-0.3,1.1-0.1c0.3,0.2,0.5,0.6,0.5,1c-0.2,2.7-1.5,5.1-3.6,6.8C16.6,21.2,14.4,22,12.1,22zM9.3,4.4c-2.9,1-5,3.6-5.2,6.8c-0.4,4.4,2.8,8.3,7.2,8.7c2.1,0.2,4.2-0.4,5.8-1.8c1.1-0.9,1.9-2.1,2.4-3.4c-2.5,0.9-5.3,0.5-7.5-1.1C9.2,11.4,8.1,7.7,9.3,4.4z"></path></svg>
-                                : <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12,18c-3.3,0-6-2.7-6-6s2.7-6,6-6s6,2.7,6,6S15.3,18,12,18zM12,8c-2.2,0-4,1.8-4,4c0,2.2,1.8,4,4,4c2.2,0,4-1.8,4-4C16,9.8,14.2,8,12,8z"></path><path d="M12,4c-0.6,0-1-0.4-1-1V1c0-0.6,0.4-1,1-1s1,0.4,1,1v2C13,3.6,12.6,4,12,4z"></path><path d="M12,24c-0.6,0-1-0.4-1-1v-2c0-0.6,0.4-1,1-1s1,0.4,1,1v2C13,23.6,12.6,24,12,24z"></path><path d="M5.6,6.6c-0.3,0-0.5-0.1-0.7-0.3L3.5,4.9c-0.4-0.4-0.4-1,0-1.4s1-0.4,1.4,0l1.4,1.4c0.4,0.4,0.4,1,0,1.4C6.2,6.5,5.9,6.6,5.6,6.6z"></path><path d="M19.8,20.8c-0.3,0-0.5-0.1-0.7-0.3l-1.4-1.4c-0.4-0.4-0.4-1,0-1.4s1-0.4,1.4,0l1.4,1.4c0.4,0.4,0.4,1,0,1.4C20.3,20.7,20,20.8,19.8,20.8z"></path><path d="M3,13H1c-0.6,0-1-0.4-1-1s0.4-1,1-1h2c0.6,0,1,0.4,1,1S3.6,13,3,13z"></path><path d="M23,13h-2c-0.6,0-1-0.4-1-1s0.4-1,1-1h2c0.6,0,1,0.4,1,1S23.6,13,23,13z"></path><path d="M4.2,20.8c-0.3,0-0.5-0.1-0.7-0.3c-0.4-0.4-0.4-1,0-1.4l1.4-1.4c0.4-0.4,1-0.4,1.4,0s0.4,1,0,1.4l-1.4,1.4C4.7,20.7,4.5,20.8,4.2,20.8z"></path><path d="M18.4,6.6c-0.3,0-0.5-0.1-0.7-0.3c-0.4-0.4-0.4-1,0-1.4l1.4-1.4c0.4-0.4,1-0.4,1.4,0s0.4,1,0,1.4l-1.4,1.4C18.9,6.5,18.6,6.6,18.4,6.6z"></path></svg>
-                            }</span>} onClick={() => {
-                                setDark(dark => !dark)
-                            }}></Button>
+                            <Button disabled={disabled} icon={<SyncOutlined />} onClick={() => reload(true)}></Button>
                         </Tooltip>
                         <Tooltip title={t('action_mode')}>
                             <Button type={ faked ? 'primary' : 'default' } icon={<BugOutlined />} onClick={() => {
                                 setFaked(faked => !faked)
                             }}></Button>
                         </Tooltip>
+                        <Tooltip title={t(setting ? 'action_back' : 'action_setting')}>
+                            <Button icon={ setting ? <RollbackOutlined /> : <SettingOutlined />} onClick={() => setSetting(setting => !setting)}></Button>
+                        </Tooltip>
                         {
                             editable && (
                                 <Tooltip title={t('action_back')}>
-                                    <Button icon={<RollbackOutlined />} onClick={back}></Button>
+                                    <Button icon={<RollbackOutlined />} onClick={() => {
+                                        if (invalid) {
+                                            (editorRef.current as any).sendMsg()
+                                            return
+                                        }
+                                        setActiveIndex(-1)
+                                    }}></Button>
                                 </Tooltip>
                             )
                         }
@@ -612,6 +624,7 @@ function App() {
                     editable && (
                         <div className='app__editor'>
                             <MainEditor
+                                isDark={dark}
                                 ref={editorRef}
                                 index={activeIndex}
                                 rule={rules[activeIndex]}
@@ -620,6 +633,33 @@ function App() {
                                     update(value, activeIndex)
                                     setInvalid(invalid)
                                 }} />
+                        </div>
+                    )
+                }
+                {
+                    setting && (
+                        <div className='app__setting'>
+                            <Divider orientation='left' plain>
+                                <Button size='small' type='primary' onClick={() => {
+                                    setDark(false)
+                                    setBootLog(true)
+                                    setFakedLog(true)
+                                }}>{t('action_reset')}</Button>
+                            </Divider>
+                            <Space size={'large'}>
+                                <div style={{ display: 'flex' }}>
+                                    <span style={{ marginRight: 8 }}>{t('action_theme')}</span>
+                                    <Switch checked={dark} onClick={() => setDark(dark => !dark)}></Switch>
+                                </div>
+                                <div style={{ display: 'flex' }}>
+                                    <span style={{ marginRight: 8 }}>{t('action_boot_log')}</span>
+                                    <Switch checked={bootLog} onClick={() => setBootLog(bootLog => !bootLog)}></Switch>
+                                </div>
+                                <div style={{ display: 'flex' }}>
+                                    <span style={{ marginRight: 8 }}>{t('action_faked_log')}</span>
+                                    <Switch checked={fakedLog} onClick={() => setFakedLog(fakedLog => !fakedLog)}></Switch>
+                                </div>
+                            </Space>
                         </div>
                     )
                 }

@@ -2,17 +2,20 @@
  * The GPL License (GPL)
  * Copyright (c) 2022 hans000
  */
-import { ActionFieldKey, BackgroundMsgKey, CountMsgKey, LogMsgKey, ResponseMsgKey, RulesFieldKey, StorageMsgKey, SyncDataMsgKey, UpdateMsgKey } from '../tools/constants'
+import { ActionFieldKey, BackgroundMsgKey, BootLogKey, CountMsgKey, FakedFieldKey, FakedLogKey, LogMsgKey, ResponseMsgKey, RulesFieldKey, StorageMsgKey, SyncDataMsgKey, UpdateMsgKey } from '../tools/constants'
 import { log } from '../tools/log'
-import { noop } from '../utils'
-import { createScript, syncData } from './utils'
+import { SyncFields, createBackgroudAction } from '../tools/message'
+import { createScript, noop } from '../utils'
 
 function loadScripts() {
-    chrome.storage.local.get([ActionFieldKey], result => {
+    chrome.storage.local.get([ActionFieldKey, BootLogKey], result => {
         const action = result[ActionFieldKey] || 'close'
+        const bootLog = result[BootLogKey]
         if (action !== 'close') {
             createScript('injected.js').then(() => {
-                log('✅ Injected successfully')
+                if (bootLog) {
+                    log('✅ Injected successfully')
+                }
                 // @ts-ignore 覆盖原函数
                 loadScripts = noop
             })
@@ -93,9 +96,21 @@ function handle() {
 // 接收pagescript传来的信息
 window.addEventListener("pagescript", (event: any) => {
     const { data, type } = event.detail
-
+    
+    // 初始化数据
     if (type === SyncDataMsgKey) {
-        syncData()
+        chrome.storage.local.get([ActionFieldKey, RulesFieldKey, FakedFieldKey, FakedLogKey], (result) => {
+            Object.entries({
+                [ActionFieldKey]: 'action',
+                [RulesFieldKey]: 'rules',
+                [FakedFieldKey]: 'faked',
+                [FakedLogKey]: 'fakedLog',
+            } satisfies Record<string, SyncFields>).forEach(([key, val]) => {
+                if (result.hasOwnProperty(key)) {
+                    postMessage(createBackgroudAction(val, result[key]))
+                }
+            })
+        })
         return
     }
 

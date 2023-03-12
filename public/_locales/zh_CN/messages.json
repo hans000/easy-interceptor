@@ -29,6 +29,18 @@
     "action_mode": {
         "message": "fake模式"
     },
+    "action_reset": {
+        "message": "重置"
+    },
+    "action_setting": {
+        "message": "设置"
+    },
+    "action_boot_log": {
+        "message": "启动时打印日志"
+    },
+    "action_faked_log": {
+        "message": "fake模式打印日志"
+    },
     "action_back": {
         "message": "返回"
     },

@@ -13,6 +13,9 @@ export const IndexFieldKey = '__hs_index__'
 export const HiddenFieldsFieldKey = '__hs_hiddenFields__'
 export const PathFieldKey = '__hs_path__'
 
+export const BootLogKey = '__hs_bootLog__'
+export const FakedLogKey = '__hs_fakedLog__'
+
 export const SyncDataMsgKey = '__hs_syncdata__'
 export const UpdateMsgKey = '__hs_update__'
 export const CountMsgKey = '__hs_count__'
