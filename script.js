@@ -42,7 +42,7 @@ configList.forEach(config => {
 function handle(config) {
     const filename = path.resolve(config.filename)
     const text = fs.readFileSync(filename).toString()
-    const reg = new RegExp(`//#region ${config.mark}\n(\\s|\\S)*?//#endregion`)
+    const reg = new RegExp(`//#region ${config.mark}(\\s|\\S)*?//#endregion`)
     const code = process.env.VITE_LOCAL + '' === config.isLocal + ''
         ? `//#region ${config.mark}${config.code}\n//#endregion`
         : `//#region ${config.mark}\n//#endregion`
