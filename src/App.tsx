@@ -141,11 +141,13 @@ function App() {
             const cls = 'theme--dark'
             if (dark && !html.classList.contains(cls)) {
                 html.classList.add(cls)
-                const link = document.createElement('link')
-                link.setAttribute('dark', '')
-                link.href = 'https://unpkg.com/antd@4.24.8/dist/antd.dark.css'
-                link.rel = 'stylesheet'
-                document.head.appendChild(link)
+//#region injectDarkStyle
+const link = document.createElement('link')
+link.setAttribute('dark', '')
+link.href = 'https://unpkg.com/antd@4.24.8/dist/antd.dark.css'
+link.rel = 'stylesheet'
+document.head.appendChild(link)
+//#endregion
             } else {
                 html.classList.remove(cls)
                 document.head.querySelector('link[dark]')?.remove()

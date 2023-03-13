@@ -1,12 +1,20 @@
 
 /* 黑暗模式下的样式代码 */
 .theme--dark {
+//#region darkLess
+//#endregion
     .app {
         background-color: #141414;
         &__top,
         &__setting {
             background-color: #141414;
         }
+    }
+    .ant-table-tbody>tr.ant-table-placeholder:hover>td {
+        background-color: transparent;
+    }
+    .ant-dropdown-menu-item.ant-dropdown-menu-item-active {
+        background-color: #2f2f2f;
     }
     /*定义滚动条高宽及背景*/
     ::-webkit-scrollbar {

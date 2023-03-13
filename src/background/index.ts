@@ -68,25 +68,25 @@ chrome.webRequest.onBeforeRequest.addListener(
                 details.requestBody = { formData: {} }
             }
     
+            let body
             if (details.requestBody.raw) {
                 try {
-                    const body = JSON.parse(arrayBufferToString(details.requestBody.raw[0].bytes))
-                    __result.set(details.requestId, { body })
+                    body = JSON.parse(arrayBufferToString(details.requestBody.raw[0].bytes))
                 } catch (error) {
                     console.error(error)
                     return
                 }
+            } else {
+                const formData = details.requestBody.formData
+                body = Object.keys(formData).reduce((acc, key) => {
+                    acc[key] = formData[key][0]
+                    return acc
+                }, {})
             }
 
             chrome.storage.local.get([WatchFilterKey], (result) => {
                 const filter = result[WatchFilterKey]
-
                 if (!filter || matchPath(filter, url)) {
-                    const formData = details.requestBody.formData
-                    const body = Object.keys(formData).reduce((acc, key) => {
-                        acc[key] = formData[key][0]
-                        return acc
-                    }, {})
                     __result.set(details.requestId, { body })
                 }
             })
