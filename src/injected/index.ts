@@ -100,7 +100,7 @@ function bindEvent() {
     window.dispatchEvent(new CustomEvent('pagescript', createPagescriptAction(SyncDataMsgKey)))
     // register event
     window.addEventListener("message", (event: MessageEvent<EventProps>) => {
-        const data = event.data
+        const data = event.data || {} as EventProps
         if (data.type === StorageMsgKey) {
             app[data.key] = data.value
             run()
