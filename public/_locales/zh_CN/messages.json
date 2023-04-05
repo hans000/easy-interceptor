@@ -3,7 +3,10 @@
         "message": "Easy Interceptor——一款集成了模拟和拦截请求并拥有一定编程能力的谷歌浏览器插件，前端开发者的好帮手"
     },
     "placeholder_watch_filter": {
-        "message": "过滤规则"
+        "message": "监听过滤规则"
+    },
+    "select_workspace": {
+        "message": "选择工作空间"
     },
     "button_fill_title": {
         "message": "快速填充当前域名"
@@ -83,7 +86,7 @@
     "import_modal_content": {
         "message": "请选择覆盖数据还是追加数据"
     },
-    "import_modal_add": {
+    "import_modal_append": {
         "message": "追加"
     },
     "import_modal_override": {

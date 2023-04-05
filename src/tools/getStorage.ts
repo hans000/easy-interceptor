@@ -17,10 +17,6 @@ export default async function getStorage(keys: string[]): Promise<Record<string,
             {}
         ))
     } else {
-        return new Promise(resolve => {
-            chrome.storage.local.get(keys, result => {
-                resolve(result)
-            })
-        })
+        return new Promise(resolve => chrome.storage.local.get(keys, result => resolve(result)))
     }
 }

@@ -34,6 +34,9 @@ export const ConfigSchema: JSONSchema7 = {
         description: {
             type: 'string',
         },
+        groupId: {
+            type: 'string',
+        },
         type: {
             type: "string",
             enum: ["xhr", "fetch"]

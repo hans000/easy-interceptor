@@ -38,6 +38,7 @@ How to solve the above problems? If you can intercept and modify the data before
 - Use cdn to greatly reduce the installation package (only cdn version)
 - Support modifying response headers, actively sending requests, and modifying request parameters (params, headers, body)
 - Fake mode, which is used to adapt to different scenarios (it is closed by default and may fail in some scenarios)
+- Support multiple workspaces
 
 
 ## 📑 Usage
@@ -80,6 +81,7 @@ How to solve the above problems? If you can intercept and modify the data before
 |requestHeaders|Record<string, string>||
 |responseHeaders|Record<string, string>||
 |redirectUrl|string|cannot be the same as the url, will cause a loop|
+|groupId|string|the same group can be used a workspace|
 
 ### Code Panel
 call onMatching and onResponding functions to modify data

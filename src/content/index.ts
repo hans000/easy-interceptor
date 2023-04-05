@@ -16,7 +16,7 @@ function loadScripts() {
                 if (bootLog) {
                     log('✅ Injected successfully')
                 }
-                // @ts-ignore 覆盖原函数
+                // @ts-ignore 覆盖原函数，达到只加载一次的目的
                 loadScripts = noop
             })
         }
