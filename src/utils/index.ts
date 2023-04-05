@@ -77,15 +77,10 @@ export function stringifyHeaders(headers: HeadersInit) {
 /** do nothing */
 export function noop(): any { }
 
-export enum TransformMethodKind {
-    onResponding,
-    onMatching,
-}
+export type TransformMethodType = 'onResponding' | "onMatching"
 
-export function createRunFunc(code: string, kind: TransformMethodKind) {
-    const methods = ['onResponding', 'onMatching']
-    const f = methods.map((m, i) => `const ${m}=fn=>result[${i}]=fn(c)`).join(';')
-    return new Function('c', `const result = [];${f}${code};return result[${kind}]`)
+export function createRunFunc(code: string, kind: TransformMethodType) {
+    return new Function('c', `const result = [];${`const ${kind}=fn=>r=fn(c)`};try{${code};return r}catch{return null}`)
 }
 
 export function debounce(func: Function, delay = 300, thisArg = null) {
