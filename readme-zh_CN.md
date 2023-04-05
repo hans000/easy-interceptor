@@ -40,6 +40,7 @@
 - 使用cdn，大幅度缩减安装包（仅cdn版本）
 - 支持修改响应头，主动发送请求，支持修改请求参数（params、headers、body）
 - fake模式，用于适应不同的场景需求（默认关闭，部分场景下fake模式可能会失效）
+- 支持多工作空间
 
 ## 📑 使用说明
 
@@ -80,6 +81,7 @@
 |requestHeaders|Record<string, string>|请求头|
 |responseHeaders|Record<string, string>|响应头|
 |redirectUrl|string|重定向链接，不能和url一样，会死循环|
+|groupId|string|分组id，相同的id会被分配到相同的工作空间|
 
 ### code面板
 通过onMatching和onResponding来动态的修改数据

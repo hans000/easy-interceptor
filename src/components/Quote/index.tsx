@@ -11,11 +11,11 @@ interface IProps {
 
 const __DEV__ = import.meta.env.DEV
 
-function getPercent() {
+function getPercent(size: number) {
     return new Promise<number>((resolve) => {
         if (__DEV__) {
-            const used = Object.entries(localStorage).map(kv => kv.join('')).join('').length
-            return resolve(used / 1024 ** 2 * 5 * 100 | 0)
+            // const used = Object.entries(localStorage).map(kv => kv.join('')).join('').length
+            return resolve(size / 1024 ** 2 * 5 * 100 | 0)
         }
         const local = chrome.storage.local
         local.getBytesInUse(null, inUse => resolve(inUse / local.QUOTA_BYTES * 100 | 0))
@@ -27,7 +27,7 @@ export default function Quote(props: IProps) {
 
     useEffect(
         () => {
-            getPercent().then(setPercent)
+            getPercent(props.size).then(setPercent)
         },
         [props.size]
     )

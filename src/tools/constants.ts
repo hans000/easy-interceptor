@@ -5,11 +5,12 @@
 
 export const RulesFieldKey = '__hs_rules__'
 export const ActionFieldKey = '__hs_action__'
+export const ActiveGroupId = '__hs_activeGroupId__'
 export const WatchFilterKey = '__hs_watch_filter__'
 export const FakedFieldKey = '__hs_faked__'
 export const SelectedRowFieldKeys = '__hs_selectedRowKeys__'
 export const DarkFieldKey = '__hs_dark__'
-export const IndexFieldKey = '__hs_index__'
+export const ActiveIdFieldKey = '__hs_activeId__'
 export const HiddenFieldsFieldKey = '__hs_hiddenFields__'
 export const PathFieldKey = '__hs_path__'
 

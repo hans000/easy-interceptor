@@ -115,6 +115,13 @@ export default defineConfig({
             // 'https://cdn.jsdelivr.net/npm/@monaco-editor/react@4.4.5/lib/umd/monaco-react.min.js',
           ]
         },
+        // {
+        //   name: 'idb-keyval',
+        //   var: 'idbKeyval',
+        //   path: [
+        //     'https://unpkg.com/idb-keyval@6.2.0/dist/umd.js'
+        //   ]
+        // },
       ]
     }) as any,
     isLocal && styleImport({

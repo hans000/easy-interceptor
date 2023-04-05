@@ -2,22 +2,28 @@
  * The GPL License (GPL)
  * Copyright (c) 2022 hans000
  */
-import { FakedFieldKey } from './../tools/constants';
+import { ActiveGroupId, FakedFieldKey } from './../tools/constants';
 import { MatchRule } from "../App"
 import { ActionFieldKey, RulesFieldKey } from "../tools/constants"
 
+type RGBA = [number, number, number, number]
+const FAKED_COLOR: RGBA = [43, 44, 45, 255]
+const INTERCEPT: RGBA = [136, 20, 127, 255]
+const WATCH: RGBA = [241, 89, 43, 255]
+const CLOSE: RGBA = [200, 200, 200, 255]
+
 function setBadgeText(rules: MatchRule[], action: ActionType, faked: boolean) {
     let count = 0
-    let color: any = [136, 20, 127, 255]
+    let color: RGBA = INTERCEPT
     if (action === 'intercept') {
         count = rules.filter(item => item.enable).length
-        color = faked ? [43, 44, 45, 255] : [136, 20, 127, 255]
+        color = faked ? FAKED_COLOR : INTERCEPT
     } else if (action === 'watch') {
         count = rules.length
-        color = [241, 89, 43, 255]
+        color = WATCH
     } else {
         count = rules.length
-        color = [200, 200, 200, 255]
+        color = CLOSE
     }
     const text = count > 99 ? '99+' : count === 0 ? '' : count + ''
     chrome.browserAction.setBadgeText({ text })
@@ -41,13 +47,17 @@ function setIcon(action: ActionType, faked: boolean) {
     })
 }
 
-export function updateIcon(props = [ActionFieldKey, RulesFieldKey, FakedFieldKey]) {
-    chrome.storage.local.get(props, (result) => {
+export function updateIcon() {
+    chrome.storage.local.get([ActionFieldKey, RulesFieldKey, FakedFieldKey, ActiveGroupId], (result) => {
         if (result.hasOwnProperty(ActionFieldKey)) {
             setIcon(result[ActionFieldKey], result[FakedFieldKey])
         }
         if (result.hasOwnProperty(RulesFieldKey)) {
-            setBadgeText(result[RulesFieldKey], result[ActionFieldKey], result[FakedFieldKey])
+            setBadgeText(
+                result[RulesFieldKey].filter(rule => rule.groupId === result[ActiveGroupId]),
+                result[ActionFieldKey],
+                result[FakedFieldKey]
+            )
         }
     })
 }

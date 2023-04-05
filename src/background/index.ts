@@ -4,7 +4,8 @@
  */
 import { MatchRule } from "../App"
 import { matchPath } from "../tools"
-import { ActionFieldKey, BackgroundMsgKey, PopupMsgKey, RulesFieldKey, StorageMsgKey, WatchFilterKey } from "../tools/constants"
+import { ActionFieldKey, ActiveGroupId, BackgroundMsgKey, PopupMsgKey, RulesFieldKey, StorageMsgKey, WatchFilterKey } from "../tools/constants"
+import { EventProps } from "../tools/message"
 import { arrayBufferToString } from "../utils"
 import { updateIcon } from "./utils"
 
@@ -26,7 +27,7 @@ chrome.tabs.onActivated.addListener(update)
 chrome.tabs.onUpdated.addListener(update)
 
 /** 接收popup传来的信息，并转发给content.js */
-chrome.runtime.onMessage.addListener(msg => {
+chrome.runtime.onMessage.addListener((msg: EventProps) => {
     // 过滤非本插件的消息
     if (msg.from !== PopupMsgKey) return;
 
@@ -117,7 +118,7 @@ chrome.webRequest.onBeforeSendHeaders.addListener(
         const objectHeaders = details.requestHeaders.reduce((acc, { name, value }) => {
             acc[name] = value
             return acc
-        }, {}) as any
+        }, {}) as Record<string, any>
 
         if (__action === 'intercept') {
             const index = +objectHeaders.Index
@@ -170,13 +171,14 @@ chrome.webRequest.onResponseStarted.addListener(
 
         const urlObj = new URL(details.url)
         
-        chrome.storage.local.get([RulesFieldKey, ActionFieldKey], (result) => {
+        chrome.storage.local.get([RulesFieldKey, ActionFieldKey, ActiveGroupId], (result) => {
             chrome.storage.local.set({
                 [RulesFieldKey]: [
                     ...result[RulesFieldKey],
                     {
                         id: Math.random().toString(36).slice(2),
                         count: 0,
+                        groupId: result[ActiveGroupId],
                         url: urlObj.origin + urlObj.pathname,
                         test: urlObj.origin + urlObj.pathname,
                         method: details.method.toLowerCase(),
