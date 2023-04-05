@@ -635,7 +635,7 @@ document.head.appendChild(link)
                                 if (key === 'intercept' && !!activeId) {
                                     setRules(rules => {
                                         const newRules = [...rules]
-                                        newRules[activeId].enable = true
+                                        newRules[activeIndex].enable = true
                                         return newRules
                                     })
                                 }
