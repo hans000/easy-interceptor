@@ -1,3 +1,8 @@
+## v1.14.1
+- 添加onRedirect、onResponseHeaders、 onRequestHeaders钩子
+- 支持拦截重定向css js类型的资源
+- 优化列表信息展示
+
 ## v1.14.0
 - 添加groupId字段，支持工作空间
 

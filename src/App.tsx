@@ -76,13 +76,12 @@ export default function App() {
     const [bootLog, setBootLog] = useStorage(BootLogKey, true)
     const [fakedLog, setFakedLog] = useStorage(FakedLogKey, true)
     const [setting, setSetting] = useState(false)
+    const originRef = useRef('')
     const editorRef = useRef()
     const t = useTranslate()
-    const originRef = useRef('')
 
     const watchRules = () => {
         if (!__DEV__) {
-            // @ts-ignore
             chrome.storage.local.onChanged.addListener((result) => {
                 if (result.hasOwnProperty(UpdateMsgKey)) {
                     reload()
@@ -103,6 +102,7 @@ export default function App() {
             [WatchFilterKey]: setWatchFilter,
             [BootLogKey]: setBootLog,
             [FakedLogKey]: setFakedLog,
+            [ActiveGroupId]: setActiveGroupId,
         }
         setLoading(true)
         const result = await getStorage(Object.keys(map))
@@ -134,6 +134,7 @@ export default function App() {
             const result = [...rule]
             const config = JSON.parse(value.config)
             result[index] = {
+                groupId: 'default',
                 ...Object.keys(result[index]).reduce((acc, k) => {
                     if (!fields.includes(k)) {
                         acc[k] = result[index][k]
@@ -151,7 +152,7 @@ export default function App() {
         (type: string) => {
             const count = selectedRowKeys.length
             const total = rules.length
-            return count ? `${type}${count}${t('items')}` : total ? `${type}${t('total', [total])}` : ''
+            return count ? `${type}${count}${t('items')}` : total ? `${type}${t('total', [total + ''])}` : ''
         },
         [selectedRowKeys.length, rules.length]
     )
@@ -180,10 +181,15 @@ export default function App() {
         {
             dataIndex: 'groupId',
             filters: workspaces.map(workspace => ({ text: workspace, value: workspace })),
-            width: 0,
-            render: () => null,
+            width: 5,
             onFilter: (_, record) => record.groupId === activeGroupId,
             filteredValue: [activeGroupId],
+            render: (_, record) => {
+                const status = record.code
+                    ? 'default'
+                    : (['lime', 'lime', 'success', 'success', 'warning', 'error'][(record.status || 200) / 100 | 0] || 'default') as BadgeProps['status']
+                return <Badge style={{ left: -10 }} status={status} />
+            },
         },
         {
             title: (
@@ -243,10 +249,8 @@ export default function App() {
                 return value ? (include && !exclude) : true
             },
             render: (value, record) => {
-                const status = record.code
-                    ? 'default'
-                    : (['lime', 'lime', 'success', 'success', 'warning', 'error'][(record.status || 200) / 100 | 0] || 'default') as BadgeProps['status']
                 const index = rules.findIndex(rule => rule.id === record.id)
+                const shortText = value.replace(new RegExp(`^${originRef.current}`), '~')
                 return (
                     <Dropdown trigger={['contextMenu']} menu={{
                         items: [
@@ -287,14 +291,12 @@ export default function App() {
                             },
                         ]
                     }}>
-                        <Badge status={status} text={
-                            <>
-                                <a title={value} onClick={() => {
-                                    setActiveId(record.id)
-                                }}>{value}</a>
-                                <span title={record.description} className='row__desc'>{record.description}</span>
-                            </>
-                        }></Badge>
+                        <div>
+                            <a title={value} onClick={() => {
+                                setActiveId(record.id)
+                            }}>{shortText}</a>
+                            <div title={record.description} className='row__desc'>{record.description}</div>
+                        </div>
                     </Dropdown>
                 )
             }
@@ -388,10 +390,10 @@ export default function App() {
     ]
 
     const formatResult = (record: MatchRule) => {
-        const data = fields.filter(field => !hiddenFields.includes(field)).reduce((acc, k) => (acc[k] = record[k], acc), {})
+        const data = Object.fromEntries(fields.filter(field => !hiddenFields.includes(field)).map(k => [k, record[k]]))
         return {
             code: record.code,
-            config: JSON.stringify(data, null, 4)
+            config: JSON.stringify(data, null, 4),
         }
     }
 
@@ -447,7 +449,7 @@ export default function App() {
             const cls = 'theme--dark'
             if (dark && !html.classList.contains(cls)) {
                 html.classList.add(cls)
-                //#region injectDarkStyle
+//#region injectDarkStyle
 const link = document.createElement('link')
 link.setAttribute('dark', '')
 link.href = 'https://unpkg.com/antd@4.24.8/dist/antd.dark.css'
@@ -548,7 +550,7 @@ document.head.appendChild(link)
                                                     )
                                                 })
                                                 if (count) {
-                                                    message.warn(t('import_modal_filter', [count]))
+                                                    message.warn(t('import_modal_filter', [count + '']))
                                                 }
                                             },
                                         })

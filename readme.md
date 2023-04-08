@@ -70,7 +70,7 @@ How to solve the above problems? If you can intercept and modify the data before
 |---|---|---|
 |url|string|request url|
 |test|string|required, match request url, ant-path-matcher rule or string match, cannot set query|
-|type|xhr\|fetch|request type, \_\_map\_\_'s second arg will be undefined if uninitialized|
+|type|xhr\|fetch|request type|
 |response|object\|array\|null\boolean\|number||
 |responseText|string||
 |delay|number||
@@ -84,8 +84,17 @@ How to solve the above problems? If you can intercept and modify the data before
 |groupId|string|the same group can be used a workspace|
 
 ### Code Panel
-call onMatching and onResponding functions to modify data
+call hooks function to modify data, support there hooks
+- onMatching
+- onResponding
+- onResponseHeaders
+- onRequestHeaders
+- onRedirect
 ```
+onRedirect((rule: Rule) => {
+    return Math.random() > 0.5 ? 'http://foo.com' : 'http://bar.com'
+})
+
 onMatching((rule: Rule) => {
     // shallow merge
     return {
@@ -122,6 +131,9 @@ interface Context {
     response?: Response
     rule: Rule
 }
+declare function onResponseHeaders(fn: (headers: Record<string, string>) => Record<string, string> | void): void
+declare function onRequestHeaders(fn: (headers: Record<string, string>) => Record<string, string> | void): void
+declare function onRedirect(fn: (rule: Rule) => string | void): void
 declare function onMatching(fn: (rule: Rule) => MatchingRule | void): void
 declare function onResponding(fn: (context: Context) => ResponseRule | void): void
 interface ResponseRule {

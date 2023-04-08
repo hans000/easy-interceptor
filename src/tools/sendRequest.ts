@@ -19,8 +19,8 @@ export async function sendRequest(rule: MatchRule, index: number) {
                 body: new URLSearchParams(rule.body)
             }),
         })
-    } else {
-        const xhr: XMLHttpRequest = new XMLHttpRequest()
+    } else if (rule.type === 'xhr') {
+        const xhr = new XMLHttpRequest()
         xhr.open(rule.method || 'get', rule.url)
         xhr.setRequestHeader('Index', index + '')
         rule.requestHeaders && Object.keys(rule.requestHeaders).forEach(key => xhr.setRequestHeader(key, rule.requestHeaders[key]))

@@ -70,7 +70,7 @@
 |---|---|---|
 |url|string|请求地址|
 |test|string|必选，匹配的请求地址，ant-path-matcher规则或字符串匹配，不允许写query参数|
-|type|xhr\|fetch|请求类型，缺省时\_\_map\_\_的第二个参数为空|
+|type|xhr\|fetch|请求类型|
 |response|object\|array\|null\boolean\|number|响应数据|
 |responseText|string|响应数据|
 |delay|number|延迟的毫秒数|
@@ -84,8 +84,17 @@
 |groupId|string|分组id，相同的id会被分配到相同的工作空间|
 
 ### code面板
-通过onMatching和onResponding来动态的修改数据
+通过指定的hooks来动态的修改数据，支持的hooks有
+- onMatching
+- onResponding
+- onResponseHeaders
+- onRequestHeaders
+- onRedirect
 ```
+onRedirect((rule: Rule) => {
+    return Math.random() > 0.5 ? 'http://foo.com' : 'http://bar.com'
+})
+
 onMatching((rule: Rule) => {
     // 内部会shallow merge
     return {
@@ -122,6 +131,9 @@ interface Context {
     response?: Response
     rule: Rule
 }
+declare function onResponseHeaders(fn: (headers: Record<string, string>) => Record<string, string> | void): void
+declare function onRequestHeaders(fn: (headers: Record<string, string>) => Record<string, string> | void): void
+declare function onRedirect(fn: (rule: Rule) => string | void): void
 declare function onMatching(fn: (rule: Rule) => MatchingRule | void): void
 declare function onResponding(fn: (context: Context) => ResponseRule | void): void
 interface ResponseRule {

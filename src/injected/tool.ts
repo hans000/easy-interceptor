@@ -13,25 +13,18 @@ import { CustomRequestInfo } from "./fake/globalVar"
 export function matching(rules: MatchRule[], req: CustomRequestInfo): MatchRule | undefined {
     for (let rule of rules) {
         const { code, id, enable, count, ...restRule } = rule
-        if (code) {
-            const fn = createRunFunc(code, 'onMatching')
-            const result = fn?.(restRule)
-            if (result) {
-                return {
-                    ...restRule,
-                    ...result,
-                    id,
-                    enable,
-                    count,
-                }
+        const fn = createRunFunc(code, 'onMatching')
+        const result = fn(restRule)
+        if (result) {
+            return {
+                ...restRule,
+                ...result,
+                id,
+                enable,
+                count,
             }
         }
         if (rule.enable && matchPath(rule.test, req.requestUrl)) {
-            if (!(rule.type ? req.type === rule.type : true)) {
-                log('not work? please check `type` option', 'warn')
-                console.log('%c Easy Interceptor %c log ', 'color:white;background-color:orange', 'color:green;background-color:black', 'not work? please check `type` option')
-                continue
-            }
             if (rule.method ? req.method.toLowerCase() !== rule.method : false) {
                 log('not work? please check `method` option', 'warn')
                 continue
@@ -63,7 +56,7 @@ export async function handleCode(matchRule: MatchRule, inst: XMLHttpRequest | Re
     if (code) {
         try {
             const fn = createRunFunc(code, 'onResponding')
-            const partialData = await fn?.({
+            const partialData = await fn({
                 rule: restRule,
                 xhr: isResponse ? undefined : inst,
                 response: isResponse ? inst : undefined,

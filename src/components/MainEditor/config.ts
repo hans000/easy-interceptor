@@ -99,6 +99,9 @@ interface Context {
     response?: Response
     rule: Rule
 }
+declare function onResponseHeaders(fn: (headers: Record<string, string>) => Record<string, string> | void): void
+declare function onRequestHeaders(fn: (headers: Record<string, string>) => Record<string, string> | void): void
+declare function onRedirect(fn: (rule: Rule) => string | void): void
 declare function onMatching(fn: (rule: Rule) => MatchingRule | void): void
 declare function onResponding(fn: (context: Context) => ResponseRule | void): void
 
@@ -106,9 +109,9 @@ interface ResponseRule {
     response?: any
     responseText?: string
     status?: number
+    delay?: number
 }
 interface MatchingRule extends ResponseRule {
-    delay?: number
     responseHeaders?: Record<string, string>
 }
 `

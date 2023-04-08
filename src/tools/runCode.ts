@@ -38,7 +38,7 @@ export async function runCode(data: MatchRule, index: number) {
 
         const fn = createRunFunc(code, 'onResponding')
         const inst = await sendRequest(data, index)
-        const msg = await fn?.(restData, inst)
+        const msg = await fn(restData, inst)
 
         const newMsg = {
             ...restData,

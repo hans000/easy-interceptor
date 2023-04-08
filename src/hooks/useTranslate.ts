@@ -8,7 +8,7 @@ import en from '../../public/_locales/en/messages.json'
 export default function useTranslate(lang: 'zh_CN' | 'en' = 'zh_CN') {
     const __DEV__ = import.meta.env.DEV
     if (__DEV__) {
-        return (key: string, substitutions?: Array<string | number>) => {
+        return (key: string, substitutions?: string[]) => {
             const message = { zh_CN, en }[lang][key]?.message
             if (message === undefined) {
                 return key
@@ -19,5 +19,5 @@ export default function useTranslate(lang: 'zh_CN' | 'en' = 'zh_CN') {
             })
         }
     }
-    return (key: string, substitutions?: Array<string | number>) => chrome.i18n.getMessage(key, substitutions)
+    return (key: string, substitutions?: string[]) => chrome.i18n.getMessage(key, substitutions)
 }

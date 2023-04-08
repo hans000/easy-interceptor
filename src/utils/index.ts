@@ -77,7 +77,7 @@ export function stringifyHeaders(headers: HeadersInit) {
 /** do nothing */
 export function noop(): any { }
 
-export type TransformMethodType = 'onResponding' | "onMatching"
+export type TransformMethodType = 'onResponding' | 'onMatching' | 'onRedirect' | 'onRequestHeaders' | 'onResponseHeaders'
 
 export function createRunFunc(code: string, kind: TransformMethodType) {
     return new Function('c', `const result = [];${`const ${kind}=fn=>r=fn(c)`};try{${code};return r}catch{return null}`)
@@ -144,4 +144,12 @@ export function createScript(path: string) {
         script.remove()
         resolve(void 0)
     }))
+}
+
+export function objectToHttpHeaders(obj: object) {
+    return Object.keys(obj).map(key => ({ name: key, value: obj[key] }))
+}
+
+export function trimUrlParams(url: string) {
+    return url.replace(/\?(.*)/, '')
 }

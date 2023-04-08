@@ -31,8 +31,6 @@ const defaultData = { config: '', code: '' }
 
 const __DEV__ = import.meta.env.DEV
 
-
-
 const Editor = __DEV__ || process.env.VITE_LOCAL ? MonacoEditor : (MonacoEditor as any).default as unknown as typeof MonacoEditor
 
 const MainEditor = React.forwardRef(function (props: IProps, ref) {
@@ -158,5 +156,7 @@ const MainEditor = React.forwardRef(function (props: IProps, ref) {
         </div>
     )
 })
+
+MainEditor.displayName = 'MainEditor'
 
 export default MainEditor
