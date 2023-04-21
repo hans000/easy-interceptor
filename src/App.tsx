@@ -3,9 +3,9 @@
  * Copyright (c) 2022 hans000
  */
 import './App.less'
-import { Badge, Checkbox, BadgeProps, Button, Dropdown, Input, message, Modal, Spin, Table, Tag, Tooltip, Upload, Form, Switch, Row, Col, Space, Divider, Select } from 'antd'
+import { Badge, Checkbox, BadgeProps, Button, Dropdown, Input, message, Modal, Spin, Table, Tag, Tooltip, Upload, Switch, Space, Divider, Select } from 'antd'
 import React, { useEffect, useRef, useState } from 'react'
-import { TagOutlined, ControlOutlined, CodeOutlined, DeleteOutlined, PlusOutlined, SearchOutlined, DownOutlined, VerticalAlignBottomOutlined, UploadOutlined, SyncOutlined, RollbackOutlined, BugOutlined, FilterOutlined, MenuOutlined, UnorderedListOutlined, EllipsisOutlined, FormOutlined, SettingOutlined, AppstoreOutlined } from '@ant-design/icons'
+import { TagOutlined, ControlOutlined, CodeOutlined, DeleteOutlined, PlusOutlined, SearchOutlined, VerticalAlignBottomOutlined, UploadOutlined, SyncOutlined, RollbackOutlined, BugOutlined, FilterOutlined, FormOutlined, SettingOutlined, AppstoreOutlined } from '@ant-design/icons'
 import { ColumnsType } from 'antd/lib/table'
 import { pathMatch, randID, renderSize } from './utils'
 import { getMethodColor } from './tools/mappings'
@@ -291,12 +291,11 @@ export default function App() {
                             },
                         ]
                     }}>
-                        <div>
-                            <a title={value} onClick={() => {
+                        <Tooltip placement='topLeft' title={record.description}>
+                            <a onClick={() => {
                                 setActiveId(record.id)
                             }}>{shortText}</a>
-                            <div title={record.description} className='row__desc'>{record.description}</div>
-                        </div>
+                        </Tooltip>
                     </Dropdown>
                 )
             }
