@@ -104,6 +104,7 @@ export default function App() {
             [FakedLogKey]: setFakedLog,
             [ActiveGroupId]: setActiveGroupId,
         }
+
         setLoading(true)
         const result = await getStorage(Object.keys(map))
         setLoading(false)
@@ -114,6 +115,47 @@ export default function App() {
             setActiveId(null)
         }
     }
+
+    // 数据改变后通知background，并保存chrome.storage
+    useEffect(
+        () => {
+            if (! __DEV__) {
+                chrome.runtime.sendMessage(chrome.runtime.id, createStorageAction('rules', rules.filter(e => e.enable)))
+            }
+        },
+        [rules]
+    )
+
+    useEffect(
+        () => {
+            if (! __DEV__) {
+                chrome.runtime.sendMessage(chrome.runtime.id, createStorageAction('faked', faked))
+            }
+        },
+        [faked]
+    )
+
+    useEffect(
+        () => {
+            if (! __DEV__) {
+                chrome.runtime.sendMessage(chrome.runtime.id, createStorageAction('action', action))
+            }
+        },
+        [action]
+    )
+
+    useEffect(
+        () => {
+            const html = document.querySelector('html')!
+            const cls = 'theme--dark'
+            if (dark && !html.classList.contains(cls)) {
+                html.classList.add(cls)
+            } else {
+                html.classList.remove(cls)
+            }
+        },
+        [dark]
+    )
 
     const updateOrigin = () => {
         if (!__DEV__) {
@@ -183,7 +225,6 @@ export default function App() {
             filters: workspaces.map(workspace => ({ text: workspace, value: workspace })),
             width: 5,
             onFilter: (_, record) => record.groupId === activeGroupId,
-            filteredValue: [activeGroupId],
             render: (_, record) => {
                 const status = record.code
                     ? 'default'
