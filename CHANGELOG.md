@@ -1,4 +1,4 @@
-## v1.14.1
+## v1.14.3
 - 添加onRedirect、onResponseHeaders、 onRequestHeaders钩子
 - 支持拦截重定向css js类型的资源
 - 优化列表信息展示

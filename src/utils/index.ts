@@ -80,7 +80,7 @@ export function noop(): any { }
 export type TransformMethodType = 'onResponding' | 'onMatching' | 'onRedirect' | 'onRequestHeaders' | 'onResponseHeaders'
 
 export function createRunFunc(code: string, kind: TransformMethodType) {
-    return new Function('c', `const result = [];${`const ${kind}=fn=>r=fn(c)`};try{${code};return r}catch{return null}`)
+    return new Function('c', `let r;${`const ${kind}=fn=>r=fn(c)`};try{${code};return r}catch{return null}`)
 }
 
 export function debounce(func: Function, delay = 300, thisArg = null) {
