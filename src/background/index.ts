@@ -1,11 +1,11 @@
 /*
- * The GPL License (GPL)
+ * The AGPL License (AGPL)
  * Copyright (c) 2022 hans000
  */
 import { MatchRule } from "../App"
 import { matchPath } from "../tools"
 import { ActionFieldKey, ActiveGroupId, BackgroundMsgKey, LogMsgKey, PopupMsgKey, RulesFieldKey, StorageMsgKey, WatchFilterKey } from "../tools/constants"
-import { EventProps } from "../tools/message"
+import { EventProps, createBackgroudAction } from "../tools/message"
 import { arrayBufferToString, createRunFunc, objectToHttpHeaders, randID, trimUrlParams } from "../utils"
 import { updateIcon } from "./utils"
 

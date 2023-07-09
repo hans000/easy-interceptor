@@ -1,5 +1,5 @@
 /*
- * The GPL License (GPL)
+ * The AGPL License (AGPL)
  * Copyright (c) 2022 hans000
  */
 import { JSONSchema7 } from "json-schema";

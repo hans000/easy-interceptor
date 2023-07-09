@@ -1,5 +1,5 @@
 /*
- * The GPL License (GPL)
+ * The AGPL License (AGPL)
  * Copyright (c) 2022 hans000
  */
 import { MatchRule } from '../App'
@@ -12,7 +12,7 @@ import { handleCode, matching, triggerCountEvent, triggerResponseEvent } from '.
 
 bindEvent()
 
-const run = debounce(() => app.run())
+const run = debounce(() => app.run(), true)
 
 const app = {
     rules: [] as MatchRule[],

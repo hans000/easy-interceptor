@@ -1,5 +1,5 @@
 /*
- * The GPL License (GPL)
+ * The AGPL License (AGPL)
  * Copyright (c) 2022 hans000
  */
 import zh_CN from '../../public/_locales/zh_CN/messages.json'

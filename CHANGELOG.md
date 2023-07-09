@@ -1,3 +1,7 @@
+## v1.14.4
+- 修复页面刷新时，工作空间没有数据没有更新的问题
+- 更改license
+
 ## v1.14.3
 - 添加onRedirect、onResponseHeaders、 onRequestHeaders钩子
 - 支持拦截重定向css js类型的资源

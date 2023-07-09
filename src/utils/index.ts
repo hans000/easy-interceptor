@@ -1,5 +1,5 @@
 /*
- * The GPL License (GPL)
+ * The AGPL License (AGPL)
  * Copyright (c) 2022 hans000
  */
 export function equal(obj1, obj2) {
@@ -83,10 +83,14 @@ export function createRunFunc(code: string, kind: TransformMethodType) {
     return new Function('c', `let r;${`const ${kind}=fn=>r=fn(c)`};try{${code};return r}catch{return null}`)
 }
 
-export function debounce(func: Function, delay = 300, thisArg = null) {
-    let timer
+export function debounce(func: Function, immediate = false, delay = 300, thisArg = null) {
+    let timer, first = immediate
     return (...args) => {
         clearTimeout(timer)
+        if (first) {
+            func.call(thisArg, ...args)
+            first = false
+        }
         timer = setTimeout(() => {
             func.call(thisArg, ...args)
         }, delay)

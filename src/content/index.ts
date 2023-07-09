@@ -1,8 +1,8 @@
 /*
- * The GPL License (GPL)
+ * The AGPL License (AGPL)
  * Copyright (c) 2022 hans000
  */
-import { ActionFieldKey, BackgroundMsgKey, BootLogKey, CountMsgKey, FakedFieldKey, FakedLogKey, LogMsgKey, ResponseMsgKey, RulesFieldKey, StorageMsgKey, SyncDataMsgKey, UpdateMsgKey } from '../tools/constants'
+import { ActionFieldKey, ActiveGroupId, BackgroundMsgKey, BootLogKey, CountMsgKey, FakedFieldKey, FakedLogKey, LogMsgKey, ResponseMsgKey, RulesFieldKey, StorageMsgKey, SyncDataMsgKey, UpdateMsgKey } from '../tools/constants'
 import { log } from '../tools/log'
 import { SyncFields, createBackgroudAction } from '../tools/message'
 import { createScript, noop } from '../utils'
@@ -97,17 +97,27 @@ function handle() {
 window.addEventListener("pagescript", (event: any) => {
     const { data, type } = event.detail
     
-    // 初始化数据
+    // 页面加载时初始化数据
     if (type === SyncDataMsgKey) {
-        chrome.storage.local.get([ActionFieldKey, RulesFieldKey, FakedFieldKey, FakedLogKey], (result) => {
-            Object.entries({
-                [ActionFieldKey]: 'action',
-                [RulesFieldKey]: 'rules',
-                [FakedFieldKey]: 'faked',
-                [FakedLogKey]: 'fakedLog',
-            } satisfies Record<string, SyncFields>).forEach(([key, val]) => {
+        chrome.storage.local.get([ActionFieldKey, RulesFieldKey, FakedFieldKey, FakedLogKey, ActiveGroupId], (result) => {
+            const handleMap: Record<string, { key: SyncFields; fn?: Function }> = {
+                [ActionFieldKey]: {
+                    key: 'action',
+                },
+                [RulesFieldKey]: {
+                    key: 'rules',
+                    fn: () => result[RulesFieldKey].filter(rule => rule.groupId === result[ActiveGroupId])
+                },
+                [FakedFieldKey]: {
+                    key: 'faked',
+                },
+                [FakedLogKey]: {
+                    key: 'fakedLog',
+                },
+            }
+            Object.entries(handleMap).forEach(([key, val]) => {
                 if (result.hasOwnProperty(key)) {
-                    postMessage(createBackgroudAction(val, result[key]))
+                    postMessage(createBackgroudAction(val.key as any as SyncFields, val.fn?.() || result[key]))
                 }
             })
         })
