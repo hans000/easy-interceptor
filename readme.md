@@ -7,6 +7,11 @@
 ## abstract
 Easy Interceptor is a Chrome extension that intercepts HTTP requests in the form of XMLHttpRequest data requests. It intercepts and modifs data by overwriting the Response and responseText fields. It is mainly used for debugging Web pages.
 
+
+## WIKI
+- [Manual](https://github.com/hans000/easy-interceptor/wiki/%E8%BD%AF%E4%BB%B6%E4%B8%80%E8%A7%88%E5%9B%BE)
+- [How to use](https://github.com/hans000/easy-interceptor/wiki/%E8%BD%AF%E4%BB%B6%E6%93%8D%E4%BD%9C)
+
 ## 🚀 Scenarios
 Imagine that it is obviously to verify a very simple thing, but the preconditions for the recurrence of this problem are too difficult to complete, causing pain. The difficulty may be:
 
