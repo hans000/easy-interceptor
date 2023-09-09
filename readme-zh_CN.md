@@ -171,6 +171,8 @@ interface MatchingRule extends ResponseRule {
 ### 🔹 为什么有时候刷新页面数据没有拦截成功
 开发环境网页加载比较快，插件可能还有生效就请求就结束了，可以适当延迟请求执行
 
+### 🔹 为什么没有拦截接口
+可能是接口走了缓存，注意把浏览器Network的disable cache勾选上
 
 
 ### 🔹 为什么会有两个安装包

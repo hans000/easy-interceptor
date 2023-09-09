@@ -174,6 +174,9 @@ The extension provides the function of testing the back-end interface. You can u
 The dev environment page is loaded faster, The script has not been injected yet but the request has been finished. You can appropriately delay the request
 
 
+### 🔹 Why does it not work
+perharps cached data, you can disable cache from network panel in devtool
+
 ### 🔹 Why there are two installation packages
 It is recommended to use the cdn version (ensure access to https://unpkg.com). The offline version with local is more suitable for LAN users
 
