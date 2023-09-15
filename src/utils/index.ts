@@ -157,3 +157,15 @@ export function objectToHttpHeaders(obj: object) {
 export function trimUrlParams(url: string) {
     return url.replace(/\?(.*)/, '')
 }
+
+// export function once(func: Function) {
+//     let mounted = false;
+//     let result
+//     return (...args) => {
+//         if (mounted) {
+//             return result
+//         }
+//         result = func(args)
+//         return result;
+//     };
+// }

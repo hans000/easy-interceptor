@@ -2,9 +2,9 @@
  * The AGPL License (AGPL)
  * Copyright (c) 2022 hans000
  */
-import { ActiveGroupId, FakedFieldKey } from './../tools/constants';
+import { ActiveGroupId, ConfigInfoFieldKey } from './../tools/constants';
 import { MatchRule } from "../App"
-import { ActionFieldKey, RulesFieldKey } from "../tools/constants"
+import { RulesFieldKey } from "../tools/constants"
 
 type RGBA = [number, number, number, number]
 const FAKED_COLOR: RGBA = [43, 44, 45, 255]
@@ -48,15 +48,16 @@ function setIcon(action: ActionType, faked: boolean) {
 }
 
 export function updateIcon() {
-    chrome.storage.local.get([ActionFieldKey, RulesFieldKey, FakedFieldKey, ActiveGroupId], (result) => {
-        if (result.hasOwnProperty(ActionFieldKey)) {
-            setIcon(result[ActionFieldKey], result[FakedFieldKey])
+    chrome.storage.local.get([ConfigInfoFieldKey, RulesFieldKey, ActiveGroupId], (result) => {
+        const configInfo = result[ConfigInfoFieldKey] || {}
+        if (result.hasOwnProperty(ConfigInfoFieldKey)) {
+            setIcon(configInfo.action, configInfo.faked)
         }
         if (result.hasOwnProperty(RulesFieldKey)) {
             setBadgeText(
                 result[RulesFieldKey].filter(rule => rule.groupId === result[ActiveGroupId]),
-                result[ActionFieldKey],
-                result[FakedFieldKey]
+                configInfo.action,
+                configInfo.faked
             )
         }
     })

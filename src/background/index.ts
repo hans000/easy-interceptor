@@ -2,24 +2,24 @@
  * The AGPL License (AGPL)
  * Copyright (c) 2022 hans000
  */
-import { MatchRule } from "../App"
+import { ConfigInfoType, MatchRule } from "../App"
 import { matchPath } from "../tools"
-import { ActionFieldKey, ActiveGroupId, BackgroundMsgKey, LogMsgKey, PopupMsgKey, RulesFieldKey, StorageMsgKey, WatchFilterKey } from "../tools/constants"
+import { ActiveGroupId, BackgroundMsgKey, ConfigInfoFieldKey, PopupMsgKey, RulesFieldKey, StorageMsgKey, WatchFilterKey } from "../tools/constants"
 import { EventProps, createBackgroudAction } from "../tools/message"
 import { arrayBufferToString, createRunFunc, objectToHttpHeaders, randID, trimUrlParams } from "../utils"
 import { updateIcon } from "./utils"
 
 let __result = new Map<string, any>()
-let __action: ActionType
 let __rules: MatchRule[] = []
+let __configInfo: Partial<ConfigInfoType> = {}
 
 updateIcon()
 
 function update() {
     __result.clear()
 
-    chrome.storage.local.get([ActionFieldKey], (result) => {
-        __action = result[ActionFieldKey]
+    chrome.storage.local.get([ConfigInfoFieldKey], (result) => {
+        __configInfo.action = (result[ConfigInfoFieldKey] || {}).action
     })
 }
 
@@ -40,11 +40,11 @@ chrome.runtime.onMessage.addListener((msg: EventProps) => {
         }
         // 更新rule
         if (msg.key === 'rules') {
-            __rules = msg.value
+            __rules = msg.value || []
         }
         // 更新action
-        if (msg.key === 'action') {
-            __action = msg.value
+        if (msg.key === 'configInfo') {
+            __configInfo = msg.value || {}
         }
         chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
             chrome.tabs.sendMessage(tabs[0].id, { ...msg, from: BackgroundMsgKey })
@@ -53,7 +53,7 @@ chrome.runtime.onMessage.addListener((msg: EventProps) => {
 })
 
 chrome.storage.local.get([RulesFieldKey, ActiveGroupId], (result) => {
-    __rules = result[RulesFieldKey].filter(rule => (rule.groupId || 'default') === result[ActiveGroupId])
+    __rules = (result[RulesFieldKey] || []).filter(rule => (rule.groupId || 'default') === result[ActiveGroupId])
 })
 
 // 获取body数据
@@ -61,10 +61,18 @@ chrome.webRequest.onBeforeRequest.addListener(
     details => {
         const url = trimUrlParams(details.url)
 
-        if (__action === 'watch') {
+        if (__configInfo.runAt === 'trigger') {
+            if (matchPath(__configInfo.runAtTrigger, url)) {
+                chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+                    chrome.tabs.sendMessage(tabs[0].id, createBackgroudAction('trigger', true))
+                })
+            }
+        }
+
+        if (__configInfo.action === 'watch') {
             return beforeRequestWatch(details, url)
         }
-        if (__action === 'intercept') {
+        if (__configInfo.action === 'intercept') {
             return beforeRequestIntercept(details, url)
         }
     },
@@ -78,14 +86,14 @@ chrome.webRequest.onBeforeRequest.addListener(
 // 获取requestHeaders
 chrome.webRequest.onBeforeSendHeaders.addListener(
     (details) => {
-        if (__action === 'close') return
+        if (__configInfo.action === 'close') return
 
         const objectHeaders: Record<string, string> = Object.fromEntries(details.requestHeaders.map(({ name, value }) => [name, value]))
-        if (__action === 'intercept') {
+        if (__configInfo.action === 'intercept') {
             return beforeSendHeadersIntercept(details, objectHeaders)
         }
 
-        if (__action === 'watch') {
+        if (__configInfo.action === 'watch') {
             return beforeSendHeadersWatch(details, objectHeaders)
         }
     },
@@ -99,10 +107,10 @@ chrome.webRequest.onBeforeSendHeaders.addListener(
 // 获取responseHeaders
 chrome.webRequest.onResponseStarted.addListener(
     details => {
-        if (__action === 'watch') {
+        if (__configInfo.action === 'watch') {
             return responseStartedWatch(details);
         }
-        if (__action === 'intercept') {
+        if (__configInfo.action === 'intercept') {
             return responseStartedIntercept(details);
         }
     },
@@ -181,7 +189,7 @@ function responseStartedWatch(details: chrome.webRequest.WebResponseCacheDetails
 
         const urlObj = new URL(details.url)
 
-        chrome.storage.local.get([RulesFieldKey, ActionFieldKey, ActiveGroupId], (result) => {
+        chrome.storage.local.get([RulesFieldKey, ActiveGroupId], (result) => {
             chrome.storage.local.set({
                 [RulesFieldKey]: [
                     ...result[RulesFieldKey],

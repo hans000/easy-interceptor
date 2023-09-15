@@ -103,6 +103,21 @@
             }
         }
     },
+    "run_at_title": {
+        "message": "Setting Injected Run At"
+    },
+    "run_at_start": {
+        "message": "document start"
+    },
+    "run_at_end": {
+        "message": "document end"
+    },
+    "run_at_delay": {
+        "message": "delay"
+    },
+    "run_at_trigger": {
+        "message": "trigger"
+    },
     "tip_send": {
         "message": "Click to fetch request"
     },

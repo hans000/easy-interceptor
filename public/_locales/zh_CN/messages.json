@@ -103,6 +103,21 @@
             }
         }
     },
+    "run_at_title": {
+        "message": "设置拦截时机"
+    },
+    "run_at_start": {
+        "message": "文档加载时"
+    },
+    "run_at_end": {
+        "message": "文档加载后"
+    },
+    "run_at_delay": {
+        "message": "延时"
+    },
+    "run_at_trigger": {
+        "message": "拦截"
+    },
     "tip_send": {
         "message": "点击发送请求"
     },

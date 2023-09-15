@@ -2,18 +2,17 @@
  * The AGPL License (AGPL)
  * Copyright (c) 2022 hans000
  */
-import { ActionFieldKey, ActiveGroupId, BackgroundMsgKey, BootLogKey, CountMsgKey, FakedFieldKey, FakedLogKey, LogMsgKey, ResponseMsgKey, RulesFieldKey, StorageMsgKey, SyncDataMsgKey, UpdateMsgKey } from '../tools/constants'
+import { ActiveGroupId, BackgroundMsgKey,  ConfigInfoFieldKey, CountMsgKey, LogMsgKey, ResponseMsgKey, RulesFieldKey, StorageMsgKey, SyncDataMsgKey, UpdateMsgKey } from '../tools/constants'
 import { log } from '../tools/log'
 import { SyncFields, createBackgroudAction } from '../tools/message'
 import { createScript, noop } from '../utils'
 
 function loadScripts() {
-    chrome.storage.local.get([ActionFieldKey, BootLogKey], result => {
-        const action = result[ActionFieldKey] || 'close'
-        const bootLog = result[BootLogKey]
-        if (action !== 'close') {
+    chrome.storage.local.get([ConfigInfoFieldKey], result => {
+        const configInfo = result[ConfigInfoFieldKey] || {}
+        if (configInfo.action !== 'close') {
             createScript('injected.js').then(() => {
-                if (bootLog) {
+                if (configInfo.bootLog !== false) {
                     log('✅ Injected successfully')
                 }
                 // @ts-ignore 覆盖原函数，达到只加载一次的目的
@@ -35,7 +34,7 @@ chrome.runtime.onMessage.addListener(msg => {
     // 转发给pagescript
     if (msg.type === StorageMsgKey) {
         postMessage(msg)
-        if (msg.key === 'action') {
+        if (msg.key === 'configInfo') {
             loadScripts()
         }
         return
@@ -93,34 +92,34 @@ function handle() {
     })
 }
 
+function initData() {
+    chrome.storage.local.get([ConfigInfoFieldKey, RulesFieldKey, ActiveGroupId], (result) => {
+        const handleMap: Record<string, { key: SyncFields; fn?: Function }> = {
+            [ConfigInfoFieldKey]: {
+                key: 'configInfo',
+            },
+            [RulesFieldKey]: {
+                key: 'rules',
+                fn: () => result[RulesFieldKey].filter(rule => rule.groupId === result[ActiveGroupId])
+            },
+        }
+        Object.entries(handleMap).forEach(([key, val]) => {
+            if (result.hasOwnProperty(key)) {
+                postMessage(createBackgroudAction(val.key as any as SyncFields, val.fn?.() || result[key]))
+            }
+        })
+        // 重置trigger
+        postMessage(createBackgroudAction('trigger', false))
+    })
+}
+
 // 接收pagescript传来的信息
 window.addEventListener("pagescript", (event: any) => {
     const { data, type } = event.detail
     
     // 页面加载时初始化数据
     if (type === SyncDataMsgKey) {
-        chrome.storage.local.get([ActionFieldKey, RulesFieldKey, FakedFieldKey, FakedLogKey, ActiveGroupId], (result) => {
-            const handleMap: Record<string, { key: SyncFields; fn?: Function }> = {
-                [ActionFieldKey]: {
-                    key: 'action',
-                },
-                [RulesFieldKey]: {
-                    key: 'rules',
-                    fn: () => result[RulesFieldKey].filter(rule => rule.groupId === result[ActiveGroupId])
-                },
-                [FakedFieldKey]: {
-                    key: 'faked',
-                },
-                [FakedLogKey]: {
-                    key: 'fakedLog',
-                },
-            }
-            Object.entries(handleMap).forEach(([key, val]) => {
-                if (result.hasOwnProperty(key)) {
-                    postMessage(createBackgroudAction(val.key as any as SyncFields, val.fn?.() || result[key]))
-                }
-            })
-        })
+        initData()
         return
     }
 

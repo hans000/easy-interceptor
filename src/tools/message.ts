@@ -12,7 +12,7 @@ export interface EventProps {
     value: any
 }
 
-export type SyncFields = 'rules' | 'action' | 'faked' | 'fakedLog'
+export type SyncFields = 'rules' | 'configInfo' | 'trigger'
 
 export function createBackgroudAction(key: SyncFields, value: any) {
     return {

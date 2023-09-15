@@ -3,9 +3,9 @@
  * Copyright (c) 2022 hans000
  */
 import './App.less'
-import { Badge, Checkbox, BadgeProps, Button, Dropdown, Input, message, Modal, Spin, Table, Tag, Tooltip, Upload, Switch, Space, Divider, Select } from 'antd'
+import { Badge, Checkbox, BadgeProps, Button, Dropdown, Input, message, Modal, Spin, Table, Tag, Tooltip, Upload, Switch, Space, Divider, Select, Popover, Segmented, InputNumber } from 'antd'
 import React, { useEffect, useRef, useState } from 'react'
-import { TagOutlined, ControlOutlined, CodeOutlined, DeleteOutlined, PlusOutlined, SearchOutlined, VerticalAlignBottomOutlined, UploadOutlined, SyncOutlined, RollbackOutlined, BugOutlined, FilterOutlined, FormOutlined, SettingOutlined, AppstoreOutlined } from '@ant-design/icons'
+import { TagOutlined, ControlOutlined, CodeOutlined, DeleteOutlined, PlusOutlined, SearchOutlined, VerticalAlignBottomOutlined, UploadOutlined, SyncOutlined, RollbackOutlined, BugOutlined, FilterOutlined, FormOutlined, SettingOutlined, AppstoreOutlined, FieldTimeOutlined } from '@ant-design/icons'
 import { ColumnsType } from 'antd/lib/table'
 import { pathMatch, randID, renderSize } from './utils'
 import { getMethodColor } from './tools/mappings'
@@ -20,7 +20,7 @@ import Quote from './components/Quote'
 import { runCode } from './tools/runCode'
 import { loader } from "@monaco-editor/react";
 import { sendRequestLog } from './tools/sendRequest'
-import { ActionFieldKey, ActiveGroupId, BootLogKey, DarkFieldKey, FakedFieldKey, FakedLogKey, HiddenFieldsFieldKey, ActiveIdFieldKey, RulesFieldKey, SelectedRowFieldKeys, UpdateMsgKey, WatchFilterKey } from './tools/constants'
+import { ActionFieldKey, ActiveGroupId, BootLogKey, DarkFieldKey, FakedFieldKey, FakedLogKey, HiddenFieldsFieldKey, ActiveIdFieldKey, RulesFieldKey, SelectedRowFieldKeys, UpdateMsgKey, WatchFilterKey, RunAtKey, RunAtDelayKey, RunAtTriggerKey, ConfigInfoFieldKey } from './tools/constants'
 import useTranslate from './hooks/useTranslate'
 import getStorage from './tools/getStorage'
 
@@ -60,12 +60,29 @@ const fields = ['url', 'redirectUrl', 'test', 'groupId', 'type', 'method', 'stat
 
 const isDarkTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
 
+export interface ConfigInfoType {
+    faked: boolean
+    fakedLog: boolean
+    runAt: string
+    runAtDelay: number
+    runAtTrigger: string
+    action: string
+}
+
+const defaultConfigInfo: ConfigInfoType = {
+    faked: false,
+    fakedLog: true,
+    runAt: 'start',
+    runAtDelay: 0,
+    runAtTrigger: '**',
+    action: 'close',
+}
+
 export default function App() {
     const [dark, setDark] = useStorage(DarkFieldKey, isDarkTheme)
-    const [action, setAction] = useStorage(ActionFieldKey, 'close')
     const [activeGroupId, setActiveGroupId] = useStorage(ActiveGroupId, 'default')
     const [watchFilter, setWatchFilter] = useStorage(WatchFilterKey, '')
-    const [faked, setFaked] = useStorage(FakedFieldKey, false)
+    const [configInfo, setConfigInfo] = useStorage<ConfigInfoType>(ConfigInfoFieldKey, defaultConfigInfo)
     const [rules, setRules] = useStorage<MatchRule[]>(RulesFieldKey, [])
     const [selectedRowKeys, setSelectedRowKeys] = useStorage(SelectedRowFieldKeys, [])
     const [loading, setLoading] = useState(false)
@@ -74,11 +91,9 @@ export default function App() {
     const [visible, setVisible] = useState(false)
     const [hiddenFields, setHiddenFields] = useStorage<string[]>(HiddenFieldsFieldKey, [])
     const [bootLog, setBootLog] = useStorage(BootLogKey, true)
-    const [fakedLog, setFakedLog] = useStorage(FakedLogKey, true)
-    const [setting, setSetting] = useState(false)
     const originRef = useRef('')
     const editorRef = useRef()
-    const t = useTranslate()
+    const t = useTranslate('en')
 
     const watchRules = () => {
         if (!__DEV__) {
@@ -92,16 +107,14 @@ export default function App() {
 
     const reload = async (clean = false) => {
         const map = {
-            [ActionFieldKey]: setAction,
+            [ConfigInfoFieldKey]: setConfigInfo,
             [RulesFieldKey]: setRules,
             [SelectedRowFieldKeys]: setSelectedRowKeys,
             [DarkFieldKey]: setDark,
             [ActiveIdFieldKey]: setActiveId,
             [HiddenFieldsFieldKey]: setHiddenFields,
-            [FakedFieldKey]: setFaked,
             [WatchFilterKey]: setWatchFilter,
             [BootLogKey]: setBootLog,
-            [FakedLogKey]: setFakedLog,
             [ActiveGroupId]: setActiveGroupId,
         }
 
@@ -115,34 +128,6 @@ export default function App() {
             setActiveId(null)
         }
     }
-
-    // 数据改变后通知background，并保存chrome.storage
-    useEffect(
-        () => {
-            if (! __DEV__) {
-                chrome.runtime.sendMessage(chrome.runtime.id, createStorageAction('rules', rules.filter(e => e.enable)))
-            }
-        },
-        [rules]
-    )
-
-    useEffect(
-        () => {
-            if (! __DEV__) {
-                chrome.runtime.sendMessage(chrome.runtime.id, createStorageAction('faked', faked))
-            }
-        },
-        [faked]
-    )
-
-    useEffect(
-        () => {
-            if (! __DEV__) {
-                chrome.runtime.sendMessage(chrome.runtime.id, createStorageAction('action', action))
-            }
-        },
-        [action]
-    )
 
     useEffect(
         () => {
@@ -201,7 +186,7 @@ export default function App() {
 
     const editable = React.useMemo(() => !!activeId, [activeId])
 
-    const disabled = React.useMemo(() => editable || setting, [editable, setting])
+    const disabled = React.useMemo(() => editable, [editable])
 
     const workspaces = React.useMemo(
         () => {
@@ -416,7 +401,7 @@ export default function App() {
             render: (value, record) => (
                 <Checkbox checked={value} onChange={(e) => {
                     if (!value) {
-                        setAction('intercept')
+                        setConfigInfo(info => ({ ...info, action: 'intercept' }))
                     }
                     setRules(data => {
                         const result = [...data]
@@ -450,37 +435,10 @@ export default function App() {
     useEffect(
         () => {
             if (!__DEV__) {
-                chrome.runtime.sendMessage(chrome.runtime.id, createStorageAction('rules', workspaceRules.filter(e => e.enable)))
+                chrome.runtime.sendMessage(chrome.runtime.id, createStorageAction('configInfo', configInfo))
             }
         },
-        [workspaceRules]
-    )
-
-    useEffect(
-        () => {
-            if (!__DEV__) {
-                chrome.runtime.sendMessage(chrome.runtime.id, createStorageAction('faked', faked))
-            }
-        },
-        [faked]
-    )
-
-    useEffect(
-        () => {
-            if (!__DEV__) {
-                chrome.runtime.sendMessage(chrome.runtime.id, createStorageAction('action', action))
-            }
-        },
-        [action]
-    )
-
-    useEffect(
-        () => {
-            if (!__DEV__) {
-                chrome.runtime.sendMessage(chrome.runtime.id, createStorageAction('fakedLog', fakedLog))
-            }
-        },
-        [fakedLog]
+        [configInfo]
     )
 
     useEffect(
@@ -614,12 +572,9 @@ document.head.appendChild(link)
                             }}></Button>
                         </Tooltip>
                         <Tooltip title={t('action_mode')}>
-                            <Button type={faked ? 'primary' : 'default'} icon={<BugOutlined />} onClick={() => {
-                                setFaked(faked => !faked)
+                            <Button type={configInfo.faked ? 'primary' : 'default'} icon={<BugOutlined />} onClick={() => {
+                                setConfigInfo(info => ({ ...info, faked: !info.faked }))
                             }}></Button>
-                        </Tooltip>
-                        <Tooltip title={t(setting ? 'action_back' : 'action_setting')}>
-                            <Button icon={setting ? <RollbackOutlined /> : <SettingOutlined />} onClick={() => setSetting(setting => !setting)}></Button>
                         </Tooltip>
                         {
                             editable && (
@@ -636,27 +591,8 @@ document.head.appendChild(link)
                         }
                     </Button.Group>
                     <div>
-                        <Tooltip title={t('select_workspace')}>
-                            <AppstoreOutlined />
-                        </Tooltip>
-                        <Select
-                            value={activeGroupId}
-                            onChange={(activeGroupId) => {
-                                setSelectedRowKeys([])
-                                setActiveGroupId(activeGroupId)
-                            }}
-                            bordered={false}
-                            style={{ maxWidth: 150 }}
-                            dropdownStyle={{ maxWidth: 200 }}
-                            dropdownMatchSelectWidth={false}>
-                            {
-                                workspaces.map(workspace => <Select.Option key={workspace}>{workspace}</Select.Option>)
-                            }
-                        </Select>
-                    </div>
-                    <div>
                         {
-                            action === 'watch' && (
+                            configInfo.action === 'watch' && (
                                 <Input value={watchFilter} onChange={e => setWatchFilter(e.target.value)}
                                     style={{ width: 200, marginRight: 24 }}
                                     suffix={
@@ -671,9 +607,9 @@ document.head.appendChild(link)
                         <Select bordered={false}
                             placement='bottomRight'
                             dropdownMatchSelectWidth={false}
-                            value={action}
+                            value={configInfo.action}
                             onChange={(key) => {
-                                setAction(key)
+                                setConfigInfo(info => ({ ...info, action: key }))
                                 if (key === 'intercept' && !!activeId) {
                                     setRules(rules => {
                                         const newRules = [...rules]
@@ -697,7 +633,7 @@ document.head.appendChild(link)
                         size='small'
                         pagination={false}
                         columns={columns}
-                        scroll={{ y: 512 }}
+                        scroll={{ y: 492 }}
                         dataSource={workspaceRules}
                         rowSelection={{
                             selectedRowKeys,
@@ -706,6 +642,106 @@ document.head.appendChild(link)
                             },
                         }}
                     />
+                </div>
+                <div className="app__bar">
+                    <div className='app__bar-item'>
+                        <Popover trigger={['click']} placement='top' showArrow={false} content={(
+                            <>
+                                <Divider orientation='left' plain>
+                                    <Button size='small' type='primary' onClick={() => {
+                                        setDark(false)
+                                        setBootLog(true)
+                                        setConfigInfo(info => ({ ...info, fakedLog: true }))
+                                    }}>{t('action_reset')}</Button>
+                                </Divider>
+                                <Space size={'large'}>
+                                    <div style={{ display: 'flex' }}>
+                                        <span style={{ marginRight: 8 }}>{t('action_theme')}</span>
+                                        <Switch checked={dark} onClick={() => setDark(dark => !dark)}></Switch>
+                                    </div>
+                                    <div style={{ display: 'flex' }}>
+                                        <span style={{ marginRight: 8 }}>{t('action_boot_log')}</span>
+                                        <Switch checked={bootLog} onClick={() => setBootLog(bootLog => !bootLog)}></Switch>
+                                    </div>
+                                    <div style={{ display: 'flex' }}>
+                                        <span style={{ marginRight: 8 }}>{t('action_faked_log')}</span>
+                                        <Switch checked={configInfo.fakedLog} onClick={() => setConfigInfo(info => ({ ...info, fakedLog: !info.fakedLog }))}></Switch>
+                                    </div>
+                                </Space>
+                            </>
+                        )}>
+                            <SettingOutlined />
+                        </Popover>
+                    </div>
+                    <div className='app__bar-item'>
+                        <Tooltip title={t('select_workspace')}>
+                            <AppstoreOutlined />
+                        </Tooltip>
+                        <Select
+                            size='small'
+                            showArrow={false}
+                            placement='topLeft'
+                            value={activeGroupId}
+                            onChange={(activeGroupId) => {
+                                setSelectedRowKeys([])
+                                setActiveGroupId(activeGroupId)
+                            }}
+                            bordered={false}
+                            style={{ maxWidth: 150, color: 'white', }}
+                            dropdownStyle={{ maxWidth: 200 }}
+                            dropdownMatchSelectWidth={false}>
+                            {
+                                workspaces.map(workspace => <Select.Option key={workspace}>{workspace}</Select.Option>)
+                            }
+                        </Select>
+                    </div>
+                    <div className='app__bar-item'>
+                        <Popover trigger={['click']} placement='top' showArrow={false} content={(
+                            <>
+                                <Segmented value={configInfo.runAt} onChange={(runAt: string) => {
+                                    setConfigInfo(info => ({ ...info, runAt }))
+                                }} options={[
+                                    {
+                                        label: t('run_at_start'),
+                                        value: 'start',
+                                    },
+                                    {
+                                        label: t('run_at_end'),
+                                        value: 'end',
+                                    },
+                                    {
+                                        label: t('run_at_delay'),
+                                        value: 'delay',
+                                    },
+                                    {
+                                        label: t('run_at_trigger'),
+                                        value: 'trigger',
+                                    },
+                                ]} />
+                                <div style={{
+                                    margin: '8px 0'
+                                }}>
+                                    {
+                                        configInfo.runAt === 'delay' && <InputNumber value={configInfo.runAtDelay} onChange={(value) => setConfigInfo(info => ({ ...info, runAtDelay: value }))} style={{ width: '100%' }} defaultValue={300} min={0} step={1} precision={0}/>
+                                    }
+                                    {
+                                        configInfo.runAt === 'trigger' && <Input value={configInfo.runAtTrigger} onChange={e => setConfigInfo(info => ({ ...info, runAtTrigger: e.target.value }))} style={{ width: '100%' }} defaultValue={'*'} />
+                                    }
+                                </div>
+                            </>
+                        )} title={t('run_at_title')}>
+                            <div style={{ maxWidth: 300, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} >
+                                <FieldTimeOutlined />
+                                <span style={{ marginLeft: 4 }}>{configInfo.runAt}</span>
+                                {
+                                    configInfo.runAt === 'delay' && <span> | {configInfo.runAtDelay}</span>
+                                }
+                                {
+                                    configInfo.runAt === 'trigger' && <span title={configInfo.runAtTrigger}> | {configInfo.runAtTrigger}</span>
+                                }
+                            </div>
+                        </Popover>
+                    </div>
                 </div>
                 {
                     editable && (
@@ -720,33 +756,6 @@ document.head.appendChild(link)
                                     update(value, activeIndex)
                                     setInvalid(invalid)
                                 }} />
-                        </div>
-                    )
-                }
-                {
-                    setting && (
-                        <div className='app__setting'>
-                            <Divider orientation='left' plain>
-                                <Button size='small' type='primary' onClick={() => {
-                                    setDark(false)
-                                    setBootLog(true)
-                                    setFakedLog(true)
-                                }}>{t('action_reset')}</Button>
-                            </Divider>
-                            <Space size={'large'}>
-                                <div style={{ display: 'flex' }}>
-                                    <span style={{ marginRight: 8 }}>{t('action_theme')}</span>
-                                    <Switch checked={dark} onClick={() => setDark(dark => !dark)}></Switch>
-                                </div>
-                                <div style={{ display: 'flex' }}>
-                                    <span style={{ marginRight: 8 }}>{t('action_boot_log')}</span>
-                                    <Switch checked={bootLog} onClick={() => setBootLog(bootLog => !bootLog)}></Switch>
-                                </div>
-                                <div style={{ display: 'flex' }}>
-                                    <span style={{ marginRight: 8 }}>{t('action_faked_log')}</span>
-                                    <Switch checked={fakedLog} onClick={() => setFakedLog(fakedLog => !fakedLog)}></Switch>
-                                </div>
-                            </Space>
                         </div>
                     )
                 }
