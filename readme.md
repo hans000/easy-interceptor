@@ -61,13 +61,19 @@ How to solve the above problems? If you can intercept and modify the data before
 - [Refresh]: refresh, will reset `count` field 
 - [Switch Theme]: light | dark
 - [Fake Mode]: turn on fake mode, default turn off, Only intercept requests, relying on back-end services; When enabled, a simulated object will be used, which can be independent of back-end services
-- \[Setting\]: Setting
+
 
 
 ### Right Top Menu
 - [Close]: close this extension
 - [Watching]: watching fetch（just work on Content-Type is json）
 - [Intercepting]: custome responseText
+
+## 状态栏
+- \[Setting\]: Setting
+- [Work Space]: Switch work space
+- [Run At]：four options can be choose. start (js injected will be work)，end (DOMContentLoaded)，delay (delay some times)，trigger (match a url)
+
 
 ### Config Panel
 
