@@ -93,7 +93,7 @@ export default function App() {
     const [bootLog, setBootLog] = useStorage(BootLogKey, true)
     const originRef = useRef('')
     const editorRef = useRef()
-    const t = useTranslate('en')
+    const t = useTranslate()
 
     const watchRules = () => {
         if (!__DEV__) {
@@ -128,19 +128,6 @@ export default function App() {
             setActiveId(null)
         }
     }
-
-    useEffect(
-        () => {
-            const html = document.querySelector('html')!
-            const cls = 'theme--dark'
-            if (dark && !html.classList.contains(cls)) {
-                html.classList.add(cls)
-            } else {
-                html.classList.remove(cls)
-            }
-        },
-        [dark]
-    )
 
     const updateOrigin = () => {
         if (!__DEV__) {
