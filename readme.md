@@ -69,7 +69,7 @@ How to solve the above problems? If you can intercept and modify the data before
 - [Watching]: watching fetch（just work on Content-Type is json）
 - [Intercepting]: custome responseText
 
-## 状态栏
+## Status Bar
 - \[Setting\]: Setting
 - [Work Space]: Switch work space
 - [Run At]：four options can be choose. start (js injected will be work)，end (DOMContentLoaded)，delay (delay some times)，trigger (match a url)
