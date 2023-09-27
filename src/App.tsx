@@ -419,6 +419,7 @@ export default function App() {
     )
 
     // 数据改变后通知background，并保存chrome.storage
+
     useEffect(
         () => {
             if (!__DEV__) {
@@ -427,7 +428,14 @@ export default function App() {
         },
         [configInfo]
     )
-
+    useEffect(
+        () => {
+            if (!__DEV__) {
+                chrome.runtime.sendMessage(chrome.runtime.id, createStorageAction('rules', workspaceRules.filter(e => e.enable)))
+            }
+        },
+        [workspaceRules]
+    )
     useEffect(
         () => {
             const html = document.querySelector('html')
