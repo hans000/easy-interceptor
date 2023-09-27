@@ -116,47 +116,6 @@ export default function App() {
         }
     }
 
-    // 数据改变后通知background，并保存chrome.storage
-    useEffect(
-        () => {
-            if (! __DEV__) {
-                chrome.runtime.sendMessage(chrome.runtime.id, createStorageAction('rules', rules.filter(e => e.enable)))
-            }
-        },
-        [rules]
-    )
-
-    useEffect(
-        () => {
-            if (! __DEV__) {
-                chrome.runtime.sendMessage(chrome.runtime.id, createStorageAction('faked', faked))
-            }
-        },
-        [faked]
-    )
-
-    useEffect(
-        () => {
-            if (! __DEV__) {
-                chrome.runtime.sendMessage(chrome.runtime.id, createStorageAction('action', action))
-            }
-        },
-        [action]
-    )
-
-    useEffect(
-        () => {
-            const html = document.querySelector('html')!
-            const cls = 'theme--dark'
-            if (dark && !html.classList.contains(cls)) {
-                html.classList.add(cls)
-            } else {
-                html.classList.remove(cls)
-            }
-        },
-        [dark]
-    )
-
     const updateOrigin = () => {
         if (!__DEV__) {
             chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
