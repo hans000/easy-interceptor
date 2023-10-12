@@ -34,7 +34,7 @@ export function parseXML(text: string) {
 }
 
 
-export function parseUrl(rawUrl: string) {
+export function parseUrl(rawUrl: string = '') {
     let url = rawUrl
     if (! /^https?/.test(rawUrl)) {
         url = location.origin + rawUrl.replace(/^(\/|\.)*/, '/')

@@ -23,6 +23,10 @@ export default async function fakeFetch(input: RequestInfo | URL, init?: Request
         params: [...url.searchParams.entries()],
     })
 
+    if (!matchItem) {
+        return __global__.NativeFetch.call(null, input, init)
+    }
+
     const realResponse = faked ? new Response(new Blob(['null'])) : await __global__.NativeFetch.call(null, input, init) as Response
     if (faked && fakedLog) {
         log({
