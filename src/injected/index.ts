@@ -5,6 +5,7 @@
 import { ConfigInfoType, MatchRule } from '../App'
 import { debounce, noop, parseUrl } from '../utils'
 import { fake, unfake } from './fake'
+import { proxyRequest, unproxyRequest } from './proxy'
 import { StorageMsgKey, SyncDataMsgKey } from '../tools/constants'
 import { HttpStatusCodes } from './fake/xhr/constants'
 import { createPagescriptAction, EventProps } from '../tools/message'
@@ -51,7 +52,7 @@ const app = {
     rules: [],
     intercept() {
         const { action, faked, fakedLog } = app.configInfo
-        fake({
+        proxyRequest({
             faked,
             fakedLog,
             onMatch(req) {
@@ -109,7 +110,7 @@ const app = {
         })
     },
     restore() {
-        unfake()
+        unproxyRequest()
     },
     run() {
         const action = app.configInfo.action
