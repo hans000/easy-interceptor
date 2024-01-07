@@ -118,6 +118,24 @@
     "run_at_trigger": {
         "message": "拦截"
     },
+    "run_at_override": {
+        "message": "重写"
+    },
+    "ban_title": {
+        "message": "设置禁用请求类型"
+    },
+    "ban_xhr": {
+        "message": "xhr"
+    },
+    "ban_fetch": {
+        "message": "fetch"
+    },
+    "ban_none": {
+        "message": "无"
+    },
+    "ban_all": {
+        "message": "全部"
+    },
     "tip_send": {
         "message": "点击发送请求"
     },

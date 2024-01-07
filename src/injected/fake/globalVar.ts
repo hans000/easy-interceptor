@@ -2,7 +2,7 @@
  * The AGPL License (AGPL)
  * Copyright (c) 2022 hans000
  */
-import { MatchRule } from "../../App"
+import { BanType, MatchRule } from "../../App"
 
 interface GlobalVar {
     NativeXhr: typeof XMLHttpRequest | undefined
@@ -22,6 +22,7 @@ export interface Options {
     fakedLog?: boolean
     nativeXHR?: typeof XMLHttpRequest
     nativeFetch?: typeof fetch
+    banType?: BanType
     onMatch?: (reqestInfo: CustomRequestInfo) => MatchRule
     onXhrIntercept?: (data: any) => (xhr: XMLHttpRequest) => Promise<void>
     onFetchIntercept?: (data: any) => (res: Response) => (Promise<Response> | undefined)

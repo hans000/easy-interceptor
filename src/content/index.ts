@@ -10,7 +10,7 @@ import { createScript, noop } from '../utils'
 function loadScripts() {
     chrome.storage.local.get([ConfigInfoFieldKey], result => {
         const configInfo = result[ConfigInfoFieldKey] || {}
-        if (configInfo.action !== 'close') {
+        if (configInfo.action !== 'close' && window.self === window.top) {
             createScript('injected.js').then(() => {
                 if (configInfo.bootLog !== false) {
                     log('✅ Injected successfully')

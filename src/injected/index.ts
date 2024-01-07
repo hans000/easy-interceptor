@@ -4,12 +4,14 @@
  */
 import { ConfigInfoType, MatchRule } from '../App'
 import { debounce, noop, parseUrl } from '../utils'
-import { fake, unfake } from './fake'
 import { proxyRequest, unproxyRequest } from './proxy'
 import { StorageMsgKey, SyncDataMsgKey } from '../tools/constants'
 import { HttpStatusCodes } from './fake/xhr/constants'
 import { createPagescriptAction, EventProps } from '../tools/message'
 import { handleCode, matching, triggerCountEvent, triggerResponseEvent } from './tool'
+
+const originXhr = window.XMLHttpRequest
+const originFetch = window.fetch
 
 // trigger for get data
 window.dispatchEvent(new CustomEvent('pagescript', createPagescriptAction(SyncDataMsgKey)))
@@ -37,6 +39,39 @@ window.addEventListener('message', (event: MessageEvent<EventProps>) => {
             }, value.runAtDelay)
         } else if (value.runAt === 'trigger') {
             updateData()
+        } else if (value.runAt === 'override') {
+            Object.defineProperty(window, 'fetch', {
+                set: function (value) {
+                    window._fetch = value;
+                    updateData()
+                    handle(data.key, data.value, {
+                        NativeFetch: window._fetch,
+                        NativeXhr: window._XMLHttpRequest,
+                    })
+                },
+                get: function () {
+                    if (window._fetch) {
+                        return window._fetch
+                    }
+                    return originFetch;
+                }
+            });
+            Object.defineProperty(window, 'XMLHttpRequest', {
+                set: function (value) {
+                    window._XMLHttpRequest = value;
+                    updateData()
+                    handle(data.key, data.value, {
+                        NativeFetch: window._fetch,
+                        NativeXhr: window._XMLHttpRequest,
+                    })
+                },
+                get: function () {
+                    if (window._XMLHttpRequest) {
+                        return window._XMLHttpRequest
+                    }
+                    return originXhr;
+                }
+            });
         } else {
             updateData()
             handle(data.key, data.value)
@@ -44,17 +79,24 @@ window.addEventListener('message', (event: MessageEvent<EventProps>) => {
     }
 })
 
-const run = debounce(() => app.run(), true)
+const run = debounce((...args) => app.run(...args), true)
+
+interface FetcherType {
+    NativeFetch?: typeof fetch
+    NativeXhr?: typeof XMLHttpRequest
+}
 
 const app = {
     trigger: false,
     configInfo: {} as ConfigInfoType,
     rules: [],
-    intercept() {
-        const { action, faked, fakedLog } = app.configInfo
+    intercept(fetcher?: FetcherType) {
+        const { action, faked, fakedLog, banType } = app.configInfo
         proxyRequest({
+            ...fetcher,
             faked,
             fakedLog,
+            banType,
             onMatch(req) {
                 if (action === 'intercept') {
                     return matching(app.rules, req)
@@ -107,32 +149,32 @@ const app = {
                     }
                 }
             }
-        })
+        }, !!fetcher)
     },
     restore() {
         unproxyRequest()
     },
-    run() {
+    run(fetcher?: FetcherType) {
         const action = app.configInfo.action
         switch (action) {
             case 'close':
                 return app.restore()
             case 'watch':
             case 'intercept':
-                return app.intercept()
+                return app.intercept(fetcher)
             default:
                 break;
         }
     },
 }
 
-function handle(key: string, value: any) {
+function handle(key: string, value: any, fetcher?: any) {
     app[key] = value
     if (app.configInfo.runAt !== 'trigger') {
-        run()
+        run(fetcher)
     } else {
         if (app.trigger) {
-            run()
+            run(fetcher)
         }
     }
 }

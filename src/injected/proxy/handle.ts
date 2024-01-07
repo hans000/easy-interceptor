@@ -3,7 +3,7 @@
  * Copyright (c) 2022 hans000
  */
 
-import { type ProxyXMLHttpRequest } from "."
+import { MatchRule } from "../../App"
 import { delayRun } from "../../tools"
 import { log } from "../../tools/log"
 import { parseUrl, parseXML, stringifyHeaders } from "../../utils"
@@ -11,6 +11,16 @@ import { createSymbol } from "../../utils/proxy"
 import { HttpStatusCodes } from "../fake/xhr/constants"
 import { __global__ } from "./globalVar"
 
+export interface ProxyXMLHttpRequest extends XMLHttpRequest {
+    _async: boolean
+    _url: string | URL
+    _method: string
+    _forceMimeType: string
+    _matchItem: MatchRule
+    _requestData: any
+    _requestHeaders: Record<string, string>
+    _responseHeaders: Record<string, string>
+}
 
 export function modifyXhrProtoMethods() {
     const { open, send, setRequestHeader } = XMLHttpRequest.prototype

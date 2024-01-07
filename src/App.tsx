@@ -5,7 +5,7 @@
 import './App.less'
 import { Badge, Checkbox, BadgeProps, Button, Dropdown, Input, message, Modal, Spin, Table, Tag, Tooltip, Upload, Switch, Space, Divider, Select, Popover, Segmented, InputNumber } from 'antd'
 import React, { useEffect, useRef, useState } from 'react'
-import { TagOutlined, ControlOutlined, CodeOutlined, DeleteOutlined, PlusOutlined, SearchOutlined, VerticalAlignBottomOutlined, UploadOutlined, SyncOutlined, RollbackOutlined, BugOutlined, FilterOutlined, FormOutlined, SettingOutlined, AppstoreOutlined, FieldTimeOutlined } from '@ant-design/icons'
+import { TagOutlined, ControlOutlined, CodeOutlined, DeleteOutlined, PlusOutlined, SearchOutlined, VerticalAlignBottomOutlined, UploadOutlined, SyncOutlined, RollbackOutlined, BugOutlined, FilterOutlined, FormOutlined, SettingOutlined, AppstoreOutlined, FieldTimeOutlined, StopOutlined } from '@ant-design/icons'
 import { ColumnsType } from 'antd/lib/table'
 import { pathMatch, randID, renderSize } from './utils'
 import { getMethodColor } from './tools/mappings'
@@ -60,6 +60,8 @@ const fields = ['url', 'redirectUrl', 'test', 'groupId', 'type', 'method', 'stat
 
 const isDarkTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
 
+export type BanType = 'xhr' | 'fetch' | 'none' | 'all'
+
 export interface ConfigInfoType {
     faked: boolean
     fakedLog: boolean
@@ -67,6 +69,7 @@ export interface ConfigInfoType {
     runAtDelay: number
     runAtTrigger: string
     action: string
+    banType: BanType
 }
 
 const defaultConfigInfo: ConfigInfoType = {
@@ -76,6 +79,7 @@ const defaultConfigInfo: ConfigInfoType = {
     runAtDelay: 0,
     runAtTrigger: '**',
     action: 'close',
+    banType: 'none',
 }
 
 export default function App() {
@@ -673,6 +677,7 @@ document.head.appendChild(link)
                             <AppstoreOutlined />
                         </Tooltip>
                         <Select
+                            className='workspace'
                             size='small'
                             showArrow={false}
                             placement='topLeft'
@@ -682,7 +687,7 @@ document.head.appendChild(link)
                                 setActiveGroupId(activeGroupId)
                             }}
                             bordered={false}
-                            style={{ maxWidth: 150, color: 'white', }}
+                            style={{ maxWidth: 150, color: 'white' }}
                             dropdownStyle={{ maxWidth: 200 }}
                             dropdownMatchSelectWidth={false}>
                             {
@@ -712,6 +717,10 @@ document.head.appendChild(link)
                                         label: t('run_at_trigger'),
                                         value: 'trigger',
                                     },
+                                    {
+                                        label: t('run_at_override'),
+                                        value: 'override',
+                                    },
                                 ]} />
                                 <div style={{
                                     margin: '8px 0'
@@ -734,6 +743,37 @@ document.head.appendChild(link)
                                 {
                                     configInfo.runAt === 'trigger' && <span title={configInfo.runAtTrigger}> | {configInfo.runAtTrigger}</span>
                                 }
+                            </div>
+                        </Popover>
+                    </div>
+                    <div className='app__bar-item'>
+                        <Popover trigger={['click']} placement='top' showArrow={false} content={(
+                            <>
+                                <Segmented value={configInfo.banType} onChange={(ban: 'xhr' | 'fetch' | 'none') => {
+                                    setConfigInfo(info => ({ ...info, banType: ban }))
+                                }} options={[
+                                    {
+                                        label: t('ban_none'),
+                                        value: 'none',
+                                    },
+                                    {
+                                        label: t('ban_xhr'),
+                                        value: 'xhr',
+                                    },
+                                    {
+                                        label: t('ban_fetch'),
+                                        value: 'fetch',
+                                    },
+                                    {
+                                        label: t('ban_all'),
+                                        value: 'all',
+                                    },
+                                ]} />
+                            </>
+                        )} title={t('ban_title')}>
+                            <div style={{ maxWidth: 300, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} >
+                                <StopOutlined />
+                                <span style={{ marginLeft: 4 }}>{configInfo.banType}</span>
                             </div>
                         </Popover>
                     </div>

@@ -2,111 +2,28 @@
  * The AGPL License (AGPL)
  * Copyright (c) 2022 hans000
  */
-import { MatchRule } from "../../App"
-import { delayRun } from "../../tools"
-import { log } from "../../tools/log"
-import { parseUrl } from "../../utils"
-import { handleReadyStateChange, proxyFakeXhrInstance, proxyXhrInstance } from "./handle"
 import { Options, __global__ } from "./globalVar"
+import { proxyFetch, unproxyFetch } from "./fetch"
+import { proxyXhr, unproxyXhr } from "./xhr"
 
-export interface ProxyXMLHttpRequest extends XMLHttpRequest {
-    _async: boolean
-    _url: string | URL
-    _method: string
-    _forceMimeType: string
-    _matchItem: MatchRule
-    _requestData: any
-    _requestHeaders: Record<string, string>
-    _responseHeaders: Record<string, string>
-}
+export function proxyRequest(options: Options, single = false) {
+    const banType = options.banType || 'none'
+    if (banType === 'all') {
+        return
+    }
 
-export function proxyRequest(options: Options) {
-    unproxyRequest()
-    __global__.options = options
-
-    const { fakedLog, faked, onMatch, onFetchIntercept } = options
-    const loggable = faked && fakedLog
-
-    const proxyFetch = window.fetch = new Proxy(__global__.NativeFetch, {
-        async apply(target, thisArg, args) {
-            const [input, init] = args
-            const req = input instanceof Request ? input.clone() : new Request(input.toString(), init)
-            const url = input instanceof Request
-                ? parseUrl(input.url)
-                : input instanceof URL
-                ? input
-                : parseUrl(input)
-            const matchItem = onMatch({
-                method: req.method,
-                requestUrl: url.origin + url.pathname,
-                type: 'fetch',
-                params: [...url.searchParams.entries()],
-            })
-            const realFetch = __global__.PageFetch || target
-
-            if (matchItem) {
-                if (loggable) {
-                    log({
-                        type: 'fetch:request',
-                        input,
-                        ...init,
-                    })
-                }
-                const realResponse = faked 
-                    ? new Response(new Blob(['null'])) 
-                    : await realFetch.call(thisArg, input, init)
-                const response = await onFetchIntercept(matchItem)(realResponse)
-
-                return new Promise(resolve => {
-                    delayRun(async () => {
-                        const res = response || realResponse
-                        resolve(res)
-                        if (loggable) {
-                            const body = await res.clone().json()
-                            log({
-                                type: 'fetch:response',
-                                input,
-                                body,
-                                status: res.status,
-                                headers: res.headers,
-                            })
-                        }
-                    }, matchItem ? matchItem.delay : undefined)
-                })
-            }
-            if (__global__.PageFetch) {
-                return __global__.PageFetch.call(thisArg, ...args)
-            }
-            return target.call(thisArg, ...args)
-        },
-    })
-    
-    const ProxyXhr =  window.XMLHttpRequest = new Proxy(__global__.NativeXhr, {
-        construct(target) {
-            const inst = new target() as ProxyXMLHttpRequest
-            if (faked) {
-                proxyFakeXhrInstance(inst, { loggable })
-            } else {
-                proxyXhrInstance(inst)
-            }
-            inst.addEventListener("readystatechange", handleReadyStateChange.bind(inst))
-            return inst
-        }
-    })
-    
-    Object.defineProperties(window, {
-        fetch: {
-            set: v => __global__.PageFetch = v,
-            get: () => proxyFetch,
-        },
-        XMLHttpRequest: {
-            set: v => __global__.PageXhr = v,
-            get: () => ProxyXhr
-        }
-    })
+    const canWorkingFetch = (single && options.NativeFetch || !single) && banType !== 'fetch'
+    const canWorkingXhr = (single && options.NativeXhr || !single) && banType !== 'xhr'
+   
+    if (canWorkingFetch) {
+        proxyFetch(options)
+    }
+    if (canWorkingXhr) {
+        proxyXhr(options)
+    }
 }
 
 export function unproxyRequest() {
-    window.fetch = __global__.PageFetch || __global__.NativeFetch
-    window.XMLHttpRequest = __global__.PageXhr || __global__.NativeXhr
+    unproxyXhr()
+    unproxyFetch()
 }

@@ -118,6 +118,24 @@
     "run_at_trigger": {
         "message": "trigger"
     },
+    "run_at_override": {
+        "message": "override"
+    },
+    "ban_title": {
+        "message": "Ban Request Type"
+    },
+    "ban_xhr": {
+        "message": "xhr"
+    },
+    "ban_fetch": {
+        "message": "fetch"
+    },
+    "ban_none": {
+        "message": "none"
+    },
+    "ban_all": {
+        "message": "all"
+    },
     "tip_send": {
         "message": "Click to fetch request"
     },
