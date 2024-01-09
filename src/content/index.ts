@@ -13,7 +13,7 @@ function loadScripts() {
         if (configInfo.action !== 'close' && window.self === window.top) {
             createScript('injected.js').then(() => {
                 if (configInfo.bootLog !== false) {
-                    log('✅ Injected successfully')
+                    log('✅ run at `' + configInfo.runAt + '`, ban type `' + configInfo.banType + '`');
                 }
                 // @ts-ignore 覆盖原函数，达到只加载一次的目的
                 loadScripts = noop

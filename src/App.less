@@ -15,7 +15,7 @@
 }
 
 @width: 300px;
-@topHeight:  46px;
+@topHeight: 40px;
 @GWidth: 800px;
 @GHeight: 600px;
 
@@ -31,11 +31,11 @@
         transition: none;
     }
 
-    &__quote {
+    &__quota {
         position: absolute;
         width: 100%;
         z-index: 2;
-        top: 43px;
+        top: @topHeight - 2px;
         line-height: 0;
     }
     &__editor {
@@ -75,7 +75,7 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding-left: 8px;
+        padding-left: 4px;
         background-color: #eee;
         box-shadow: #ccc 1px 1px 4px;
         &.active {
@@ -110,6 +110,7 @@
 }
 
 .workspace .ant-select-selector {
+    padding-left: 4px!important;
     padding-right: 0!important;
 }
 

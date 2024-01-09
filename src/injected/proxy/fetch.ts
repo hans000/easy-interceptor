@@ -18,9 +18,9 @@ export function proxyFetch(options: Options) {
 
     const { fakedLog, faked, onMatch, onFetchIntercept } = options
     const loggable = faked && fakedLog
-    const NativeFetch = options.NativeFetch || __global__.NativeFetch
+    __global__.NativeFetch = options.NativeFetch || __global__.NativeFetch
 
-    const proxyFetch = window.fetch = new Proxy(NativeFetch, {
+    const proxyFetch = new Proxy(__global__.NativeFetch, {
         async apply(target, thisArg, args) {
             const [input, init] = args
             const req = input instanceof Request ? input.clone() : new Request(input.toString(), init)

@@ -155,5 +155,8 @@
               "content": "$1"
             }
         }
+    },
+    "quota_percent": {
+        "message": "Percent of quota"
     }
 }

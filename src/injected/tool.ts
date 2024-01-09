@@ -26,11 +26,11 @@ export function matching(rules: MatchRule[], req: CustomRequestInfo): MatchRule 
         }
         if (rule.enable && matchPath(rule.test, req.requestUrl)) {
             if (rule.method ? req.method.toLowerCase() !== rule.method : false) {
-                log('not work? please check `method` option', 'warn')
+                log('no work? please check `method` option', 'warn')
                 continue
             }
             if (!(rule.params ? equal(rule.params, req.params) : true)) {
-                log('not work? please check `params` option', 'warn')
+                log('no work? please check `params` option', 'warn')
                 continue
             }
             return rule

@@ -91,14 +91,14 @@ const app = {
     configInfo: {} as ConfigInfoType,
     rules: [],
     intercept(fetcher?: FetcherType) {
-        const { action, faked, fakedLog, banType } = app.configInfo
+        const { faked, fakedLog, banType } = app.configInfo
         proxyRequest({
             ...fetcher,
             faked,
             fakedLog,
             banType,
             onMatch(req) {
-                if (action === 'intercept') {
+                if (app.configInfo.action === 'intercept') {
                     return matching(app.rules, req)
                 }
             },

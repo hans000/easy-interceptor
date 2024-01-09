@@ -5,7 +5,7 @@
 import './App.less'
 import { Badge, Checkbox, BadgeProps, Button, Dropdown, Input, message, Modal, Spin, Table, Tag, Tooltip, Upload, Switch, Space, Divider, Select, Popover, Segmented, InputNumber } from 'antd'
 import React, { useEffect, useRef, useState } from 'react'
-import { TagOutlined, ControlOutlined, CodeOutlined, DeleteOutlined, PlusOutlined, SearchOutlined, VerticalAlignBottomOutlined, UploadOutlined, SyncOutlined, RollbackOutlined, BugOutlined, FilterOutlined, FormOutlined, SettingOutlined, AppstoreOutlined, FieldTimeOutlined, StopOutlined } from '@ant-design/icons'
+import { TagOutlined, ControlOutlined, CodeOutlined, DeleteOutlined, PlusOutlined, SearchOutlined, VerticalAlignBottomOutlined, UploadOutlined, SyncOutlined, RollbackOutlined, BugOutlined, FilterOutlined, FormOutlined, SettingOutlined, AppstoreOutlined, FieldTimeOutlined, StopOutlined, DashboardOutlined } from '@ant-design/icons'
 import { ColumnsType } from 'antd/lib/table'
 import { pathMatch, randID, renderSize } from './utils'
 import { getMethodColor } from './tools/mappings'
@@ -16,7 +16,7 @@ import { ConfigSchema, TransformResultSchema } from './components/MainEditor/val
 import useStorage from './hooks/useStorage'
 import MainEditor from './components/MainEditor'
 import { FileType } from './components/MainEditor/config'
-import Quote from './components/Quote'
+import Quota, { getPercent } from './components/Quota'
 import { runCode } from './tools/runCode'
 import { loader } from "@monaco-editor/react";
 import { sendRequestLog } from './tools/sendRequest'
@@ -95,6 +95,7 @@ export default function App() {
     const [visible, setVisible] = useState(false)
     const [hiddenFields, setHiddenFields] = useStorage<string[]>(HiddenFieldsFieldKey, [])
     const [bootLog, setBootLog] = useStorage(BootLogKey, true)
+    const [percent, setPercent] = useState(0)
     const originRef = useRef('')
     const editorRef = useRef()
     const t = useTranslate()
@@ -189,9 +190,6 @@ export default function App() {
     )
 
     const workspaceRules = React.useMemo(() => rules.filter(rule => (rule.groupId || 'default') === activeGroupId), [rules, activeGroupId])
-
-    // TODO 使用idb可以计算当前的size
-    const size = React.useMemo(() => sizeof(rules), [rules])
 
     const activeIndex = React.useMemo(() => rules.findIndex(rule => rule.id === activeId), [activeId])
 
@@ -461,6 +459,14 @@ document.head.appendChild(link)
         [dark]
     )
 
+
+    useEffect(
+        () => {
+            getPercent(sizeof(rules)).then(setPercent)
+        },
+        [rules]
+    )
+
     return (
         <Spin spinning={loading}>
             <div className="app">
@@ -623,8 +629,8 @@ document.head.appendChild(link)
                         </Select>
                     </div>
                 </div>
-                <div className='app__quote'>
-                    <Quote size={size} />
+                <div className='app__quota'>
+                    <Quota percent={percent} />
                 </div>
                 <div className="app__cont">
                     <Table
@@ -776,6 +782,12 @@ document.head.appendChild(link)
                                 <span style={{ marginLeft: 4 }}>{configInfo.banType}</span>
                             </div>
                         </Popover>
+                    </div>
+                    <div className='app_bar-item'>
+                        <Tooltip title={t('quota_percent')}>
+                            <DashboardOutlined />
+                            <span style={{ marginLeft: 4 }}>{percent}%</span>
+                        </Tooltip>
                     </div>
                 </div>
                 {

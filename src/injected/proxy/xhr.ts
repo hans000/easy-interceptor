@@ -16,9 +16,9 @@ export function proxyXhr(options: Options) {
 
     const { fakedLog, faked } = options
     const loggable = faked && fakedLog
-    const NativeXhr = options.NativeXhr || __global__.NativeXhr
+    __global__.NativeXhr = options.NativeXhr || __global__.NativeXhr
     
-    const ProxyXhr = window.XMLHttpRequest = new Proxy(NativeXhr, {
+    const ProxyXhr = new Proxy(__global__.NativeXhr, {
         construct(target) {
             const inst = new target() as ProxyXMLHttpRequest
             if (faked) {
