@@ -10,9 +10,9 @@
     "build:local": "cross-env VITE_LOCAL=true node script.js && cross-env VITE_LOCAL=true npm run build:web && cross-env VITE_LOCAL=true npm run build:ts"
   },
   "dependencies": {
-    "@ant-design/icons": "^4.6.3",
+    "@ant-design/icons": "^5.2.6",
     "@monaco-editor/react": "^4.4.6",
-    "antd": "^4.24.4",
+    "antd": "^5.12.1",
     "json-schema": "^0.3.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
@@ -28,16 +28,15 @@
     "@types/react": "^18.0.24",
     "@types/react-dom": "^18.0.8",
     "cross-env": "^7.0.3",
-    "less": "^4.1.1",
-    "less-loader": "^10.0.1",
+    "less": "^4.2.0",
     "monaco-editor": "^0.33.0",
     "rollup": "^2.75.6",
     "rollup-plugin-external-globals": "^0.6.1",
     "rollup-plugin-terser": "^7.0.2",
     "rollup-plugin-typescript2": "^0.32.1",
-    "@vitejs/plugin-react": "^4.0.0-beta.0",
-    "typescript": "^5.0.2",
-    "vite": "^4.3.0",
+    "@vitejs/plugin-react": "^4.2.0",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.0",
     "vite-plugin-cdn-import": "^0.3.5",
     "vite-plugin-style-import": "^1.2.1"
   },

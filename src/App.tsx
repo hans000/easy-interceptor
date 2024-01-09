@@ -553,7 +553,7 @@ document.head.appendChild(link)
                                                     )
                                                 })
                                                 if (count) {
-                                                    message.warn(t('import_modal_filter', [count + '']))
+                                                    message.warning(t('import_modal_filter', [count + '']))
                                                 }
                                             },
                                         })
