@@ -16,23 +16,6 @@ if (! import.meta.env.DEV) {
     loadLocalMocano()
 }`,
     },
-    {
-        filename: './src/App.tsx',
-        mark: 'injectDarkStyle',
-        code: `
-const link = document.createElement('link')
-link.setAttribute('dark', '')
-link.href = 'https://unpkg.com/antd@4.24.8/dist/antd.dark.css'
-link.rel = 'stylesheet'
-document.head.appendChild(link)`
-    },
-    {
-        filename: './src/dark.less',
-        mark: 'darkLess',
-        isLocal: true,
-        code: `
-@import 'antd/dist/antd.dark.less';`
-    }
 ]
 
 configList.forEach(config => {
