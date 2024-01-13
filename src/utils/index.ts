@@ -158,14 +158,20 @@ export function trimUrlParams(url: string) {
     return url.replace(/\?(.*)/, '')
 }
 
-// export function once(func: Function) {
-//     let mounted = false;
-//     let result
-//     return (...args) => {
-//         if (mounted) {
-//             return result
-//         }
-//         result = func(args)
-//         return result;
-//     };
-// }
+export function delayRun(fn: Function, delay: number | undefined) {
+    delay ? setTimeout(() => fn(), delay) : fn()
+}
+
+export function download(filename: string, data: string) {
+    const a = document.createElement('a')
+    const url = URL.createObjectURL(new Blob([data]))
+    a.download = filename
+    a.rel = 'noopener'
+    a.href = url
+    a.click()
+    URL.revokeObjectURL(url)
+}
+
+export function sizeof(object: Record<string, any> = {}) {
+    return JSON.stringify(object).length
+}

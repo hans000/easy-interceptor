@@ -47,7 +47,7 @@ function setIcon(action: ActionType, faked: boolean) {
     })
 }
 
-export function updateIcon() {
+export default function updateIcon() {
     chrome.storage.local.get([ConfigInfoFieldKey, RulesFieldKey, ActiveGroupId], (result) => {
         const configInfo = result[ConfigInfoFieldKey] || {}
         if (result.hasOwnProperty(ConfigInfoFieldKey)) {

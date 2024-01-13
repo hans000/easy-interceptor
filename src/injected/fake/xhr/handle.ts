@@ -2,7 +2,7 @@
  * The AGPL License (AGPL)
  * Copyright (c) 2022 hans000
  */
-import { delayRun } from "../../../tools"
+import { delayRun } from "../../../utils"
 import { parseUrl, parseXML } from "../../../utils"
 import { createSymbol } from "../../../utils/proxy"
 import { __global__ } from "../globalVar"

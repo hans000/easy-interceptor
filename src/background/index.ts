@@ -4,10 +4,10 @@
  */
 import { ConfigInfoType, MatchRule } from "../App"
 import { matchPath } from "../tools"
-import { ActiveGroupId, BackgroundMsgKey, ConfigInfoFieldKey, PopupMsgKey, RulesFieldKey, StorageMsgKey, WatchFilterKey } from "../tools/constants"
-import { EventProps, createBackgroudAction } from "../tools/message"
+import { ActiveGroupId, BackgroundMsgKey, ConfigInfoFieldKey, PopupMsgKey, RulesFieldKey, WatchFilterKey } from "../tools/constants"
+import { CustomEventProps, sendMessageToContent } from "../tools/message"
+import updateIcon from "../tools/updateIcon"
 import { arrayBufferToString, createRunFunc, objectToHttpHeaders, randID, trimUrlParams } from "../utils"
-import { updateIcon } from "./utils"
 
 let __result = new Map<string, any>()
 let __rules: MatchRule[] = []
@@ -26,30 +26,20 @@ function update() {
 chrome.tabs.onActivated.addListener(update)
 chrome.tabs.onUpdated.addListener(update)
 
-/** 接收popup传来的信息，并转发给content.js */
-chrome.runtime.onMessage.addListener((msg: EventProps) => {
+// 接收popup传来的信息，并转发给content.js
+chrome.runtime.onMessage.addListener((msg: CustomEventProps) => {
     // 过滤非本插件的消息
     if (msg.from !== PopupMsgKey) return;
 
-    updateIcon()
-
-    if (msg.from === PopupMsgKey) {
-        // 重置result
-        if (msg.type === StorageMsgKey) {
-            __result.clear()
-        }
-        // 更新rule
-        if (msg.key === 'rules') {
-            __rules = msg.value || []
-        }
-        // 更新action
-        if (msg.key === 'configInfo') {
-            __configInfo = msg.value || {}
-        }
-        chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-            chrome.tabs.sendMessage(tabs[0].id, { ...msg, from: BackgroundMsgKey })
-        })
+    if (msg.type === 'rules') {
+        __rules = msg.payload || []
     }
+    if (msg.type === 'configInfo') {
+        __configInfo = msg.payload || {}
+    }
+
+    updateIcon()
+    sendMessageToContent({ ...msg, from: BackgroundMsgKey })
 })
 
 chrome.storage.local.get([RulesFieldKey, ActiveGroupId], (result) => {
@@ -61,12 +51,13 @@ chrome.webRequest.onBeforeRequest.addListener(
     details => {
         const url = trimUrlParams(details.url)
 
-        if (__configInfo.runAt === 'trigger') {
-            if (matchPath(__configInfo.runAtTrigger, url)) {
-                chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-                    chrome.tabs.sendMessage(tabs[0].id, createBackgroudAction('trigger', true))
-                })
-            }
+        // run at -> trigger 通知injected.js
+        if (__configInfo.runAt === 'trigger' && matchPath(__configInfo.runAtTrigger, url)) {
+            sendMessageToContent({
+                from: BackgroundMsgKey,
+                type: 'trigger',
+                payload: true,
+            })
         }
 
         if (__configInfo.action === 'watch') {
@@ -222,18 +213,6 @@ function beforeRequestIntercept(details: chrome.webRequest.WebRequestBodyDetails
                 url: details.url,
             }) || rule.redirectUrl
             if (redirectUrl) {
-                // chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-                //     chrome.tabs.sendMessage(tabs[0].id, {
-                //         type: LogMsgKey,
-                //         from: BackgroundMsgKey,
-                //         key: 'log',
-                //         value: {
-                //             type: 'redirect',
-                //             from: url,
-                //             to: rule.redirectUrl
-                //         }
-                //     })
-                // })
                 return {
                     redirectUrl
                 }

@@ -9,8 +9,8 @@ import { TagOutlined, ControlOutlined, CodeOutlined, DeleteOutlined, PlusOutline
 import { ColumnsType } from 'antd/lib/table'
 import { pathMatch, randID, renderSize } from './utils'
 import { getMethodColor } from './tools/mappings'
-import { download, sizeof } from './tools'
-import { createStorageAction } from './tools/message'
+import { sizeof } from "./utils"
+import { download } from "./utils"
 import jsonschema from 'json-schema'
 import { ConfigSchema, TransformResultSchema } from './components/MainEditor/validator'
 import useStorage from './hooks/useStorage'
@@ -20,10 +20,11 @@ import Quota, { getPercent } from './components/Quota'
 import { runCode } from './tools/runCode'
 import { loader } from "@monaco-editor/react";
 import { sendRequestLog } from './tools/sendRequest'
-import { ActiveGroupId, BootLogKey, DarkFieldKey, HiddenFieldsFieldKey, ActiveIdFieldKey, RulesFieldKey, SelectedRowFieldKeys, UpdateMsgKey, WatchFilterKey, ConfigInfoFieldKey } from './tools/constants'
+import { ActiveGroupId, BootLogKey, DarkFieldKey, HiddenFieldsFieldKey, ActiveIdFieldKey, RulesFieldKey, SelectedRowFieldKeys, UpdateMsgKey, WatchFilterKey, ConfigInfoFieldKey, PopupMsgKey } from './tools/constants'
 import useTranslate from './hooks/useTranslate'
 import getStorage from './tools/getStorage'
 import { ConfigProvider, theme } from 'antd'
+import { sendMessageToBackgound } from './tools/message'
 
 const __DEV__ = import.meta.env.DEV
 const isZHCN = __DEV__ ? true : chrome.i18n.getUILanguage().includes('zh')
@@ -72,6 +73,7 @@ export interface ConfigInfoType {
     runAtTrigger: string
     action: string
     banType: BanType
+    bootLog: boolean
 }
 
 const defaultConfigInfo: ConfigInfoType = {
@@ -82,6 +84,7 @@ const defaultConfigInfo: ConfigInfoType = {
     runAtTrigger: '**',
     action: 'close',
     banType: 'none',
+    bootLog: false,
 }
 
 export default function App() {
@@ -138,12 +141,14 @@ export default function App() {
 
     const updateOrigin = () => {
         if (!__DEV__) {
-            chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
-                try {
-                    const [, a, b] = tabs[0].url.match(/^(https?:\/\/)?(.+?)(\/|$)/)
-                    const origin = a + b
-                    originRef.current = origin
-                } catch (error) { }
+            chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
+                if (tab) {
+                    try {
+                        const [, a, b] = tab.url.match(/^(https?:\/\/)?(.+?)(\/|$)/)
+                        const origin = a + b
+                        originRef.current = origin
+                    } catch (error) { }
+                }
             })
         } else {
             originRef.current = location.origin
@@ -427,7 +432,11 @@ export default function App() {
     useEffect(
         () => {
             if (!__DEV__) {
-                chrome.runtime.sendMessage(chrome.runtime.id, createStorageAction('configInfo', configInfo))
+                sendMessageToBackgound({
+                    from: PopupMsgKey,
+                    type: 'configInfo',
+                    payload: configInfo,
+                })
             }
         },
         [configInfo]
@@ -435,7 +444,11 @@ export default function App() {
     useEffect(
         () => {
             if (!__DEV__) {
-                chrome.runtime.sendMessage(chrome.runtime.id, createStorageAction('rules', workspaceRules.filter(e => e.enable)))
+                sendMessageToBackgound({
+                    from: PopupMsgKey,
+                    type: 'rules',
+                    payload: workspaceRules.filter(e => e.enable),
+                })
             }
         },
         [workspaceRules]
@@ -470,12 +483,12 @@ export default function App() {
                 },
             }
         }}
-        locale={{
-            locale: '',
-            Empty: {
-                description: isZHCN ? '暂时数据' : 'No Data'
-            }
-        }}
+            locale={{
+                locale: '',
+                Empty: {
+                    description: isZHCN ? '暂时数据' : 'No Data'
+                }
+            }}
         >
             <Spin spinning={loading}>
                 <div className="app">
@@ -519,7 +532,7 @@ export default function App() {
                             <Tooltip title={t('action_import')}>
                                 <Upload className='app__upload' disabled={disabled} showUploadList={false} beforeUpload={(file) => {
                                     setLoading(true)
-                                    if (!['application/json', 'text/plain'].includes(file.type)) {
+                                    if (! ['application/json', 'text/plain'].includes(file.type)) {
                                         message.error(t('import_modal_err'))
                                         setLoading(false)
                                     } else {
@@ -769,22 +782,10 @@ export default function App() {
                                     <Segmented value={configInfo.banType} onChange={(ban: 'xhr' | 'fetch' | 'none') => {
                                         setConfigInfo(info => ({ ...info, banType: ban }))
                                     }} options={[
-                                        {
-                                            label: t('ban_none'),
-                                            value: 'none',
-                                        },
-                                        {
-                                            label: t('ban_xhr'),
-                                            value: 'xhr',
-                                        },
-                                        {
-                                            label: t('ban_fetch'),
-                                            value: 'fetch',
-                                        },
-                                        {
-                                            label: t('ban_all'),
-                                            value: 'all',
-                                        },
+                                        { label: t('ban_none'), value: 'none' },
+                                        { label: t('ban_xhr'), value: 'xhr' },
+                                        { label: t('ban_fetch'), value: 'fetch' },
+                                        { label: t('ban_all'), value: 'all' },
                                     ]} />
                                 </>
                             )} title={t('ban_title')}>

@@ -4,7 +4,7 @@
  */
 
 import { MatchRule } from "../../App"
-import { delayRun } from "../../tools"
+import { delayRun } from "../../utils"
 import { log } from "../../tools/log"
 import { parseUrl, parseXML, stringifyHeaders } from "../../utils"
 import { createSymbol } from "../../utils/proxy"

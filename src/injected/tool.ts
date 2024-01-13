@@ -4,9 +4,7 @@
  */
 import { MatchRule } from "../App"
 import { matchPath } from "../tools"
-import { CountMsgKey, ResponseMsgKey } from "../tools/constants"
 import { log } from "../tools/log"
-import { createPagescriptAction } from "../tools/message"
 import { createRunFunc, equal } from "../utils"
 import { CustomRequestInfo } from "./fake/globalVar"
 
@@ -36,14 +34,6 @@ export function matching(rules: MatchRule[], req: CustomRequestInfo): MatchRule 
             return rule
         }
     }
-}
-
-export function triggerCountEvent(id: string) {
-    window.dispatchEvent(new CustomEvent('pagescript', createPagescriptAction(CountMsgKey, { id })))
-}
-
-export function triggerResponseEvent(response: string, url: string) {
-    window.dispatchEvent(new CustomEvent('pagescript', createPagescriptAction(ResponseMsgKey, { response, url })))
 }
 
 export async function handleCode(matchRule: MatchRule, inst: XMLHttpRequest | Response) {

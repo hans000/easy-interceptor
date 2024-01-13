@@ -6,7 +6,7 @@ import { __global__ } from "../globalVar"
 import { stringifyHeaders } from "../../../utils"
 import { HttpStatusCodes } from "./constants"
 import { dispatchEvent, handleReadyStateChange, handleStateChange, setResponseBody, setResponseHeaders } from "./handle"
-import { delayRun } from "../../../tools"
+import { delayRun } from "../../../utils"
 import { log } from "../../../tools/log"
 
 interface MatchItem {
