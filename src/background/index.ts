@@ -29,7 +29,9 @@ chrome.tabs.onUpdated.addListener(update)
 // 接收popup传来的信息，并转发给content.js
 chrome.runtime.onMessage.addListener((msg: CustomEventProps) => {
     // 过滤非本插件的消息
-    if (msg.from !== PopupMsgKey) return;
+    if (msg.from !== PopupMsgKey) {
+        return
+    }
 
     if (msg.type === 'rules') {
         __rules = msg.payload || []
@@ -180,6 +182,11 @@ function responseStartedWatch(details: chrome.webRequest.WebResponseCacheDetails
 
         const urlObj = new URL(details.url)
 
+        if (details.method.toLowerCase() === 'options') {
+            __result.delete(details.requestId)
+            return
+        }
+
         chrome.storage.local.get([RulesFieldKey, ActiveGroupId], (result) => {
             chrome.storage.local.set({
                 [RulesFieldKey]: [
@@ -222,6 +229,12 @@ function beforeRequestIntercept(details: chrome.webRequest.WebRequestBodyDetails
 }
 
 function beforeRequestWatch(details: chrome.webRequest.WebRequestBodyDetails, url: string) {
+
+    // 过滤请求
+    if (['OPTIONS', 'CONNEST', 'TRACE', 'HEAD'].includes(details.method)) {
+        return
+    }
+
     if (! details.requestBody) {
         details.requestBody = { formData: {} }
     }

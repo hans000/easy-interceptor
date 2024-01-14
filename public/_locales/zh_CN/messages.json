@@ -26,6 +26,9 @@
     "action_refresh": {
         "message": "刷新数据"
     },
+    "action_all_frames": {
+        "message": "所有frame生效"
+    },
     "action_theme": {
         "message": "切换主题"
     },
@@ -116,7 +119,7 @@
         "message": "延时"
     },
     "run_at_trigger": {
-        "message": "拦截"
+        "message": "触发"
     },
     "run_at_override": {
         "message": "重写"

@@ -20,7 +20,7 @@ import Quota, { getPercent } from './components/Quota'
 import { runCode } from './tools/runCode'
 import { loader } from "@monaco-editor/react";
 import { sendRequestLog } from './tools/sendRequest'
-import { ActiveGroupId, BootLogKey, DarkFieldKey, HiddenFieldsFieldKey, ActiveIdFieldKey, RulesFieldKey, SelectedRowFieldKeys, UpdateMsgKey, WatchFilterKey, ConfigInfoFieldKey, PopupMsgKey } from './tools/constants'
+import { ActiveGroupId, HiddenFieldsFieldKey, ActiveIdFieldKey, RulesFieldKey, SelectedRowFieldKeys, UpdateMsgKey, WatchFilterKey, ConfigInfoFieldKey, PopupMsgKey } from './tools/constants'
 import useTranslate from './hooks/useTranslate'
 import getStorage from './tools/getStorage'
 import { ConfigProvider, theme } from 'antd'
@@ -74,6 +74,8 @@ export interface ConfigInfoType {
     action: string
     banType: BanType
     bootLog: boolean
+    allFrames: boolean
+    dark: boolean
 }
 
 const defaultConfigInfo: ConfigInfoType = {
@@ -84,14 +86,15 @@ const defaultConfigInfo: ConfigInfoType = {
     runAtTrigger: '**',
     action: 'close',
     banType: 'none',
-    bootLog: false,
+    bootLog: true,
+    allFrames: false,
+    dark: isDarkTheme,
 }
 
 export default function App() {
-    const [dark, setDark] = useStorage(DarkFieldKey, isDarkTheme)
+    const [configInfo, setConfigInfo] = useStorage<ConfigInfoType>(ConfigInfoFieldKey, defaultConfigInfo)
     const [activeGroupId, setActiveGroupId] = useStorage(ActiveGroupId, 'default')
     const [watchFilter, setWatchFilter] = useStorage(WatchFilterKey, '')
-    const [configInfo, setConfigInfo] = useStorage<ConfigInfoType>(ConfigInfoFieldKey, defaultConfigInfo)
     const [rules, setRules] = useStorage<MatchRule[]>(RulesFieldKey, [])
     const [selectedRowKeys, setSelectedRowKeys] = useStorage(SelectedRowFieldKeys, [])
     const [loading, setLoading] = useState(false)
@@ -99,7 +102,6 @@ export default function App() {
     const [invalid, setInvalid] = useState(false)
     const [visible, setVisible] = useState(false)
     const [hiddenFields, setHiddenFields] = useStorage<string[]>(HiddenFieldsFieldKey, [])
-    const [bootLog, setBootLog] = useStorage(BootLogKey, true)
     const [percent, setPercent] = useState(0)
     const originRef = useRef('')
     const editorRef = useRef()
@@ -120,11 +122,9 @@ export default function App() {
             [ConfigInfoFieldKey]: setConfigInfo,
             [RulesFieldKey]: setRules,
             [SelectedRowFieldKeys]: setSelectedRowKeys,
-            [DarkFieldKey]: setDark,
             [ActiveIdFieldKey]: setActiveId,
             [HiddenFieldsFieldKey]: setHiddenFields,
             [WatchFilterKey]: setWatchFilter,
-            [BootLogKey]: setBootLog,
             [ActiveGroupId]: setActiveGroupId,
         }
 
@@ -427,8 +427,6 @@ export default function App() {
         []
     )
 
-    // 数据改变后通知background，并保存chrome.storage
-
     useEffect(
         () => {
             if (!__DEV__) {
@@ -437,6 +435,15 @@ export default function App() {
                     type: 'configInfo',
                     payload: configInfo,
                 })
+            }
+
+            const html = document.querySelector('html')
+            const cls = 'theme--dark'
+            if (configInfo.dark && !html.classList.contains(cls)) {
+                html.classList.add(cls)
+            } else {
+                html.classList.remove(cls)
+                document.head.querySelector('link[dark]')?.remove()
             }
         },
         [configInfo]
@@ -455,20 +462,6 @@ export default function App() {
     )
     useEffect(
         () => {
-            const html = document.querySelector('html')
-            const cls = 'theme--dark'
-            if (dark && !html.classList.contains(cls)) {
-                html.classList.add(cls)
-            } else {
-                html.classList.remove(cls)
-                document.head.querySelector('link[dark]')?.remove()
-            }
-        },
-        [dark]
-    )
-
-    useEffect(
-        () => {
             getPercent(sizeof(rules)).then(setPercent)
         },
         [rules]
@@ -476,7 +469,7 @@ export default function App() {
 
     return (
         <ConfigProvider theme={{
-            algorithm: dark ? theme.darkAlgorithm : undefined,
+            algorithm: configInfo.dark ? theme.darkAlgorithm : undefined,
             components: {
                 Table: {
                     headerBorderRadius: 0,
@@ -676,19 +669,21 @@ export default function App() {
                                 <>
                                     <Divider orientation='left' plain>
                                         <Button size='small' type='primary' onClick={() => {
-                                            setDark(false)
-                                            setBootLog(true)
-                                            setConfigInfo(info => ({ ...info, fakedLog: true }))
+                                            setConfigInfo(info => ({ ...info, fakedLog: true, bootLog: true, dark: false, allFrames: false }))
                                         }}>{t('action_reset')}</Button>
                                     </Divider>
                                     <Space size={'large'}>
                                         <div style={{ display: 'flex' }}>
+                                            <span style={{ marginRight: 8 }}>{t('action_all_frames')}</span>
+                                            <Switch checked={configInfo.allFrames} onClick={() => setConfigInfo(info => ({ ...info, allFrames: !info.allFrames }))}></Switch>
+                                        </div>
+                                        <div style={{ display: 'flex' }}>
                                             <span style={{ marginRight: 8 }}>{t('action_theme')}</span>
-                                            <Switch checked={dark} onClick={() => setDark(dark => !dark)}></Switch>
+                                            <Switch checked={configInfo.dark} onClick={() => setConfigInfo(info => ({ ...info, dark: !info.dark }))}></Switch>
                                         </div>
                                         <div style={{ display: 'flex' }}>
                                             <span style={{ marginRight: 8 }}>{t('action_boot_log')}</span>
-                                            <Switch checked={bootLog} onClick={() => setBootLog(bootLog => !bootLog)}></Switch>
+                                            <Switch checked={configInfo.bootLog} onClick={() => setConfigInfo(info => ({ ...info, bootLog: !info.bootLog }))}></Switch>
                                         </div>
                                         <div style={{ display: 'flex' }}>
                                             <span style={{ marginRight: 8 }}>{t('action_faked_log')}</span>
@@ -729,7 +724,11 @@ export default function App() {
                             <Popover trigger={['click']} placement='top' showArrow={false} content={(
                                 <>
                                     <Segmented value={configInfo.runAt} onChange={(runAt: string) => {
-                                        setConfigInfo(info => ({ ...info, runAt }))
+                                        setConfigInfo(info => ({ 
+                                            ...info, 
+                                            runAt,
+                                            action: (runAt === 'override' && info.action === 'close') ? 'intercept' : info.action,
+                                        }))
                                     }} options={[
                                         {
                                             label: t('run_at_start'),
@@ -806,7 +805,7 @@ export default function App() {
                         editable && (
                             <div className='app__editor'>
                                 <MainEditor
-                                    isDark={dark}
+                                    isDark={configInfo.dark}
                                     ref={editorRef}
                                     index={activeIndex}
                                     rule={rules[activeIndex]}

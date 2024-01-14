@@ -1,3 +1,8 @@
+## v1.16.0
+- vite更新到5.0，antd更新到5.0
+- 添加禁用类型，可设置禁用 xhr 或 fetch
+- 添加插件拦截时机，可设置start end delay trigger override
+
 ## v1.15.0
 - 添加run at功能
 

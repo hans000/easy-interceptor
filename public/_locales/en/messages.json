@@ -26,6 +26,9 @@
     "action_refresh": {
         "message": "Refresh Data"
     },
+    "action_all_frames": {
+        "message": "All frames"
+    },
     "action_theme": {
         "message": "Switch Theme"
     },
