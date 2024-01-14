@@ -2,11 +2,13 @@
  * The AGPL License (AGPL)
  * Copyright (c) 2022 hans000
  */
-import { BanType, MatchRule } from "../../App"
+import { MatchRule, BanType } from "../../App"
 
 interface GlobalVar {
     NativeXhr: typeof XMLHttpRequest | undefined
     NativeFetch: typeof fetch | undefined
+    PageXhr: typeof XMLHttpRequest | undefined
+    PageFetch: typeof fetch | undefined
     options: Options | undefined
 }
 
@@ -18,18 +20,20 @@ export interface CustomRequestInfo {
 }
 
 export interface Options {
-    faked?: boolean
-    fakedLog?: boolean
-    nativeXHR?: typeof XMLHttpRequest
-    nativeFetch?: typeof fetch
+    faked: boolean
+    fakedLog: boolean
     banType?: BanType
+    NativeFetch?: typeof fetch
+    NativeXhr?: typeof XMLHttpRequest
     onMatch?: (reqestInfo: CustomRequestInfo) => MatchRule
     onXhrIntercept?: (data: any) => (xhr: XMLHttpRequest) => Promise<void>
     onFetchIntercept?: (data: any) => (res: Response) => (Promise<Response> | undefined)
 }
 
 export const __global__: GlobalVar = {
-    NativeXhr: undefined,
-    NativeFetch: undefined,
+    NativeXhr: window.XMLHttpRequest,
+    NativeFetch: window.fetch,
+    PageXhr: undefined,
+    PageFetch: undefined,
     options: undefined,
 }

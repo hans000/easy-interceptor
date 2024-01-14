@@ -4,7 +4,7 @@
  */
 import { MatchRule } from '../App'
 import { createRunFunc } from '../utils'
-import { PopupMsgKey, LogMsgKey } from './constants'
+import { PopupMsgKey } from './constants'
 import { sendRequest } from './sendRequest'
 
 const __DEV__ = import.meta.env.DEV
@@ -21,10 +21,9 @@ export function sendLog(msg: any) {
         return
     }
     chrome.runtime.sendMessage(chrome.runtime.id, {
-        type: LogMsgKey,
+        type: 'log',
         from: PopupMsgKey,
-        key: 'log',
-        value: msg,
+        payload: msg,
     })
 }
 

@@ -31,7 +31,7 @@
 >
 > 如果你是一个熟练度拉满，有着完善的代理环境大可不必使用，仅作为特定场合的补充
 > 
-> 如果使用cdn版本，请保证能访问https://unpkg.com，首次加载会比较慢。或者直接使用local版本
+> 如果使用cdn版本，请保证能访问https://unpkg.com，首次加载会比较慢。如果加载不出来也可直接使用local版本
 
 ## 🎉 特点
 
@@ -69,7 +69,9 @@
 ## 状态栏
 - 【设置】：设置选项
 - 【工作空间】：切换工作空间
-- 【运行时机】：插件生效的时机，start-js注入即生效，end-DOMContentLoaded，delay-延时一定时间，trigger-当拦截到特定接口后触发
+- 【运行时机】：插件生效的时机，start-js注入即生效，end-DOMContentLoaded，delay-延时一定时间，trigger-当拦截到特定接口后触发，override-当window上的xhr或者fetch被重写时
+- 【禁用类型】：禁用请求类型：xhr 或者 fetch
+- 【存储占用率】：展示数据占用率
 
 ### config面板
 
@@ -78,6 +80,7 @@
 |url|string|请求地址|
 |test|string|必选，匹配的请求地址，ant-path-matcher规则或字符串匹配，不允许写query参数|
 |type|xhr\|fetch|请求类型|
+|description|string|描述字段，做备注使用|
 |response|object\|array\|null\boolean\|number|响应数据|
 |responseText|string|响应数据|
 |delay|number|延迟的毫秒数|

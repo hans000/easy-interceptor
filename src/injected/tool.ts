@@ -4,9 +4,7 @@
  */
 import { MatchRule } from "../App"
 import { matchPath } from "../tools"
-import { CountMsgKey, ResponseMsgKey } from "../tools/constants"
 import { log } from "../tools/log"
-import { createPagescriptAction } from "../tools/message"
 import { createRunFunc, equal } from "../utils"
 import { CustomRequestInfo } from "./fake/globalVar"
 
@@ -26,24 +24,16 @@ export function matching(rules: MatchRule[], req: CustomRequestInfo): MatchRule 
         }
         if (rule.enable && matchPath(rule.test, req.requestUrl)) {
             if (rule.method ? req.method.toLowerCase() !== rule.method : false) {
-                log('not work? please check `method` option', 'warn')
+                log('not working? please check `method` option', 'warn')
                 continue
             }
             if (!(rule.params ? equal(rule.params, req.params) : true)) {
-                log('not work? please check `params` option', 'warn')
+                log('not working? please check `params` option', 'warn')
                 continue
             }
             return rule
         }
     }
-}
-
-export function triggerCountEvent(id: string) {
-    window.dispatchEvent(new CustomEvent('pagescript', createPagescriptAction(CountMsgKey, { id })))
-}
-
-export function triggerResponseEvent(response: string, url: string) {
-    window.dispatchEvent(new CustomEvent('pagescript', createPagescriptAction(ResponseMsgKey, { response, url })))
 }
 
 export async function handleCode(matchRule: MatchRule, inst: XMLHttpRequest | Response) {

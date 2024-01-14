@@ -72,7 +72,9 @@ How to solve the above problems? If you can intercept and modify the data before
 ## Status Bar
 - \[Setting\]: Setting
 - [Work Space]: Switch work space
-- [Run At]：four options can be choose. start (js injected will be work)，end (DOMContentLoaded)，delay (delay some times)，trigger (match a url)
+- [Run At]: four options can be choose. start (js injected will be work)，end (DOMContentLoaded)，delay (delay some times)，trigger (match a url)，override (window.XMLHttpRequest or window.fetch was override)
+- \[Ban Type\]: Ban type, xhr or fetch
+- \[Quota\]: Percent of quota
 
 
 ### Config Panel
@@ -82,6 +84,7 @@ How to solve the above problems? If you can intercept and modify the data before
 |url|string|request url|
 |test|string|required, match request url, ant-path-matcher rule or string match, cannot set query|
 |type|xhr\|fetch|request type|
+|description|string|note|
 |response|object\|array\|null\boolean\|number||
 |responseText|string||
 |delay|number||
