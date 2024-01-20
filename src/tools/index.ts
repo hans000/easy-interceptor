@@ -27,19 +27,18 @@ export function modifyXhrProtoProps(props: {
 }
 
 export function modifyXhrProto(xhr: XMLHttpRequest) {
-    for (const attr in xhr) {
-        if (typeof xhr[attr] !== "function" && !attr.startsWith('on')) {
-            const key = createSymbol(attr)
-            Object.defineProperty(this, attr, {
-                get() {
-                    return this[key] || xhr[attr]
-                },
-                set(val) {
-                    this[key] = val
-                }
-            })
-        }
-    }
+    const attrs = ['readyState', 'timeout', 'responseURL', 'status', 'statusText', 'response', 'responseText']
+    attrs.forEach(attr => {
+        const key = createSymbol(attr)
+        Object.defineProperty(xhr, attr, {
+            get() {
+                return this[key] ?? xhr[attr]
+            },
+            set(val) {
+                this[key] = val
+            }
+        })
+    })
 }
 
 export function equal(obj1, obj2) {
@@ -215,6 +214,11 @@ export function download(filename: string, data: string) {
 export function sizeof(object: Record<string, any> = {}) {
     return JSON.stringify(object).length
 }
+
 export function matchPath(pattern: string, path: string) {
     return /[?*]/.test(pattern) ? pathMatch(pattern, path) : path.includes(pattern)
+}
+
+export function toTitleCase(str = '') {
+    return str.replace(/\b[a-z]/g, c => c.toUpperCase())
 }

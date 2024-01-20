@@ -20,7 +20,7 @@ export function proxyXhr(options: Options) {
         construct(target) {
             const inst = new target() as ProxyXMLHttpRequest
             if (options.faked) {
-                return proxyFakeXhrInstance(inst, new target(), options)
+                return proxyFakeXhrInstance(inst, options)
             } else {
                 proxyXhrInstance(inst)
             }

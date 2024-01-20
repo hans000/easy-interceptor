@@ -4,7 +4,7 @@
  */
 
 import { MatchRule } from "../../App"
-import { createSymbol, delayRun, modifyXhrProto, modifyXhrProtoProps } from "../../tools"
+import { createSymbol, delayRun, modifyXhrProto, modifyXhrProtoProps, toTitleCase } from "../../tools"
 import { log } from "../../tools/log"
 import { parseUrl, parseXML, stringifyHeaders } from "../../tools"
 import { HttpStatusCodes } from "./constants"
@@ -22,7 +22,7 @@ export interface ProxyXMLHttpRequest extends XMLHttpRequest {
 }
 
 export function handleReadyStateChange() {
-    if (this.readyState === 1) {
+    if (this.readyState === XMLHttpRequest.OPENED) {
         const { onMatch } = __global__.options
         const urlObj: URL = this._url instanceof URL ? this._url : parseUrl(this._url)
         this._matchItem = onMatch({
@@ -31,7 +31,7 @@ export function handleReadyStateChange() {
             type: 'xhr',
             params: [...urlObj.searchParams.entries()]
         })
-    } else if (this.readyState === 4) {
+    } else if (this.readyState === XMLHttpRequest.DONE) {
         const { onXhrIntercept } = __global__.options
         if (this._matchItem) {
             const { status = 200, response, responseText } = this._matchItem
@@ -41,10 +41,6 @@ export function handleReadyStateChange() {
                 status,
                 statusText: HttpStatusCodes[status],
             })
-            // this.response = response === undefined ? this.response : response
-            // this.responseText = responseText === undefined ? this.responseText : responseText
-            // this.status = status
-            // this.statusText = HttpStatusCodes[status]
         }
 
         onXhrIntercept(this._matchItem).call(this, this)
@@ -59,7 +55,7 @@ export function setResponseHeaders(headers) {
         }
     }
     if (this._forceMimeType) {
-        this._responseHeaders['content-type'] = this._forceMimeType
+        this._responseHeaders['Content-Type'] = this._forceMimeType
     }
     if (this._async) {
         handleStateChange.call(this, XMLHttpRequest.HEADERS_RECEIVED)
@@ -92,9 +88,6 @@ export function handleStateChange(state) {
 
     if (this.readyState == XMLHttpRequest.DONE) {
         dispatchCustomEvent.call(this, 'load')
-    }
-
-    if (this.readyState == XMLHttpRequest.UNSENT || this.readyState == XMLHttpRequest.DONE) {
         dispatchCustomEvent.call(this, 'loadend')
     }
 }
@@ -102,7 +95,6 @@ export function handleStateChange(state) {
 export function dispatchCustomEvent(type: string) {
     const handle = this['on' + type]
     handle && handle()
-    this.dispatchEvent(new Event(type))
 }
 
 export function proxyXhrInstance(inst: ProxyXMLHttpRequest) {
@@ -123,7 +115,7 @@ export function proxyXhrInstance(inst: ProxyXMLHttpRequest) {
     }
 }
 
-export function proxyFakeXhrInstance(inst: ProxyXMLHttpRequest, cloneXhr: XMLHttpRequest, options: Options) {
+export function proxyFakeXhrInstance(inst: ProxyXMLHttpRequest, options: Options) {
     const originOpen = inst.open
     const originSend = inst.send
     const originSetRequestHeader = inst.setRequestHeader
@@ -131,9 +123,7 @@ export function proxyFakeXhrInstance(inst: ProxyXMLHttpRequest, cloneXhr: XMLHtt
     const originGetAllResponseHeaders = inst.getAllResponseHeaders
     const originOverrideMimeType = inst.overrideMimeType
 
-    modifyXhrProto.call(inst, cloneXhr)
-
-    inst.open = (method: string, url: string | URL, async?: boolean) => {
+    inst.open = (method: string, url: string | URL, async = true) => {
         inst._async = async
         inst._url = url
         inst._method = method
@@ -144,9 +134,13 @@ export function proxyFakeXhrInstance(inst: ProxyXMLHttpRequest, cloneXhr: XMLHtt
             type: 'xhr',
             params: [...urlObj.searchParams.entries()]
         })
-        handleStateChange.call(inst, XMLHttpRequest.UNSENT)
-        handleStateChange.call(inst, XMLHttpRequest.OPENED)
-        originOpen.call(inst, method, url, async)
+        if (inst._matchItem) {
+            modifyXhrProto.call(inst, inst)
+            handleStateChange.call(inst, XMLHttpRequest.UNSENT)
+            handleStateChange.call(inst, XMLHttpRequest.OPENED)
+        } else {
+            originOpen.call(inst, method, url, async)
+        }
     }
     inst.send = (data) => {
         if (! inst._matchItem) {
@@ -189,7 +183,7 @@ export function proxyFakeXhrInstance(inst: ProxyXMLHttpRequest, cloneXhr: XMLHtt
         }, matchItem.delay)
     }
     inst.setRequestHeader = (name: string, value: string) => {
-        const header = name.toLowerCase()
+        const header = toTitleCase(name)
         if (! inst._matchItem) {
             originSetRequestHeader.call(inst, header, value)
             return
@@ -199,7 +193,7 @@ export function proxyFakeXhrInstance(inst: ProxyXMLHttpRequest, cloneXhr: XMLHtt
         inst._requestHeaders[header] = value
     }
     inst.getResponseHeader = (name: string) => {
-        const header = name.toLowerCase()
+        const header = toTitleCase(name)
         if (! inst._matchItem) {
             return originGetResponseHeader.call(inst, header)
         }
@@ -226,7 +220,7 @@ export function proxyFakeXhrInstance(inst: ProxyXMLHttpRequest, cloneXhr: XMLHtt
             originOverrideMimeType.call(inst, mimeType)
             return
         }
-        inst._forceMimeType = mimeType && mimeType.toLowerCase()
+        inst._forceMimeType = toTitleCase(mimeType)
     }
 
     return inst
