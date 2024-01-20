@@ -7,10 +7,10 @@ import { Badge, Checkbox, BadgeProps, Button, Dropdown, Input, message, Modal, S
 import React, { useEffect, useRef, useState } from 'react'
 import { TagOutlined, ControlOutlined, CodeOutlined, DeleteOutlined, PlusOutlined, SearchOutlined, VerticalAlignBottomOutlined, UploadOutlined, SyncOutlined, RollbackOutlined, BugOutlined, FilterOutlined, FormOutlined, SettingOutlined, AppstoreOutlined, FieldTimeOutlined, StopOutlined, DashboardOutlined } from '@ant-design/icons'
 import { ColumnsType } from 'antd/lib/table'
-import { pathMatch, randID, renderSize } from './utils'
+import { pathMatch, randID, renderSize } from './tools'
 import { getMethodColor } from './tools/mappings'
-import { sizeof } from "./utils"
-import { download } from "./utils"
+import { sizeof } from "./tools"
+import { download } from "./tools"
 import jsonschema from 'json-schema'
 import { ConfigSchema, TransformResultSchema } from './components/MainEditor/validator'
 import useStorage from './hooks/useStorage'
@@ -474,6 +474,9 @@ export default function App() {
                 Table: {
                     headerBorderRadius: 0,
                 },
+                Button: {
+                    borderRadius: 0
+                }
             }
         }}
             locale={{
@@ -592,7 +595,7 @@ export default function App() {
                                 }}></Button>
                             </Tooltip>
                             <Tooltip title={t('action_mode')}>
-                                <Button type={configInfo.faked ? 'primary' : 'default'} icon={<BugOutlined />} onClick={() => {
+                                <Button disabled={disabled} type={configInfo.faked ? 'primary' : 'default'} icon={<BugOutlined />} onClick={() => {
                                     setConfigInfo(info => ({ ...info, faked: !info.faked }))
                                 }}></Button>
                             </Tooltip>

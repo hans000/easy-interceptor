@@ -2,9 +2,9 @@
  * The AGPL License (AGPL)
  * Copyright (c) 2022 hans000
  */
-import { delayRun } from "../../utils";
+import { delayRun } from "../../tools";
 import { log } from "../../tools/log";
-import { parseUrl } from "../../utils";
+import { parseUrl } from "../../tools";
 import { Options, __global__ } from "./globalVar";
 
 let unproxied = true
@@ -16,8 +16,7 @@ export function proxyFetch(options: Options) {
     unproxied = false
     __global__.options = options
 
-    const { fakedLog, faked, onMatch, onFetchIntercept } = options
-    const loggable = faked && fakedLog
+    const { onMatch, onFetchIntercept } = options
     __global__.NativeFetch = options.NativeFetch || __global__.NativeFetch
 
     const proxyFetch = new Proxy(__global__.NativeFetch, {
@@ -38,6 +37,8 @@ export function proxyFetch(options: Options) {
             const realFetch = __global__.PageFetch || target
 
             if (matchItem) {
+                const loggable = options.faked && options.fakedLog
+
                 if (loggable) {
                     log({
                         type: 'fetch:request',
@@ -45,7 +46,7 @@ export function proxyFetch(options: Options) {
                         ...init,
                     })
                 }
-                const realResponse = faked 
+                const realResponse = options.faked 
                     ? new Response(new Blob(['null'])) 
                     : await realFetch.call(thisArg, input, init)
                 const response = await onFetchIntercept(matchItem)(realResponse)

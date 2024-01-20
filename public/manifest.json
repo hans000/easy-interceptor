@@ -22,12 +22,12 @@
   "browser_action": {
     "default_title": "Easy Interceptor by hans000 - v1.16.0",
     "default_popup": "index.html",
-    "default_icon": "images/48-gray.png"
+    "default_icon": "images/128-gray.png"
   },
   "icons": {
-    "16": "images/16.png",
-    "32": "images/32.png",
-    "48": "images/48.png",
+    "16": "images/128.png",
+    "32": "images/128.png",
+    "48": "images/128.png",
     "128": "images/128.png"
   },
   "content_scripts": [

@@ -2,6 +2,7 @@
 * The AGPL License (AGPL)
 * Copyright (c) 2022 hans000
 */
+import { modifyXhrProto, modifyXhrProtoProps } from "../../tools"
 import { Options, __global__ } from "./globalVar"
 import { ProxyXMLHttpRequest, handleReadyStateChange, proxyFakeXhrInstance, proxyXhrInstance } from "./handle"
 
@@ -13,20 +14,17 @@ export function proxyXhr(options: Options) {
     }
     unproxied = false
     __global__.options = options
-
-    const { fakedLog, faked } = options
-    const loggable = faked && fakedLog
     __global__.NativeXhr = options.NativeXhr || __global__.NativeXhr
     
     const ProxyXhr = new Proxy(__global__.NativeXhr, {
         construct(target) {
             const inst = new target() as ProxyXMLHttpRequest
-            if (faked) {
-                proxyFakeXhrInstance(inst, { loggable })
+            if (options.faked) {
+                return proxyFakeXhrInstance(inst, new target(), options)
             } else {
                 proxyXhrInstance(inst)
             }
-            inst.addEventListener("readystatechange", handleReadyStateChange.bind(inst))
+            inst.addEventListener("readystatechange", handleReadyStateChange.bind(inst, options.faked))
             return inst
         }
     })

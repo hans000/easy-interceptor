@@ -4,12 +4,11 @@
  */
 
 import { MatchRule } from "../../App"
-import { delayRun } from "../../utils"
+import { createSymbol, delayRun, modifyXhrProto, modifyXhrProtoProps } from "../../tools"
 import { log } from "../../tools/log"
-import { parseUrl, parseXML, stringifyHeaders } from "../../utils"
-import { createSymbol } from "../../utils/proxy"
-import { HttpStatusCodes } from "../fake/xhr/constants"
-import { __global__ } from "./globalVar"
+import { parseUrl, parseXML, stringifyHeaders } from "../../tools"
+import { HttpStatusCodes } from "./constants"
+import { Options, __global__ } from "./globalVar"
 
 export interface ProxyXMLHttpRequest extends XMLHttpRequest {
     _async: boolean
@@ -20,52 +19,6 @@ export interface ProxyXMLHttpRequest extends XMLHttpRequest {
     _requestData: any
     _requestHeaders: Record<string, string>
     _responseHeaders: Record<string, string>
-}
-
-export function modifyXhrProtoMethods() {
-    const { open, send, setRequestHeader } = XMLHttpRequest.prototype
-    XMLHttpRequest.prototype.open = function(method: string, url: string) {
-        this._method = method
-        this._url = url
-        open.apply(this, arguments)
-    }
-
-    XMLHttpRequest.prototype.send = function(data) {
-        delayRun(() => {
-            this._requestData = data
-            send.apply(this, arguments)
-        }, this._matchItem ? this._matchItem.delay : undefined)
-    }
-
-    XMLHttpRequest.prototype.setRequestHeader = function(header, value) {
-        this._requestHeaders = this.requestHeaders || {}
-        this._requestHeaders[header] = value
-        setRequestHeader.apply(this, arguments)
-    }
-    return {
-        open,
-        send,
-        setRequestHeader,
-    }
-}
-
-export function modifyXhrProtoProps(config: {
-    response: string
-    responseText: string
-    status: number
-    statusText: string
-}) {
-    for (const attr in config) {
-        const key = createSymbol(attr)
-        Object.defineProperty(this, attr, {
-            get() {
-                return this[key] || config[attr]
-            },
-            set(val) {
-                this[key] = val
-            }
-        })
-    }
 }
 
 export function handleReadyStateChange() {
@@ -88,6 +41,10 @@ export function handleReadyStateChange() {
                 status,
                 statusText: HttpStatusCodes[status],
             })
+            // this.response = response === undefined ? this.response : response
+            // this.responseText = responseText === undefined ? this.responseText : responseText
+            // this.status = status
+            // this.statusText = HttpStatusCodes[status]
         }
 
         onXhrIntercept(this._matchItem).call(this, this)
@@ -107,7 +64,7 @@ export function setResponseHeaders(headers) {
     if (this._async) {
         handleStateChange.call(this, XMLHttpRequest.HEADERS_RECEIVED)
     } else {
-        this._readyState = XMLHttpRequest.HEADERS_RECEIVED
+        this.readyState = XMLHttpRequest.HEADERS_RECEIVED
     }
 }
 
@@ -125,7 +82,7 @@ export function setResponseBody(body = '') {
     if (this._async) {
         handleStateChange.call(this, XMLHttpRequest.DONE)
     } else {
-        this._readyState = XMLHttpRequest.DONE
+        this.readyState = XMLHttpRequest.DONE
     }
 }
 
@@ -166,30 +123,39 @@ export function proxyXhrInstance(inst: ProxyXMLHttpRequest) {
     }
 }
 
-export function proxyFakeXhrInstance(inst: ProxyXMLHttpRequest, options: {
-    loggable: boolean
-}) {
+export function proxyFakeXhrInstance(inst: ProxyXMLHttpRequest, cloneXhr: XMLHttpRequest, options: Options) {
     const originOpen = inst.open
     const originSend = inst.send
     const originSetRequestHeader = inst.setRequestHeader
     const originGetResponseHeader = inst.getResponseHeader
     const originGetAllResponseHeaders = inst.getAllResponseHeaders
     const originOverrideMimeType = inst.overrideMimeType
-    const notMatching = !inst._matchItem
+
+    modifyXhrProto.call(inst, cloneXhr)
 
     inst.open = (method: string, url: string | URL, async?: boolean) => {
         inst._async = async
         inst._url = url
         inst._method = method
+        const urlObj = inst._url instanceof URL ? inst._url : parseUrl(inst._url)
+        inst._matchItem = options.onMatch({
+            method: inst._method,
+            requestUrl: urlObj.origin + urlObj.pathname,
+            type: 'xhr',
+            params: [...urlObj.searchParams.entries()]
+        })
+        handleStateChange.call(inst, XMLHttpRequest.UNSENT)
+        handleStateChange.call(inst, XMLHttpRequest.OPENED)
         originOpen.call(inst, method, url, async)
     }
     inst.send = (data) => {
-        if (notMatching) {
+        if (! inst._matchItem) {
             originSend.call(inst, data)
             return
         }
+        const loggable = options.faked && options.fakedLog
 
-        if (options.loggable) {
+        if (loggable) {
             log({
                 type: 'xhr:request',
                 url: inst._url,
@@ -200,17 +166,16 @@ export function proxyFakeXhrInstance(inst: ProxyXMLHttpRequest, options: {
         }
         const matchItem = inst._matchItem
         dispatchCustomEvent.call(inst, 'loadstart')
-        handleStateChange.call(inst, XMLHttpRequest.HEADERS_RECEIVED)
-        handleStateChange.call(inst, XMLHttpRequest.LOADING)
         delayRun(() => {
             const { status = 200, responseHeaders, response, responseText } = matchItem
             setResponseHeaders.call(inst, responseHeaders)
+            handleStateChange.call(inst, XMLHttpRequest.LOADING)
             // @ts-ignore inst field has been proxy
             inst.status = status
             // @ts-ignore inst field has been proxy
             inst.statusText = HttpStatusCodes[inst.status]
             setResponseBody.call(inst, response ? JSON.stringify(response) : responseText)
-            if (options.loggable) {
+            if (loggable) {
                 log({
                     type: 'xhr:response',
                     url: inst._url,
@@ -225,7 +190,7 @@ export function proxyFakeXhrInstance(inst: ProxyXMLHttpRequest, options: {
     }
     inst.setRequestHeader = (name: string, value: string) => {
         const header = name.toLowerCase()
-        if (notMatching) {
+        if (! inst._matchItem) {
             originSetRequestHeader.call(inst, header, value)
             return
         }
@@ -235,7 +200,7 @@ export function proxyFakeXhrInstance(inst: ProxyXMLHttpRequest, options: {
     }
     inst.getResponseHeader = (name: string) => {
         const header = name.toLowerCase()
-        if (notMatching) {
+        if (! inst._matchItem) {
             return originGetResponseHeader.call(inst, header)
         }
 
@@ -250,17 +215,19 @@ export function proxyFakeXhrInstance(inst: ProxyXMLHttpRequest, options: {
         return inst._responseHeaders[header]
     }
     inst.getAllResponseHeaders = () => {
-        if (notMatching) {
+        if (! inst._matchItem) {
             return originGetAllResponseHeaders.call(inst)
         }
 
         return stringifyHeaders(inst._responseHeaders)
     }
     inst.overrideMimeType = (mimeType: string) => {
-        if (notMatching) {
+        if (! inst._matchItem) {
             originOverrideMimeType.call(inst, mimeType)
             return
         }
         inst._forceMimeType = mimeType && mimeType.toLowerCase()
     }
+
+    return inst
 }

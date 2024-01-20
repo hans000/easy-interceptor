@@ -3,29 +3,9 @@
  * Copyright (c) 2022 hans000
  */
 import { MatchRule } from '../App'
-import { createRunFunc } from '../utils'
-import { PopupMsgKey } from './constants'
+import { createRunFunc } from '.'
 import { sendRequest } from './sendRequest'
-
-const __DEV__ = import.meta.env.DEV
-
-export interface CodeResult {
-    response: Record<string, any>
-    status?: number
-    delay?: number
-}
-
-export function sendLog(msg: any) {
-    if (__DEV__) {
-        console.log(msg)
-        return
-    }
-    chrome.runtime.sendMessage(chrome.runtime.id, {
-        type: 'log',
-        from: PopupMsgKey,
-        payload: msg,
-    })
-}
+import { sendLog } from './log'
 
 export async function runCode(data: MatchRule, index: number) {
     const { id, count, enable, code, ...restData } = data

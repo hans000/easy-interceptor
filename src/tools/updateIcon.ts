@@ -40,9 +40,10 @@ function setIcon(action: ActionType, faked: boolean) {
         : ''
     chrome.browserAction.setIcon({
         path: {
-            16: `/images/16${suffix}.png`,
-            32: `/images/32${suffix}.png`,
-            48: `/images/48${suffix}.png`,
+            16: `/images/128${suffix}.png`,
+            32: `/images/128${suffix}.png`,
+            48: `/images/128${suffix}.png`,
+            128: `/images/128${suffix}.png`,
         }
     })
 }

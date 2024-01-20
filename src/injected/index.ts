@@ -3,12 +3,13 @@
  * Copyright (c) 2022 hans000
  */
 import { ConfigInfoType, MatchRule } from '../App'
-import { debounce, noop, parseUrl } from '../utils'
+import { debounce, noop, parseUrl } from '../tools'
 import { proxyRequest, unproxyRequest } from './proxy'
 import { PageScriptEventName, PageScriptMsgKey } from '../tools/constants'
-import { HttpStatusCodes } from './fake/xhr/constants'
+import { HttpStatusCodes } from './proxy/constants'
 import { CustomEventProps, dispatchPageScriptEvent } from '../tools/message'
-import { handleCode, matching } from './tool'
+import { matching } from "../tools/match"
+import { handleCode } from '../tools/sendRequest'
 
 const originXhr = window.XMLHttpRequest
 const originFetch = window.fetch
