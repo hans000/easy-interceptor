@@ -7,7 +7,7 @@ import { matchPath } from "../tools"
 import { ActiveGroupId, BackgroundMsgKey, ConfigInfoFieldKey, PopupMsgKey, RulesFieldKey, WatchFilterKey } from "../tools/constants"
 import { CustomEventProps, sendMessageToContent } from "../tools/message"
 import updateIcon from "../tools/updateIcon"
-import { arrayBufferToString, createRunFunc, objectToHttpHeaders, randID, trimUrlParams } from "../utils"
+import { arrayBufferToString, createRunFunc, objectToHttpHeaders, randID, trimUrlParams } from "../tools"
 
 let __result = new Map<string, any>()
 let __rules: MatchRule[] = []

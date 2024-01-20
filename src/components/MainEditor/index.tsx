@@ -9,7 +9,7 @@ import React, { useEffect, useImperativeHandle, useMemo, useRef, useState } from
 import { useDebounce } from '../../hooks/useDebounce'
 import useStorage from '../../hooks/useStorage'
 import getStorage from '../../tools/getStorage'
-import { equal } from '../../utils'
+import { equal } from '../../tools'
 import config, { FileType } from './config'
 import jsonschema from 'json-schema'
 import { MatchRule } from '../../App'

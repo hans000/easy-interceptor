@@ -6,7 +6,7 @@ import { ConfigInfoType, MatchRule } from "../App";
 import { ConfigInfoFieldKey, RulesFieldKey, ActiveGroupId, ContentMsgKey, UpdateMsgKey } from "../tools/constants";
 import { log } from "../tools/log";
 import { CustomEventProps, SyncFields, dispatchPageScriptEvent } from "../tools/message";
-import { createScript, noop } from "../utils";
+import { createScript, noop } from "../tools";
 
 export function injectedScript(configInfo: Partial<ConfigInfoType>) {
     createScript('injected.js').then(() => {

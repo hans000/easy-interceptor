@@ -3,8 +3,8 @@
  * Copyright (c) 2022 hans000
  */
 import { MatchRule } from "../App"
-import { stringifyParams } from "../utils"
-import { sendLog } from "./runCode"
+import { createRunFunc, stringifyParams } from "."
+import { sendLog } from './log'
 
 export async function sendRequest(rule: MatchRule, index: number) {
     if (rule.type === 'fetch') {
@@ -52,4 +52,34 @@ export function sendRequestLog(rule: MatchRule, index: number) {
             return inst.json()
         }
     }).then(sendLog)
+}
+
+export async function handleCode(matchRule: MatchRule, inst: XMLHttpRequest | Response) {
+    let { id, count, enable, code, ...restRule } = matchRule
+
+    const isResponse = inst instanceof Response
+    const text = await (isResponse ? inst.text() : inst.responseText)
+    restRule.responseText = text
+
+    if (code) {
+        try {
+            const fn = createRunFunc(code, 'onResponding')
+            const partialData = await fn({
+                rule: restRule,
+                xhr: isResponse ? undefined : inst,
+                response: isResponse ? inst : undefined,
+            })
+            return {
+                ...restRule,
+                ...partialData || {},
+                id,
+                count,
+                enable,
+                code,
+            }
+        } catch (error) {
+            console.error(error)
+        }
+    }
+    return restRule
 }
