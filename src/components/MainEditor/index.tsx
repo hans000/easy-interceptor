@@ -16,6 +16,10 @@ import { MatchRule } from '../../App'
 import { PathFieldKey } from '../../tools/constants'
 
 //#region loadConfig
+import { loadLocalMocano } from './local';
+if (! import.meta.env.DEV) {
+    loadLocalMocano()
+}
 //#endregion
 
 

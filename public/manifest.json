@@ -1,26 +1,29 @@
 {
-  "manifest_version": 2,
+  "manifest_version": 3,
   "name": "Easy Interceptor",
-  "version": "1.16.0",
+  "version": "2.0.0",
   "description": "__MSG_description__",
   "permissions": [
     "storage",
-    "webRequest",
-    "webRequestBlocking",
     "tabs",
+    "webRequest",
+    "webRequestAuthProvider",
+    "declarativeNetRequest",
+    "declarativeNetRequestFeedback"
+  ],
+  "host_permissions": [
     "http://*/",
     "https://*/"
   ],
   "background": {
-    "scripts": [
-      "background.js"
-    ],
-    "persistent": true
+    "service_worker": "background.js"
   },
   "default_locale": "zh_CN",
-  "content_security_policy" : "script-src 'self' 'unsafe-eval'; script-src-elem 'self' data: blob: https://unpkg.com; worker-src 'self' data: blob:; object-src 'self'",
-  "browser_action": {
-    "default_title": "Easy Interceptor by hans000 - v1.16.0",
+  "content_security_policy" : {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  },
+  "action": {
+    "default_title": "Easy Interceptor by hans000 - v2.0.0",
     "default_popup": "index.html",
     "default_icon": "images/128-gray.png"
   },
@@ -41,7 +44,12 @@
     }
   ],
   "web_accessible_resources": [
-    "injected.js",
-    "index.html"
+    {
+      "resources": [
+        "injected.js",
+        "index.html"
+      ],
+      "matches": ["<all_urls>"]
+    }
   ]
 }

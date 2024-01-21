@@ -73,7 +73,7 @@ chrome.webRequest.onBeforeRequest.addListener(
         urls: ['<all_urls>'],
         types: ['xmlhttprequest', 'stylesheet', 'script', 'main_frame', 'sub_frame']
     },
-    ['requestBody', 'blocking']
+    ['requestBody']
 )
 
 // 获取requestHeaders
@@ -94,7 +94,7 @@ chrome.webRequest.onBeforeSendHeaders.addListener(
       urls: ['<all_urls>'],
       types: ['xmlhttprequest']
     },
-    ['blocking', 'extraHeaders', 'requestHeaders']
+    ['extraHeaders', 'requestHeaders']
 )
 
 // 获取responseHeaders

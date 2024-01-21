@@ -71,67 +71,67 @@ const config: EditorProps[] = [
             editor.addAction(createRequestAction({ editor, monaco, rule, index }))
         }
     },
-    {
-        name: 'code',
-        language: 'javascript',
-        value: 'code',
-        beforeMount: (monaco) => {
-            const libSource = `
-declare interface Rule {
-    count?: number
-    delay?: number
-    url?: string
-    description?: string
-    test: string
-    type?: 'xhr' | 'fetch'
-    method?: 'get' | 'post' | 'delete' | 'put' | 'patch'
-    body?: any
-    params?: [string, string][]
-    requestHeaders?: Record<string, string>
-    status?: number
-    response?: any
-    responseText?: string
-    responseHeaders?: Record<string, string>
-    redirectUrl?: string
-}
-interface Context {
-    xhr?: XMLHttpRequest
-    response?: Response
-    rule: Rule
-}
-declare function onResponseHeaders(fn: (headers: Record<string, string>) => Record<string, string> | void): void
-declare function onRequestHeaders(fn: (headers: Record<string, string>) => Record<string, string> | void): void
-declare function onRedirect(fn: (rule: Rule) => string | void): void
-declare function onMatching(fn: (rule: Rule) => MatchingRule | void): void
-declare function onResponding(fn: (context: Context) => ResponseRule | void): void
+//     {
+//         name: 'code',
+//         language: 'javascript',
+//         value: 'code',
+//         beforeMount: (monaco) => {
+//             const libSource = `
+// declare interface Rule {
+//     count?: number
+//     delay?: number
+//     url?: string
+//     description?: string
+//     test: string
+//     type?: 'xhr' | 'fetch'
+//     method?: 'get' | 'post' | 'delete' | 'put' | 'patch'
+//     body?: any
+//     params?: [string, string][]
+//     requestHeaders?: Record<string, string>
+//     status?: number
+//     response?: any
+//     responseText?: string
+//     responseHeaders?: Record<string, string>
+//     redirectUrl?: string
+// }
+// interface Context {
+//     xhr?: XMLHttpRequest
+//     response?: Response
+//     rule: Rule
+// }
+// declare function onResponseHeaders(fn: (headers: Record<string, string>) => Record<string, string> | void): void
+// declare function onRequestHeaders(fn: (headers: Record<string, string>) => Record<string, string> | void): void
+// declare function onRedirect(fn: (rule: Rule) => string | void): void
+// declare function onMatching(fn: (rule: Rule) => MatchingRule | void): void
+// declare function onResponding(fn: (context: Context) => ResponseRule | void): void
 
-interface ResponseRule {
-    response?: any
-    responseText?: string
-    status?: number
-    delay?: number
-}
-interface MatchingRule extends ResponseRule {
-    responseHeaders?: Record<string, string>
-}
-`
-            const libUri = 'ts:typings/fake.d.ts';
-            monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
-                noSemanticValidation: false,
-                noSyntaxValidation: false,
-            });
-            monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
-                target: monaco.languages.typescript.ScriptTarget.ESNext,
-                allowNonTsExtensions: true,
-            });
-            monaco.languages.typescript.javascriptDefaults.addExtraLib(libSource, libUri);
-        },
-        onMount: (context) => {
-            const { editor } = context
-            editor.addAction(createRunCodeAction(context))
-            editor.addAction(createRequestAction(context))
-        }
-    },
+// interface ResponseRule {
+//     response?: any
+//     responseText?: string
+//     status?: number
+//     delay?: number
+// }
+// interface MatchingRule extends ResponseRule {
+//     responseHeaders?: Record<string, string>
+// }
+// `
+//             const libUri = 'ts:typings/fake.d.ts';
+//             monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
+//                 noSemanticValidation: false,
+//                 noSyntaxValidation: false,
+//             });
+//             monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
+//                 target: monaco.languages.typescript.ScriptTarget.ESNext,
+//                 allowNonTsExtensions: true,
+//             });
+//             monaco.languages.typescript.javascriptDefaults.addExtraLib(libSource, libUri);
+//         },
+//         onMount: (context) => {
+//             const { editor } = context
+//             editor.addAction(createRunCodeAction(context))
+//             editor.addAction(createRequestAction(context))
+//         }
+//     },
 ]
 
 export default config
