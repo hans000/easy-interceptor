@@ -5,7 +5,7 @@
 import './App.less'
 import { Badge, Checkbox, BadgeProps, Button, Dropdown, Input, message, Modal, Spin, Table, Tag, Tooltip, Upload, Switch, Space, Divider, Select, Popover, Segmented, InputNumber } from 'antd'
 import React, { useEffect, useRef, useState } from 'react'
-import { TagOutlined, ControlOutlined, CodeOutlined, DeleteOutlined, PlusOutlined, SearchOutlined, VerticalAlignBottomOutlined, UploadOutlined, SyncOutlined, RollbackOutlined, BugOutlined, FilterOutlined, FormOutlined, SettingOutlined, AppstoreOutlined, FieldTimeOutlined, StopOutlined, DashboardOutlined } from '@ant-design/icons'
+import { TagOutlined, ControlOutlined, CodeOutlined, DeleteOutlined, PlusOutlined, SearchOutlined, VerticalAlignBottomOutlined, UploadOutlined, SyncOutlined, RollbackOutlined, BugOutlined, FilterOutlined, FormOutlined, SettingOutlined, AppstoreOutlined, FieldTimeOutlined, StopOutlined, DashboardOutlined, GithubOutlined } from '@ant-design/icons'
 import { ColumnsType } from 'antd/lib/table'
 import { pathMatch, randID, renderSize } from './tools'
 import { getMethodColor } from './tools/mappings'
@@ -667,6 +667,11 @@ export default function App() {
                         />
                     </div>
                     <div className="app__bar">
+                        <div className='app__bar-item'>
+                            <GithubOutlined onClick={() => {
+                                open('https://github.com/hans000/easy-interceptor/tree/feat/v3', '_blank')
+                            }} />
+                        </div>
                         <div className='app__bar-item'>
                             <Popover trigger={['click']} placement='topLeft' showArrow={false} content={(
                                 <>

@@ -1,5 +1,7 @@
 # Easy Interceptor
 
+>📢 注意：以下特性MV3目前只支持部分，目前正在迁移功能中，如果想享受完成功能，请下载v1.0+的离线版本
+
 <img src="./assets/header-zh_CN.svg" width="800" height="300">
 
 中文 | [**English**](./readme.md)

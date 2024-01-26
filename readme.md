@@ -1,5 +1,7 @@
 # Easy Interceptor
 
+>📢 Notice：The following features are currently only partially supported in MV3 and are currently being migrated. If you want to enjoy the complete functionality, please download the offline version of v1.0+
+
 <img src="./assets/header.svg" width="800" height="300">
 
 [中文](./readme-zh_CN.md) | **English**
