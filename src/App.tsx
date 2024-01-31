@@ -177,10 +177,10 @@ export default function App() {
     const getActionText = React.useCallback(
         (type: string) => {
             const count = selectedRowKeys.length
-            const total = rules.length
+            const total = rules.filter(item => item.groupId === activeGroupId).length
             return count ? `${type}${count}${t('items')}` : total ? `${type}${t('total', [total + ''])}` : ''
         },
-        [selectedRowKeys.length, rules.length]
+        [selectedRowKeys, rules, activeGroupId]
     )
 
     const editable = React.useMemo(() => !!activeId, [activeId])
@@ -509,9 +509,12 @@ export default function App() {
                                 }}></Button>
                             </Tooltip>
                             <Tooltip title={getActionText(t('menu_remove'))}>
-                                <Button disabled={disabled} icon={<DeleteOutlined />} onClick={() => {
+                                <Button disabled={disabled} icon={<DeleteOutlined />} onDoubleClick={() => {
+                                    setRules([])
+                                }} onClick={() => {
                                     if (!selectedRowKeys.length) {
-                                        return setRules([])
+                                        setRules(rules.filter(item => item.groupId !== activeGroupId))
+                                        return
                                     }
                                     setRules(rules.filter(item => !selectedRowKeys.find(id => id === item.id)))
                                     setSelectedRowKeys([])
