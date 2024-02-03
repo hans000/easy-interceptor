@@ -17,6 +17,7 @@ export function removeRequiredField(schema: JSONSchema7) {
 }
 
 export const ConfigSchema: JSONSchema7 = {
+    "$schema": "http://json-schema.org/draft-07/schema#",
     type: "object",
     additionalProperties: false,
     required: ["test"],
@@ -128,4 +129,70 @@ export const ExportSchema: JSONSchema7 = {
 export const TransformResultSchema: JSONSchema7 = {
     type: "array",
     items: ExportSchema
+}
+
+export const SettingSchema: JSONSchema7 = {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    type: 'object',
+    additionalProperties: false,
+    required: ["faked", "fakedLog"],
+    properties: {
+        faked: {
+            type: 'boolean'
+        },
+        fakedLog: {
+            type: 'boolean'
+        },
+        runAt: {
+            type: 'string',
+            enum: ['start', 'end', 'delay', 'override']
+        },
+        runAtDelay: {
+            type: 'number'
+        },
+        runAtTrigger: {
+            type: 'string'
+        },
+        action: {
+            type: 'string',
+            enum: ['close', 'intercept', 'watch']
+        },
+        banType: {
+            type: 'string',
+            enum: ['none', 'xhr', 'fetch', 'all']
+        },
+        bootLog: {
+            type: 'boolean'
+        },
+        allFrames: {
+            type: 'boolean'
+        },
+        dark: {
+            type: 'boolean'
+        },
+        proxy: {
+            type: 'object',
+            patternProperties: {
+                ".+": {
+                    oneOf: [
+                        {
+                            type: 'string'
+                        },
+                        {
+                            type: 'object',
+                            required: ['target'],
+                            properties: {
+                                target: {
+                                    type: 'string'
+                                },
+                                rewrite: {
+                                    type: 'string'
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    }
 }
