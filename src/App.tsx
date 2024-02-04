@@ -164,8 +164,6 @@ export default function App() {
     }
 
     const update = (value: Record<FileType, string>, index: number) => {
-        const configInfo = JSON.parse(value.setting)
-        setConfigInfo(configInfo)
         setRules(rule => {
             const result = [...rule]
             const config = JSON.parse(value.config)
@@ -824,7 +822,14 @@ export default function App() {
                                         setFileName(fileName)
                                     }}
                                     onChange={(value, invalid) => {
-                                        update(value, activeIndex)
+                                        if (fileName === 'setting') {
+                                            if (!invalid) {
+                                                const configInfo = JSON.parse(value.setting)
+                                                setConfigInfo(configInfo)  
+                                            }
+                                        } else {
+                                            update(value, activeIndex)
+                                        }
                                         setInvalid(invalid)
                                     }} />
                             </div>
