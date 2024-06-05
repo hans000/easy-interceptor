@@ -72,7 +72,7 @@ chrome.webRequest.onBeforeRequest.addListener(
     },
     {
         urls: ['<all_urls>'],
-        types: ['xmlhttprequest', 'stylesheet', 'script', 'main_frame', 'sub_frame']
+        types: ['xmlhttprequest', 'stylesheet', 'script', 'main_frame', 'sub_frame', 'font']
     },
     ['requestBody', 'blocking']
 )
