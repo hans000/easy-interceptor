@@ -3,6 +3,7 @@
  * Copyright (c) 2022 hans000
  */
 
+export const OpenEditorKey = '__ei_openEditor__'
 export const RulesFieldKey = '__ei_rules__'
 export const ActionFieldKey = '__ei_action__'
 export const ActiveGroupId = '__ei_activeGroupId__'
