@@ -152,7 +152,7 @@
         "message": " items"
     },
     "total": {
-        "message": " all, total $total$ items",
+        "message": " all of current workspace, total $total$ items",
         "placeholders": {
             "total": {
               "content": "$1"
