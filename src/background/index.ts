@@ -8,6 +8,7 @@ import { ActiveGroupId, BackgroundMsgKey, ConfigInfoFieldKey, PopupMsgKey, Rules
 import { CustomEventProps, sendMessageToContent } from "../tools/message"
 import updateIcon from "../tools/updateIcon"
 import { arrayBufferToString, createRunFunc, objectToHttpHeaders, randID, trimUrlParams } from "../tools"
+import { URL } from "url"
 
 let __result = new Map<string, any>()
 let __rules: MatchRule[] = []
@@ -214,6 +215,8 @@ function responseStartedWatch(details: chrome.webRequest.WebResponseCacheDetails
 function beforeRequestIntercept(details: chrome.webRequest.WebRequestBodyDetails, url: string) {
     for (const rule of __rules) {
         if (rule.enable && matchPath(rule.test, url)) {
+            // 处理重定向优先级
+            // code面板 > rule.redirectUrl
             const fn = createRunFunc(rule.code, 'onRedirect')
             const redirectUrl = fn({
                 ...rule,

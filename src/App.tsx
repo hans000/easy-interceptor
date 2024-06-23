@@ -817,7 +817,14 @@ export default function App() {
                                     rule={rules[activeIndex]}
                                     value={formatResult(rules[activeIndex])}
                                     onChange={(value, invalid) => {
-                                        update(value, activeIndex)
+                                        if (fileName === 'setting') {
+                                            if (!invalid) {
+                                                const configInfo = JSON.parse(value.setting)
+                                                setConfigInfo(configInfo)  
+                                            }
+                                        } else {
+                                            update(value, activeIndex)
+                                        }
                                         setInvalid(invalid)
                                     }} />
                             </div>
