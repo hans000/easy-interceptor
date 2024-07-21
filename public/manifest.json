@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Easy Interceptor",
-  "version": "1.16.1",
+  "version": "1.17.0",
   "description": "__MSG_description__",
   "permissions": [
     "storage",
@@ -20,7 +20,7 @@
   "default_locale": "zh_CN",
   "content_security_policy" : "script-src 'self' 'unsafe-eval'; script-src-elem 'self' data: blob: https://unpkg.com; worker-src 'self' data: blob:; object-src 'self'",
   "browser_action": {
-    "default_title": "Easy Interceptor by hans000 - v1.16.0",
+    "default_title": "Easy Interceptor by hans000 - v1.17.0",
     "default_popup": "index.html",
     "default_icon": "images/128-gray.png"
   },
