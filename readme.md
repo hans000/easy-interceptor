@@ -77,6 +77,13 @@ How to solve the above problems? If you can intercept and modify the data before
 - \[Quota\]: Percent of quota
 
 
+### 设置
+- \[All frames\]: The default only takes effect for top-level pages, iframe does not take effect, and this option is turned on if needed
+- \[Switch Theme\]: Switch theme (light or dark)
+- \[Print Boot Log\]: Print boot log
+- \[Print Faked Log\]: Print log in faked mode
+- \[Site White List\]: Match which sites can take effect, the default is * * , that is, all sites
+
 ### Config Panel
 
 |field|type|description|

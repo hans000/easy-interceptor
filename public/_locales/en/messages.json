@@ -48,7 +48,7 @@
         "message": "Print Faked Log"
     },
     "action_white_list": {
-        "message": "White List"
+        "message": "Site White List"
     },
     "placeholder_white_list": {
         "message": "Multiple rules can be joined with ;"
