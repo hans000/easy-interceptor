@@ -2,7 +2,7 @@
  * The AGPL License (AGPL)
  * Copyright (c) 2022 hans000
  */
-import { Col, Form, Input, Row, Switch } from "antd";
+import { Button, Col, Divider, Form, Input, Row, Switch } from "antd";
 import { ConfigInfoType } from "../../App";
 import useTranslate from "../../hooks/useTranslate";
 import { useEffect } from "react";
@@ -22,6 +22,12 @@ export default function Settings(props: {
         <Form form={form} style={{ width: 750 }} onValuesChange={(_, values) => {
             props.onChange?.(values)
         }}>
+            <Divider orientation='left' plain>
+                <Button size='small' type='primary' onClick={() => {
+                    form.setFieldsValue({ fakedLog: true, bootLog: true, dark: false, allFrames: false })
+                    props.onChange?.(form.getFieldsValue())
+                }}>{t('action_reset')}</Button>
+            </Divider>
             <Row>
                 <Col span={8}>
                     <Form.Item name={'allFrames'} label={t('action_all_frames')}>
