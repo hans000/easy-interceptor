@@ -8,7 +8,6 @@ import { ActiveGroupId, BackgroundMsgKey, ConfigInfoFieldKey, PopupMsgKey, Rules
 import { CustomEventProps, sendMessageToContent } from "../tools/message"
 import updateIcon from "../tools/updateIcon"
 import { arrayBufferToString, createRunFunc, objectToHttpHeaders, randID, trimUrlParams } from "../tools"
-import { URL } from "url"
 
 let __result = new Map<string, any>()
 let __rules: MatchRule[] = []

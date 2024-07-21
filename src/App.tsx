@@ -25,6 +25,7 @@ import useTranslate from './hooks/useTranslate'
 import getStorage from './tools/getStorage'
 import { ConfigProvider, theme } from 'antd'
 import { sendMessageToBackgound } from './tools/message'
+import Settings from './components/Settings'
 
 const __DEV__ = import.meta.env.DEV
 const isZHCN = __DEV__ ? true : chrome.i18n.getUILanguage().includes('zh')
@@ -80,6 +81,7 @@ export interface ConfigInfoType {
         target: string
         rewrite?: string
     }>
+    whiteList?: string
 }
 
 const defaultConfigInfo: ConfigInfoType = {
@@ -698,29 +700,12 @@ export default function App() {
                             }}/> */}
                             <Popover trigger={['click']} placement='topLeft' showArrow={false} content={(
                                 <>
-                                    <Divider orientation='left' plain>
-                                        <Button size='small' type='primary' onClick={() => {
-                                            setConfigInfo(info => ({ ...info, fakedLog: true, bootLog: true, dark: false, allFrames: false }))
-                                        }}>{t('action_reset')}</Button>
-                                    </Divider>
-                                    <Space size={'large'}>
-                                        <div style={{ display: 'flex' }}>
-                                            <span style={{ marginRight: 8 }}>{t('action_all_frames')}</span>
-                                            <Switch checked={configInfo.allFrames} onClick={() => setConfigInfo(info => ({ ...info, allFrames: !info.allFrames }))}></Switch>
-                                        </div>
-                                        <div style={{ display: 'flex' }}>
-                                            <span style={{ marginRight: 8 }}>{t('action_theme')}</span>
-                                            <Switch checked={configInfo.dark} onClick={() => setConfigInfo(info => ({ ...info, dark: !info.dark }))}></Switch>
-                                        </div>
-                                        <div style={{ display: 'flex' }}>
-                                            <span style={{ marginRight: 8 }}>{t('action_boot_log')}</span>
-                                            <Switch checked={configInfo.bootLog} onClick={() => setConfigInfo(info => ({ ...info, bootLog: !info.bootLog }))}></Switch>
-                                        </div>
-                                        <div style={{ display: 'flex' }}>
-                                            <span style={{ marginRight: 8 }}>{t('action_faked_log')}</span>
-                                            <Switch checked={configInfo.fakedLog} onClick={() => setConfigInfo(info => ({ ...info, fakedLog: !info.fakedLog }))}></Switch>
-                                        </div>
-                                    </Space>
+                                    <Settings value={configInfo} onChange={(value) => {
+                                        setConfigInfo(info => ({
+                                            ...info,
+                                            ...value,
+                                        }))
+                                    }} />
                                 </>
                             )}>
                                 <SettingOutlined />

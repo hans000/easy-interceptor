@@ -47,6 +47,12 @@
     "action_faked_log": {
         "message": "Print Faked Log"
     },
+    "action_white_list": {
+        "message": "White List"
+    },
+    "placeholder_white_list": {
+        "message": "Multiple rules can be joined with ;"
+    },
     "action_back": {
         "message": "Back"
     },

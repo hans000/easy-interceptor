@@ -2,7 +2,6 @@
 * The AGPL License (AGPL)
 * Copyright (c) 2022 hans000
 */
-import { modifyXhrProto, modifyXhrProtoProps } from "../../tools"
 import { Options, __global__ } from "./globalVar"
 import { ProxyXMLHttpRequest, handleReadyStateChange, proxyFakeXhrInstance, proxyXhrInstance } from "./handle"
 

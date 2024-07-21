@@ -4,7 +4,7 @@
  */
 
 import { MatchRule } from "../../App"
-import { createSymbol, delayRun, modifyXhrProto, modifyXhrProtoProps, toTitleCase, tryToProxyUrl } from "../../tools"
+import { delayRun, modifyXhrProto, modifyXhrProtoProps, toTitleCase, tryToProxyUrl } from "../../tools"
 import { log } from "../../tools/log"
 import { parseUrl, parseXML, stringifyHeaders } from "../../tools"
 import { HttpStatusCodes } from "./constants"
@@ -83,6 +83,7 @@ export function setResponseBody(body = '') {
 }
 
 export function handleStateChange(state) {
+    console.log('handleStateChange', state)
     this.readyState = state
     dispatchCustomEvent.call(this, 'readystatechange')
 

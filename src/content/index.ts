@@ -7,19 +7,29 @@ import { CustomEventProps, dispatchPageScriptEvent } from '../tools/message'
 import { log } from '../tools/log'
 import { ConfigInfoType } from '../App'
 import { handleTask, injectedScript, syncData } from './tools'
+import { matchPath } from '../tools'
 
 
 chrome.storage.local.get([ConfigInfoFieldKey], result => {
     const configInfo: Partial<ConfigInfoType> = result[ConfigInfoFieldKey] || {}
-    const canInjected = configInfo.allFrames ? true : (window.self === window.top)
+    const workingStatusList = ['watch', 'intercept']
+    const whiteList = (configInfo.whiteList || '**').split(';')
 
-    if (! canInjected) {
-       return
+    if (workingStatusList.includes(configInfo.action)) {
+        const canInjected = configInfo.allFrames ? true : (window.self === window.top)
+        if (! canInjected) {
+            log('subiframe not working, please open the allIframe', 'warn')
+           return
+        }
+    
+        if (!whiteList.some(pattern => matchPath(pattern, location.href))) {
+            log('The whiteList can not match current site', 'warn')
+            return
+        }
     }
 
     let timer: number;
     const queue = new Set<CustomEventProps>()
-    const workingStatusList = ['watch', 'intercept']
 
     // 接收background.js传来的信息
     chrome.runtime.onMessage.addListener((msg: CustomEventProps) => {
@@ -34,7 +44,11 @@ chrome.storage.local.get([ConfigInfoFieldKey], result => {
         }
 
         if (msg.type === 'configInfo' && workingStatusList.includes(msg.payload.action)) {
-            injectedScript(msg.payload)
+            if (whiteList.some(pattern => matchPath(pattern, location.href))) {
+                injectedScript(msg.payload)
+            } else {
+                log('The whiteList can not match current site', 'warn')
+            }
             return
         }
 

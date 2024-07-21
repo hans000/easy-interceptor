@@ -47,6 +47,12 @@
     "action_faked_log": {
         "message": "fake模式打印日志"
     },
+    "action_white_list": {
+        "message": "白名单"
+    },
+    "placeholder_white_list": {
+        "message": "多个规则用 ; 隔开"
+    },
     "action_back": {
         "message": "返回"
     },
