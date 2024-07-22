@@ -19,33 +19,52 @@ import { PathFieldKey } from '../../tools/constants'
 //#endregion
 
 
-const defaultData = { config: '', code: '', setting: '' }
-
-const __DEV__ = import.meta.env.DEV
-
-const Editor = __DEV__ || process.env.VITE_LOCAL ? MonacoEditor : (MonacoEditor as any).default as unknown as typeof MonacoEditor
-
-const MainEditor = React.forwardRef(function (props: {
+interface IProps {
     rule: MatchRule
     index: number
     isDark?: boolean
     value?: Record<FileType, string>
     onChange?: (value: Record<FileType, string>, invalid: boolean) => void
-    fileName?: FileType
-    onFileNameChange?: (fileName: FileType) => void
-}, ref) {
+}
+
+const defaultData = { config: '', code: '' }
+
+const __DEV__ = import.meta.env.DEV
+
+const Editor = __DEV__ || process.env.VITE_LOCAL ? MonacoEditor : (MonacoEditor as any).default as unknown as typeof MonacoEditor
+
+const MainEditor = React.forwardRef(function (props: IProps, ref) {
     const [data, setData] = useState<Record<FileType, string>>(defaultData)
-    const [fileName, setFileName] = useState<FileType>(props.fileName)
+    const [filename, setFilename] = useStorage<FileType>(PathFieldKey, 'config')
     const dataRef = useRef<Record<FileType, string>>()
     const msgRef = useRef('')
 
-    const info = React.useMemo(() => config.find((info => info.name === fileName)), [fileName])
+    useEffect(
+        () => {
+            if (props.value && !equal(props.value, data)) {
+                setData(props.value)
+                dataRef.current = props.value
+            }
+            getStorage([PathFieldKey]).then(result => setFilename(result[PathFieldKey]))
+        },
+        []
+    )
+
+    const info = React.useMemo(() => config.find((info => info.name === filename)), [filename])
     const sendMsg = () => message.error(msgRef.current)
+
+    useImperativeHandle(
+        ref,
+        () => {
+            return { sendMsg }
+        },
+        [],
+    )
 
     const handle = useDebounce(() => {
         if (info.language === 'json' && info.schema !== false) {
             try {
-                const json = JSON.parse(data[fileName])
+                const json = JSON.parse(data[filename])
                 const validateResult = jsonschema.validate(json, info.schema)
                 if (validateResult.errors.length) {
                     const { property: p, message: m } = validateResult.errors[0]
@@ -61,37 +80,12 @@ const MainEditor = React.forwardRef(function (props: {
         }
     })
 
-    useImperativeHandle(
-        ref,
-        () => {
-            return { sendMsg }
-        },
-        [],
-    )
-
-    useEffect(() => {
-        if (props.fileName !== fileName) {
-            setFileName(props.fileName)
-        }
-    }, [props.fileName])
-
-    useEffect(
-        () => {
-            if (props.value && !equal(props.value, data)) {
-                setData(props.value)
-                dataRef.current = props.value
-            }
-            // getStorage([PathFieldKey]).then(result => setFilename(result[PathFieldKey]))
-        },
-        []
-    )
-
     return (
         <div className='main-editor'>
-            <Menu style={{ userSelect: 'none' }} mode='horizontal' selectable={false} activeKey={fileName} onClick={(currInfo) => {
+            <Menu style={{ userSelect: 'none' }} mode='horizontal' selectable={false} activeKey={filename} onClick={(currInfo) => {
                 if (info.name === 'config') {
                     try {
-                        const json = JSON.parse(data[fileName])
+                        const json = JSON.parse(data[filename])
                         const { schema } = info
                         if (schema) {
                             const validateResult = jsonschema.validate(json, schema)
@@ -109,30 +103,19 @@ const MainEditor = React.forwardRef(function (props: {
                         return
                     }
                 }
-                setFileName(currInfo.key as FileType)
-                props.onFileNameChange?.(currInfo.key as FileType)
+                setFilename(currInfo.key as FileType)
             }} items={config.map(info => ({
                 label: info.name,
-                key: info.name,
-                disabled: props.index === -1 && info.name !== 'setting',
+                key: info.name
             }))} />
             <div>
                 {
                     config.map(info => {
                         return (
-                            <div
-                                key={info.name}
-                                className={info.name}
-                                style={{
-                                    position: 'absolute',
-                                    height: 514,
-                                    background: props.isDark ? '#000' : '#fff',
-                                    width: '100%',
-                                    zIndex: fileName === info.name ? 1 : 0
-                                }}>
+                            <div key={info.name} className={info.name} style={{ position: 'absolute', height: 510, background: props.isDark ? '#000' : '#fff', width: '100%', zIndex: filename === info.name ? 1 : 0 }}>
                                 <Editor
                                     theme={props.isDark ? 'vs-dark' : 'light'}
-                                    height="514px"
+                                    height="510px"
                                     path={info.name}
                                     value={data[info.name]}
                                     language={info.language}
@@ -158,7 +141,7 @@ const MainEditor = React.forwardRef(function (props: {
                                     }}
                                     onChange={value => {
                                         setData(data => {
-                                            const result = { ...data, [fileName]: value }
+                                            const result = { ...data, [filename]: value }
                                             dataRef.current = result
                                             return result
                                         })
