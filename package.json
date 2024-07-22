@@ -10,6 +10,7 @@
     "build:local": "cross-env VITE_LOCAL=true node script.js && cross-env VITE_LOCAL=true npm run build:web && cross-env VITE_LOCAL=true npm run build:ts"
   },
   "dependencies": {
+    "@ant-design/compatible": "^5.1.2",
     "@ant-design/icons": "^5.2.6",
     "@monaco-editor/react": "^4.4.6",
     "antd": "^5.12.1",
