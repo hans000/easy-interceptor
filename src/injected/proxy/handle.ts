@@ -83,7 +83,6 @@ export function setResponseBody(body = '') {
 }
 
 export function handleStateChange(state) {
-    console.log('handleStateChange', state)
     this.readyState = state
     dispatchCustomEvent.call(this, 'readystatechange')
 
@@ -101,12 +100,12 @@ export function dispatchCustomEvent(type: string) {
 export function proxyXhrInstance(inst: ProxyXMLHttpRequest) {
     const originOpen = inst.open
     const originSend = inst.send
-    inst.open = (method: string, url: string | URL, async?: boolean) => {
+    inst.open = (method: string, url: string | URL, async?: boolean, user?: string, password?: string) => {
         const proxyUrl = tryToProxyUrl(url, __global__.options.proxy)
-        inst._async = async
+        inst._async = async ?? true
         inst._url = proxyUrl
         inst._method = method
-        originOpen.call(inst, method, proxyUrl, async)
+        originOpen.call(inst, method, proxyUrl, async, user, password)
     }
     inst.send = (data) => {
         const delay = inst._matchItem ? inst._matchItem.delay : undefined
