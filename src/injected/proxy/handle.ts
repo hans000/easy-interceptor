@@ -35,9 +35,14 @@ export function handleReadyStateChange() {
         const { onXhrIntercept } = __global__.options
         if (this._matchItem) {
             const { status = 200, response, responseText } = this._matchItem
+            const mergedResponseText = response === undefined 
+                ? (this.response || this.responseText) 
+                : response === null 
+                ? null
+                : JSON.stringify(response)
             modifyXhrProtoProps.call(this, {
-                response: response === undefined ? this.response : response,
-                responseText: responseText === undefined ? this.responseText : responseText,
+                response: mergedResponseText,
+                responseText: responseText === undefined ? mergedResponseText : responseText,
                 status,
                 statusText: HttpStatusCodes[status],
             })
