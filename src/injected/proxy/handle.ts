@@ -98,6 +98,7 @@ export function handleStateChange(state) {
 }
 
 export function dispatchCustomEvent(type: string) {
+    this.dispatchEvent(new Event(type))
     const handle = this['on' + type]
     handle && handle()
 }
