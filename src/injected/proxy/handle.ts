@@ -21,6 +21,29 @@ export interface ProxyXMLHttpRequest extends XMLHttpRequest {
     _responseHeaders: Record<string, string>
 }
 
+export function isTextType() {
+    return this.responseType === '' || this.responseType === 'text'
+}
+
+export function formatResponse(response: unknown) {
+    if (isTextType.call(this)) {
+        return response 
+            ? typeof response === 'string'
+            ? response
+            : JSON.stringify(response)
+            : ''
+    }
+    return response
+}
+
+export function formatResponseText(response: unknown) {
+    return response 
+        ? typeof response === 'string'
+        ? response
+        : JSON.stringify(response) 
+        : ''
+}
+
 export function handleReadyStateChange() {
     if (this.readyState === XMLHttpRequest.OPENED) {
         const { onMatch } = __global__.options
@@ -35,14 +58,15 @@ export function handleReadyStateChange() {
         const { onXhrIntercept } = __global__.options
         if (this._matchItem) {
             const { status = 200, response, responseText } = this._matchItem
-            const mergedResponseText = response === undefined 
-                ? (this.response || this.responseText) 
-                : response === null 
+            const mergedResponse = response === undefined
+                ? this.response
+                : response === null
                 ? null
-                : JSON.stringify(response)
+                : response
+            const formatResponseResult = formatResponse.call(this, mergedResponse)
             modifyXhrProtoProps.call(this, {
-                response: mergedResponseText,
-                responseText: responseText === undefined ? mergedResponseText : responseText,
+                response: formatResponseResult,
+                responseText: responseText === undefined ? formatResponseText(formatResponseResult) : responseText,
                 status,
                 statusText: HttpStatusCodes[status],
             })
@@ -167,15 +191,32 @@ export function proxyFakeXhrInstance(inst: ProxyXMLHttpRequest, options: Options
         }
         const matchItem = inst._matchItem
         dispatchCustomEvent.call(inst, 'loadstart')
-        delayRun(() => {
+
+        delayRun(async () => {
             const { status = 200, responseHeaders, response, responseText } = matchItem
             setResponseHeaders.call(inst, responseHeaders)
             handleStateChange.call(inst, XMLHttpRequest.LOADING)
             // @ts-ignore inst field has been proxy
-            inst.status = status
-            // @ts-ignore inst field has been proxy
-            inst.statusText = HttpStatusCodes[inst.status]
-            setResponseBody.call(inst, response ? JSON.stringify(response) : responseText)
+            inst.readyState = XMLHttpRequest.DONE
+            {
+                const result = await options.onXhrIntercept(matchItem).call(inst, inst)
+                const { status = 200, responseHeaders, response, responseText } = { ...matchItem, ...result } as MatchRule
+
+                const mergedResponse = formatResponse.call(inst, response)
+                const mergedResponseText = responseText === undefined ? formatResponseText(mergedResponse) : responseText
+                // @ts-ignore inst field has been proxy
+                inst.status = status
+                // @ts-ignore inst field has been proxy
+                inst.statusText = HttpStatusCodes[inst.status]
+                // @ts-ignore inst field has been proxy
+                inst.responseText = mergedResponseText
+                // @ts-ignore inst field has been proxy
+                inst.response = mergedResponse
+                // @ts-ignore inst field has been proxy
+                inst.responseHeaders = responseHeaders
+            }
+            handleStateChange.call(inst, XMLHttpRequest.DONE)
+
             if (loggable) {
                 log({
                     type: 'xhr:response',
@@ -195,7 +236,7 @@ export function proxyFakeXhrInstance(inst: ProxyXMLHttpRequest, options: Options
             originSetRequestHeader.call(inst, header, value)
             return
         }
-    
+
         inst._requestHeaders = inst._requestHeaders || {};
         inst._requestHeaders[header] = value
     }

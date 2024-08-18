@@ -28,14 +28,19 @@ export function modifyXhrProtoProps(props: {
 
 export function modifyXhrProto(xhr: XMLHttpRequest) {
     const attrs = ['readyState', 'timeout', 'responseURL', 'status', 'statusText', 'response', 'responseText']
+    const cacheMap = new WeakMap()
     attrs.forEach(attr => {
         const key = createSymbol(attr)
         Object.defineProperty(xhr, attr, {
             get() {
-                return this[key] ?? xhr[attr]
+                if (cacheMap.has(xhr) && cacheMap.get(xhr)[key]) {
+                    return xhr[key]
+                }
+                cacheMap.set(xhr, { [key]: true })
+                return xhr[key] ?? xhr[attr]
             },
             set(val) {
-                this[key] = val
+                xhr[key] = val
             }
         })
     })

@@ -144,20 +144,15 @@ const app = {
                 return async function(xhr: XMLHttpRequest) {
                     if (data) {
                         if (this.readyState === 4) {
-                            try {
-                                const { response, responseText, status = 200 } = await handleCode(data, xhr)
-                                
-                                this.responseText = this.response = response !== undefined ? JSON.stringify(response) : responseText
-                                this.status = status
-                                this.statusText = HttpStatusCodes[status]
-                            } catch (error) {
-                                console.error(error)
-                            }
+                            const result = await handleCode(data, xhr)
+
                             dispatchPageScriptEvent({
                                 from: PageScriptMsgKey,
                                 type: 'count',
                                 payload: data.id
                             })
+
+                            return result
                         }
                     } else {
                         if (app.configInfo.action === 'watch') {
