@@ -5,7 +5,7 @@
 import './App.less'
 import { Badge, Checkbox, BadgeProps, Button, Dropdown, Input, message, Modal, Spin, Table, Tag, Tooltip, Upload, Switch, Space, Divider, Select, Popover, Segmented, InputNumber } from 'antd'
 import React, { useEffect, useRef, useState } from 'react'
-import { TagOutlined, ControlOutlined, CodeOutlined, DeleteOutlined, PlusOutlined, SearchOutlined, VerticalAlignBottomOutlined, UploadOutlined, SyncOutlined, RollbackOutlined, BugOutlined, FilterOutlined, FormOutlined, SettingOutlined, AppstoreOutlined, FieldTimeOutlined, StopOutlined, DashboardOutlined } from '@ant-design/icons'
+import { TagOutlined, ControlOutlined, CodeOutlined, DeleteOutlined, PlusOutlined, SearchOutlined, VerticalAlignBottomOutlined, UploadOutlined, SyncOutlined, RollbackOutlined, BugOutlined, FilterOutlined, FormOutlined, SettingOutlined, AppstoreOutlined, FieldTimeOutlined, StopOutlined, DashboardOutlined, GithubFilled } from '@ant-design/icons'
 import { ColumnsType } from 'antd/lib/table'
 import { pathMatch, randID, renderSize } from './tools'
 import { getMethodColor } from './tools/mappings'
@@ -20,11 +20,12 @@ import Quota, { getPercent } from './components/Quota'
 import { runCode } from './tools/runCode'
 import { loader } from "@monaco-editor/react";
 import { sendRequestLog } from './tools/sendRequest'
-import { ActiveGroupId, HiddenFieldsFieldKey, ActiveIdFieldKey, RulesFieldKey, SelectedRowFieldKeys, UpdateMsgKey, WatchFilterKey, ConfigInfoFieldKey, PopupMsgKey } from './tools/constants'
+import { ActiveGroupId, HiddenFieldsFieldKey, ActiveIdFieldKey, RulesFieldKey, SelectedRowFieldKeys, UpdateMsgKey, WatchFilterKey, ConfigInfoFieldKey, PopupMsgKey, OpenEditorKey, PathFieldKey } from './tools/constants'
 import useTranslate from './hooks/useTranslate'
 import getStorage from './tools/getStorage'
 import { ConfigProvider, theme } from 'antd'
 import { sendMessageToBackgound } from './tools/message'
+import Settings from './components/Settings'
 
 const __DEV__ = import.meta.env.DEV
 const isZHCN = __DEV__ ? true : chrome.i18n.getUILanguage().includes('zh')
@@ -76,6 +77,11 @@ export interface ConfigInfoType {
     bootLog: boolean
     allFrames: boolean
     dark: boolean
+    proxy?: Record<string, string | {
+        target: string
+        rewrite?: string
+    }>
+    whiteList?: string
 }
 
 const defaultConfigInfo: ConfigInfoType = {
@@ -96,11 +102,13 @@ export default function App() {
     const [activeGroupId, setActiveGroupId] = useStorage(ActiveGroupId, 'default')
     const [watchFilter, setWatchFilter] = useStorage(WatchFilterKey, '')
     const [rules, setRules] = useStorage<MatchRule[]>(RulesFieldKey, [])
+    const [openEditor, setOpenEditor] = useStorage(OpenEditorKey, false)
     const [selectedRowKeys, setSelectedRowKeys] = useStorage(SelectedRowFieldKeys, [])
     const [loading, setLoading] = useState(false)
     const [activeId, setActiveId] = useStorage<string>(ActiveIdFieldKey, null)
     const [invalid, setInvalid] = useState(false)
     const [visible, setVisible] = useState(false)
+    const [fileName, setFileName] = useStorage<FileType>(PathFieldKey, 'config')
     const [hiddenFields, setHiddenFields] = useStorage<string[]>(HiddenFieldsFieldKey, [])
     const [percent, setPercent] = useState(0)
     const originRef = useRef('')
@@ -121,6 +129,8 @@ export default function App() {
         const map = {
             [ConfigInfoFieldKey]: setConfigInfo,
             [RulesFieldKey]: setRules,
+            [PathFieldKey]: setFileName,
+            [OpenEditorKey]: setOpenEditor,
             [SelectedRowFieldKeys]: setSelectedRowKeys,
             [ActiveIdFieldKey]: setActiveId,
             [HiddenFieldsFieldKey]: setHiddenFields,
@@ -156,6 +166,8 @@ export default function App() {
     }
 
     const update = (value: Record<FileType, string>, index: number) => {
+        const configInfo = JSON.parse(value.setting)
+        setConfigInfo(configInfo)
         setRules(rule => {
             const result = [...rule]
             const config = JSON.parse(value.config)
@@ -177,15 +189,13 @@ export default function App() {
     const getActionText = React.useCallback(
         (type: string) => {
             const count = selectedRowKeys.length
-            const total = rules.length
+            const total = rules.filter(item => item.groupId === activeGroupId).length
             return count ? `${type}${count}${t('items')}` : total ? `${type}${t('total', [total + ''])}` : ''
         },
-        [selectedRowKeys.length, rules.length]
+        [selectedRowKeys, rules, activeGroupId]
     )
 
-    const editable = React.useMemo(() => !!activeId, [activeId])
-
-    const disabled = React.useMemo(() => editable, [editable])
+    const editable = React.useMemo(() => !!activeId || openEditor, [activeId, openEditor])
 
     const workspaces = React.useMemo(
         () => {
@@ -315,7 +325,11 @@ export default function App() {
                     }}>
                         <Tooltip placement='topLeft' title={record.description}>
                             <a onClick={() => {
+                                setOpenEditor(true)
                                 setActiveId(record.id)
+                                if (fileName === 'setting') {
+                                    setFileName('config')
+                                }
                             }}>{shortText}</a>
                         </Tooltip>
                     </Dropdown>
@@ -410,11 +424,19 @@ export default function App() {
         },
     ]
 
-    const formatResult = (record: MatchRule) => {
+    const formatResult = (record: MatchRule | undefined) => {
+        if (!record) {
+            return {
+                code: '',
+                config: '',
+                setting: JSON.stringify(configInfo, null, 4),
+            }
+        }
         const data = Object.fromEntries(fields.filter(field => !hiddenFields.includes(field)).map(k => [k, record[k]]))
         return {
             code: record.code,
             config: JSON.stringify(data, null, 4),
+            setting: JSON.stringify(configInfo, null, 4),
         }
     }
 
@@ -491,7 +513,7 @@ export default function App() {
                     <div className={'app__top'}>
                         <Button.Group style={{ padding: '0 4px' }}>
                             <Tooltip title={t('action_add')}>
-                                <Button disabled={disabled} icon={<PlusOutlined />} onClick={() => {
+                                <Button disabled={editable} icon={<PlusOutlined />} onClick={() => {
                                     setRules(rule => {
                                         const result = [...rule, {
                                             id: randID(),
@@ -506,29 +528,32 @@ export default function App() {
                                         }]
                                         return result
                                     })
-                                }}></Button>
+                                }} />
                             </Tooltip>
                             <Tooltip title={getActionText(t('menu_remove'))}>
-                                <Button disabled={disabled} icon={<DeleteOutlined />} onClick={() => {
+                                <Button disabled={editable} icon={<DeleteOutlined />} onDoubleClick={() => {
+                                    setRules([])
+                                }} onClick={() => {
                                     if (!selectedRowKeys.length) {
-                                        return setRules([])
+                                        setRules(rules.filter(item => item.groupId !== activeGroupId))
+                                        return
                                     }
                                     setRules(rules.filter(item => !selectedRowKeys.find(id => id === item.id)))
                                     setSelectedRowKeys([])
-                                }}></Button>
+                                }} />
                             </Tooltip>
                             <Tooltip title={getActionText(t('action_export'))}>
-                                <Button disabled={disabled} icon={<VerticalAlignBottomOutlined />} onClick={() => {
+                                <Button disabled={editable} icon={<VerticalAlignBottomOutlined />} onClick={() => {
                                     const data = selectedRowKeys.length
                                         ? rules.filter(item => !selectedRowKeys.find(id => id === item.id))
                                         : rules
                                     download(`${selectedRowKeys.length ? activeGroupId : 'all'}.json`, JSON.stringify(data, null, 2))
-                                }}></Button>
+                                }} />
                             </Tooltip>
                             <Tooltip title={t('action_import')}>
-                                <Upload className='app__upload' disabled={disabled} showUploadList={false} beforeUpload={(file) => {
+                                <Upload className='app__upload' disabled={editable} showUploadList={false} beforeUpload={(file) => {
                                     setLoading(true)
-                                    if (! ['application/json', 'text/plain'].includes(file.type)) {
+                                    if (!['application/json', 'text/plain'].includes(file.type)) {
                                         message.error(t('import_modal_err'))
                                         setLoading(false)
                                     } else {
@@ -584,20 +609,20 @@ export default function App() {
                                     }
                                     return false
                                 }}>
-                                    <Button disabled={disabled} icon={<UploadOutlined />}></Button>
+                                    <Button disabled={editable} icon={<UploadOutlined />}></Button>
                                 </Upload>
                             </Tooltip>
                             <Tooltip title={t('action_refresh')}>
-                                <Button disabled={disabled} icon={<SyncOutlined />} onClick={() => {
+                                <Button disabled={editable} icon={<SyncOutlined />} onClick={() => {
                                     setSelectedRowKeys([])
                                     setRules(rules => rules.map(rule => ({ ...rule, count: 0 })))
                                     setActiveId(null)
-                                }}></Button>
+                                }} />
                             </Tooltip>
                             <Tooltip title={t('action_mode')}>
-                                <Button disabled={disabled} type={configInfo.faked ? 'primary' : 'default'} icon={<BugOutlined />} onClick={() => {
+                                <Button disabled={editable} type={configInfo.faked ? 'primary' : 'default'} icon={<BugOutlined />} onClick={() => {
                                     setConfigInfo(info => ({ ...info, faked: !info.faked }))
-                                }}></Button>
+                                }} />
                             </Tooltip>
                             {
                                 editable && (
@@ -608,7 +633,8 @@ export default function App() {
                                                 return
                                             }
                                             setActiveId(null)
-                                        }}></Button>
+                                            setOpenEditor(false)
+                                        }} />
                                     </Tooltip>
                                 )
                             }
@@ -668,31 +694,18 @@ export default function App() {
                     </div>
                     <div className="app__bar">
                         <div className='app__bar-item'>
+                            {/* <SettingOutlined onClick={() => {
+                                setOpenEditor(true)
+                                setFileName('setting')
+                            }}/> */}
                             <Popover trigger={['click']} placement='topLeft' showArrow={false} content={(
                                 <>
-                                    <Divider orientation='left' plain>
-                                        <Button size='small' type='primary' onClick={() => {
-                                            setConfigInfo(info => ({ ...info, fakedLog: true, bootLog: true, dark: false, allFrames: false }))
-                                        }}>{t('action_reset')}</Button>
-                                    </Divider>
-                                    <Space size={'large'}>
-                                        <div style={{ display: 'flex' }}>
-                                            <span style={{ marginRight: 8 }}>{t('action_all_frames')}</span>
-                                            <Switch checked={configInfo.allFrames} onClick={() => setConfigInfo(info => ({ ...info, allFrames: !info.allFrames }))}></Switch>
-                                        </div>
-                                        <div style={{ display: 'flex' }}>
-                                            <span style={{ marginRight: 8 }}>{t('action_theme')}</span>
-                                            <Switch checked={configInfo.dark} onClick={() => setConfigInfo(info => ({ ...info, dark: !info.dark }))}></Switch>
-                                        </div>
-                                        <div style={{ display: 'flex' }}>
-                                            <span style={{ marginRight: 8 }}>{t('action_boot_log')}</span>
-                                            <Switch checked={configInfo.bootLog} onClick={() => setConfigInfo(info => ({ ...info, bootLog: !info.bootLog }))}></Switch>
-                                        </div>
-                                        <div style={{ display: 'flex' }}>
-                                            <span style={{ marginRight: 8 }}>{t('action_faked_log')}</span>
-                                            <Switch checked={configInfo.fakedLog} onClick={() => setConfigInfo(info => ({ ...info, fakedLog: !info.fakedLog }))}></Switch>
-                                        </div>
-                                    </Space>
+                                    <Settings value={configInfo} onChange={(value) => {
+                                        setConfigInfo(info => ({
+                                            ...info,
+                                            ...value,
+                                        }))
+                                    }} />
                                 </>
                             )}>
                                 <SettingOutlined />
@@ -727,8 +740,8 @@ export default function App() {
                             <Popover trigger={['click']} placement='top' showArrow={false} content={(
                                 <>
                                     <Segmented value={configInfo.runAt} onChange={(runAt: string) => {
-                                        setConfigInfo(info => ({ 
-                                            ...info, 
+                                        setConfigInfo(info => ({
+                                            ...info,
                                             runAt,
                                             action: (runAt === 'override' && info.action === 'close') ? 'intercept' : info.action,
                                         }))
@@ -804,16 +817,34 @@ export default function App() {
                             </Tooltip>
                         </div>
                     </div>
+                    <div className='app__bar app__bar--right'>
+                        <div className='app__bar-item'>
+                            <GithubFilled onClick={() => {
+                                window.open('https://github.com/hans000/easy-interceptor', '_blank')
+                            }} />
+                        </div>
+                    </div>
                     {
-                        editable && (
+                        openEditor && (
                             <div className='app__editor'>
                                 <MainEditor
+                                    fileName={fileName}
                                     isDark={configInfo.dark}
                                     ref={editorRef}
                                     index={activeIndex}
                                     rule={rules[activeIndex]}
                                     value={formatResult(rules[activeIndex])}
+                                    onFileNameChange={fileName => {
+                                        setFileName(fileName)
+                                    }}
                                     onChange={(value, invalid) => {
+                                        // if (fileName === 'setting') {
+                                        //     if (!invalid) {
+                                        //         const configInfo = JSON.parse(value.setting)
+                                        //         setConfigInfo(configInfo)  
+                                        //     }
+                                        // } else {
+                                        // }
                                         update(value, activeIndex)
                                         setInvalid(invalid)
                                     }} />

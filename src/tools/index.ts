@@ -227,3 +227,32 @@ export function matchPath(pattern: string, path: string) {
 export function toTitleCase(str = '') {
     return str.replace(/\b[a-z]/g, c => c.toUpperCase())
 }
+
+export function tryToProxyUrl(url: string | URL, proxy: Record<string, string | {
+    target: string
+    rewrite?: string
+}> = {}) {
+    const urlObj = url instanceof URL ? url : new URL(url)
+    for (const [name, value] of Object.entries(proxy)) {
+        try {
+            const reg = new RegExp(name)
+            if (reg.test(urlObj.pathname)) {
+                if (typeof value === 'string') {
+                    urlObj.host = value
+                    return urlObj.toString()
+                } else {
+                    if (value.target) {
+                        urlObj.host = value.target
+                    }
+                    if (value.rewrite) {
+                        urlObj.pathname = urlObj.pathname.replace(reg, '')
+                    }
+                    return urlObj.toString()
+                }
+            }
+        } catch (error) {
+            console.error(error)
+        }
+    }
+    return url
+}

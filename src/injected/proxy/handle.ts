@@ -4,7 +4,7 @@
  */
 
 import { MatchRule } from "../../App"
-import { createSymbol, delayRun, modifyXhrProto, modifyXhrProtoProps, toTitleCase } from "../../tools"
+import { delayRun, modifyXhrProto, modifyXhrProtoProps, toTitleCase, tryToProxyUrl } from "../../tools"
 import { log } from "../../tools/log"
 import { parseUrl, parseXML, stringifyHeaders } from "../../tools"
 import { HttpStatusCodes } from "./constants"
@@ -112,6 +112,7 @@ export function setResponseBody(body = '') {
 }
 
 export function handleStateChange(state) {
+    console.log('handleStateChange', state)
     this.readyState = state
     dispatchCustomEvent.call(this, 'readystatechange')
 
@@ -130,11 +131,12 @@ export function dispatchCustomEvent(type: string) {
 export function proxyXhrInstance(inst: ProxyXMLHttpRequest) {
     const originOpen = inst.open
     const originSend = inst.send
-    inst.open = (method: string, url: string | URL, async?: boolean, user?: string, password?: string) => {
-        inst._async = async ?? true
-        inst._url = url
+    inst.open = (method: string, url: string | URL, async?: boolean) => {
+        const proxyUrl = tryToProxyUrl(url, __global__.options.proxy)
+        inst._async = async
+        inst._url = proxyUrl
         inst._method = method
-        originOpen.call(inst, method, url, async, user, password)
+        originOpen.call(inst, method, proxyUrl, async)
     }
     inst.send = (data) => {
         const delay = inst._matchItem ? inst._matchItem.delay : undefined

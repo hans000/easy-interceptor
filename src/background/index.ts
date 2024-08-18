@@ -214,6 +214,8 @@ function responseStartedWatch(details: chrome.webRequest.WebResponseCacheDetails
 function beforeRequestIntercept(details: chrome.webRequest.WebRequestBodyDetails, url: string) {
     for (const rule of __rules) {
         if (rule.enable && matchPath(rule.test, url)) {
+            // 处理重定向优先级
+            // code面板 > rule.redirectUrl
             const fn = createRunFunc(rule.code, 'onRedirect')
             const redirectUrl = fn({
                 ...rule,
