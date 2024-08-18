@@ -27,7 +27,7 @@ interface EditorProps {
     onMount?: (context: CustomEditorContext) => void
 }
 
-export type FileType = 'config' | 'code' | 'setting'
+export type FileType = 'config' | 'code'
 
 function createAction(id: string, label: string, handle: Function) {
     return {
@@ -62,7 +62,7 @@ const config: EditorProps[] = [
             monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
                 schemas: [
                     {
-                        uri: 'ei://config.json',
+                        uri: 'http://json-schema.org/',
                         fileMatch: [editor.getModel().uri.toString()],
                         schema: removeRequiredField(ConfigSchema)
                     }
@@ -132,24 +132,6 @@ interface MatchingRule extends ResponseRule {
             editor.addAction(createRequestAction(context))
         }
     },
-    // TODO experimental
-    // {
-    //     name: 'setting',
-    //     language: 'json',
-    //     value: 'setting',
-    //     schema: SettingSchema,
-    //     onMount: ({ editor, monaco }) => {
-    //         monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
-    //             schemas: [
-    //                 {
-    //                     uri: 'ei://setting.json',
-    //                     fileMatch: [editor.getModel().uri.toString()],
-    //                     schema: SettingSchema
-    //                 }
-    //             ]
-    //         })
-    //     }
-    // }
 ]
 
 export default config

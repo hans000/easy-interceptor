@@ -158,7 +158,7 @@
         "message": "项"
     },
     "total": {
-        "message": "当前工作区所有，共$total$项",
+        "message": "所有，共$total$项",
         "placeholders": {
             "total": {
               "content": "$1"

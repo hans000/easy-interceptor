@@ -2,7 +2,7 @@
  * The AGPL License (AGPL)
  * Copyright (c) 2022 hans000
  */
-import { delayRun, tryToProxyUrl } from "../../tools";
+import { delayRun } from "../../tools";
 import { log } from "../../tools/log";
 import { parseUrl } from "../../tools";
 import { Options, __global__ } from "./globalVar";
@@ -22,9 +22,8 @@ export function proxyFetch(options: Options) {
     const proxyFetch = new Proxy(__global__.NativeFetch, {
         async apply(target, thisArg, args) {
             const [input, init] = args
-            const isRequest = input instanceof Request
-            const req = isRequest ? input.clone() : new Request(input.toString(), init)
-            const url = isRequest
+            const req = input instanceof Request ? input.clone() : new Request(input.toString(), init)
+            const url = input instanceof Request
                 ? parseUrl(input.url)
                 : input instanceof URL
                 ? input
@@ -36,8 +35,6 @@ export function proxyFetch(options: Options) {
                 params: [...url.searchParams.entries()],
             })
             const realFetch = __global__.PageFetch || target
-            const proxyUrl = tryToProxyUrl(input, __global__.options.proxy)
-            const proxyInput = isRequest ? new Request(proxyUrl, init) : proxyUrl
 
             if (matchItem) {
                 const loggable = options.faked && options.fakedLog
@@ -51,7 +48,7 @@ export function proxyFetch(options: Options) {
                 }
                 const realResponse = options.faked 
                     ? new Response(new Blob(['null'])) 
-                    : await realFetch.call(thisArg, proxyInput, init)
+                    : await realFetch.call(thisArg, input, init)
                 const response = await onFetchIntercept(matchItem)(realResponse)
 
                 return new Promise(resolve => {
@@ -71,11 +68,10 @@ export function proxyFetch(options: Options) {
                     }, matchItem ? matchItem.delay : undefined)
                 })
             }
-
             if (__global__.PageFetch) {
-                return __global__.PageFetch.call(thisArg, proxyInput, init)
+                return __global__.PageFetch.call(thisArg, ...args)
             }
-            return target.call(thisArg, proxyInput, init)
+            return target.call(thisArg, ...args)
         },
     })
 
