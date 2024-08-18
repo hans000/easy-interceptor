@@ -112,7 +112,6 @@ export function setResponseBody(body = '') {
 }
 
 export function handleStateChange(state) {
-    console.log('handleStateChange', state)
     this.readyState = state
     dispatchCustomEvent.call(this, 'readystatechange')
 
