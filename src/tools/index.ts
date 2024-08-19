@@ -232,7 +232,7 @@ export function tryToProxyUrl(url: string | URL, proxy: Record<string, string | 
     target: string
     rewrite?: string
 }> = {}) {
-    const urlObj = url instanceof URL ? url : new URL(url)
+    const urlObj = url instanceof URL ? url : parseUrl(url)
     for (const [name, value] of Object.entries(proxy)) {
         try {
             const reg = new RegExp(name)
