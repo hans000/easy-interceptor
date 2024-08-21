@@ -21,17 +21,13 @@
 
 如何解决上述问题呢？如果可以在客户端接收数据前拦截并加以修改再返回就可以达到目的。Easy Interceptor就是利用上述思路，它可以拦截XMLHttpRequest，fetch数据请求方式的http请求，通过覆盖response，responseText字段，从而达到对数据的修改。作为一个chrome插件，天然的集成在用户测试环境，因此对使用者的心智负担极小。
 
-- xhr: 内部实现了一个FakeXMLHttpRequest，因此使用xhr类型的请求方式可以不向后端发出请求，也无须后端服务支持
-
-- fetch: 内部实现了一个fakeFetch
-
 > 注意：
 > 
-> 插件仅针对content-type: json类型有效，在不用时请关闭该插件防止出现页面加载异常
+> 1. 插件仅针对content-type: json类型有效，在不用时请关闭该插件防止出现页面加载异常，或者对dev环境设置白名单，这样可以避免影响其他网站
 >
-> 如果你是一个熟练度拉满，有着完善的代理环境大可不必使用，仅作为特定场合的补充
+> 2. 如果你是一个熟练度拉满，有着完善的代理环境大可不必使用，仅作为特定场合的补充
 > 
-> 如果使用cdn版本，请保证能访问https://unpkg.com，首次加载会比较慢。如果加载不出来也可直接使用local版本
+> 3. 如果使用cdn版本，请保证能访问https://unpkg.com，首次加载会比较慢。如果加载不出来也可直接使用local版本
 
 ## 🎉 特点
 
@@ -39,11 +35,13 @@
 - 提供监听当前请求（省略手动填写的麻烦）
 - 导入导出，工程序列化
 - 拥有一定的js编程能力，可以动态处理数据，可打印输出信息
-- 集成monaco-editor，更方便的编辑处理文本
+- 集成`monaco-editor`，更方便的编辑处理文本
 - 使用cdn，大幅度缩减安装包（仅cdn版本）
-- 支持修改响应头，主动发送请求，支持修改请求参数（params、headers、body）
-- fake模式，用于适应不同的场景需求（默认关闭，部分场景下fake模式可能会失效）
-- 支持多工作空间
+- 支持修改响应头，主动发送请求，支持修改请求参数（`params、headers、body`）
+- `fake`模式，用于适应不同的场景需求（默认关闭，部分场景下fake模式可能会失效）
+- 支持多工作空间，支持网站白名单功能
+- ✨支持EventSource数据（设置`chunks`字段，由于一些技术限制，当使用`xhr`请求时必须开启`fake`模式）
+
 
 ## 📑 使用说明
 
@@ -69,7 +67,7 @@
 ## 状态栏
 - 【设置】：设置选项
 - 【工作空间】：切换工作空间
-- 【运行时机】：插件生效的时机，start-js注入即生效，end-DOMContentLoaded，delay-延时一定时间，trigger-当拦截到特定接口后触发，override-当window上的xhr或者fetch被重写时
+- 【运行时机】：插件生效的时机，start-js注入即生效，end-DOMContentLoaded，delay-延时一定时间，trigger-当拦截到特定接口后触发，override-当window上的xhr或者fetch被重写时（通常默认就可以生效，但是部分网站不生效时可以尝试其他的模式）
 - 【禁用类型】：禁用请求类型：xhr 或者 fetch
 - 【存储占用率】：展示数据占用率
 
@@ -77,8 +75,8 @@
 - 【所有frame生效】：默认只对顶层页面生效，iframe不生效，如果需要则开启此选项
 - 【切换主题】：切换主题
 - 【启动时打印日志】：打印启动日志
-- 【fake模式打印日志】：fake模式下打印日志
-- 【匹配网站白名单】：匹配哪些网站可以生效，默认是**，即所有网站
+- 【fake模式打印日志】：`fake`模式下打印日志
+- 【匹配网站白名单】：匹配哪些网站可以生效，默认是`**`，即所有网站
 
 ### config面板
 
@@ -99,6 +97,8 @@
 |responseHeaders|Record<string, string>|响应头|
 |redirectUrl|string|重定向链接，不能和url一样，会死循环|
 |groupId|string|分组id，相同的id会被分配到相同的工作空间|
+|chunks|string[]|设置event-source数据源，response、responseText会失效|
+|chunkSpeed|number|设置数据吐出的间隔，默认1_000|
 
 ### code面板
 通过指定的hooks来动态的修改数据，支持的hooks有

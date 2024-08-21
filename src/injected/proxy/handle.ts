@@ -4,7 +4,7 @@
  */
 
 import { MatchRule } from "../../App"
-import { delayRun, modifyXhrProto, modifyXhrProtoProps, toTitleCase, tryToProxyUrl } from "../../tools"
+import { asyncGenerator, delayRun, modifyXhrProto, modifyXhrProtoProps, toTitleCase, tryToProxyUrl } from "../../tools"
 import { log } from "../../tools/log"
 import { parseUrl, parseXML, stringifyHeaders } from "../../tools"
 import { HttpStatusCodes } from "./constants"
@@ -123,8 +123,8 @@ export function handleStateChange(state) {
 
 export function dispatchCustomEvent(type: string) {
     this.dispatchEvent(new Event(type))
-    const handle = this['on' + type]
-    handle && handle()
+    // const handle = this['on' + type]
+    // handle && handle()
 }
 
 export function proxyXhrInstance(inst: ProxyXMLHttpRequest) {
@@ -196,25 +196,43 @@ export function proxyFakeXhrInstance(inst: ProxyXMLHttpRequest, options: Options
             const { status = 200, responseHeaders, response, responseText } = matchItem
             setResponseHeaders.call(inst, responseHeaders)
             handleStateChange.call(inst, XMLHttpRequest.LOADING)
+
+            const chunks = inst._matchItem.chunks || []
+            const isEventSource = !!chunks.length
+
+            if (isEventSource) {
+                // @ts-ignore inst field has been proxy
+                inst.responseText = ''
+                for await (const item of asyncGenerator(inst._matchItem.chunks, inst._matchItem.chunkSpeed)) {
+                    // @ts-ignore inst field has been proxy
+                    inst.responseText += item
+                    handleStateChange.call(inst, XMLHttpRequest.LOADING)
+                }
+            }
+
             // @ts-ignore inst field has been proxy
             inst.readyState = XMLHttpRequest.DONE
             {
                 const result = await options.onXhrIntercept(matchItem).call(inst, inst)
                 const { status = 200, responseHeaders, response, responseText } = { ...matchItem, ...result } as MatchRule
 
-                const mergedResponse = formatResponse.call(inst, response)
-                const mergedResponseText = responseText === undefined ? formatResponseText(mergedResponse) : responseText
                 // @ts-ignore inst field has been proxy
                 inst.status = status
                 // @ts-ignore inst field has been proxy
                 inst.statusText = HttpStatusCodes[inst.status]
                 // @ts-ignore inst field has been proxy
-                inst.responseText = mergedResponseText
-                // @ts-ignore inst field has been proxy
-                inst.response = mergedResponse
-                // @ts-ignore inst field has been proxy
                 inst.responseHeaders = responseHeaders
+
+                if (!isEventSource) {
+                    const mergedResponse = formatResponse.call(inst, response)
+                    const mergedResponseText = responseText === undefined ? formatResponseText(mergedResponse) : responseText
+                    // @ts-ignore inst field has been proxy
+                    inst.responseText = mergedResponseText
+                    // @ts-ignore inst field has been proxy
+                    inst.response = mergedResponse
+                }
             }
+            
             handleStateChange.call(inst, XMLHttpRequest.DONE)
 
             if (loggable) {

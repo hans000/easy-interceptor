@@ -6,6 +6,13 @@ export function createSymbol(attr: string) {
     return Symbol.for(attr)
 }
 
+export async function* asyncGenerator(data: string[], delay = 1000) {
+    for (const item of data) {
+        await new Promise(resolve => setTimeout(resolve, delay))
+        yield item
+    }
+}
+
 export function modifyXhrProtoProps(props: {
     response?: string
     responseText?: string

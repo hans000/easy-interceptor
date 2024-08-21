@@ -91,6 +91,15 @@ export const ConfigSchema: JSONSchema7 = {
                 }
             }
         },
+        chunks: {
+            type: 'array',
+            items: {
+                type: 'string'
+            }
+        },
+        chunkSpeed: {
+            type: 'number'
+        }
     },
 }
 

@@ -2,7 +2,7 @@
  * The AGPL License (AGPL)
  * Copyright (c) 2022 hans000
  */
-import { delayRun, tryToProxyUrl } from "../../tools";
+import { asyncGenerator, delayRun, tryToProxyUrl } from "../../tools";
 import { log } from "../../tools/log";
 import { parseUrl } from "../../tools";
 import { Options, __global__ } from "./globalVar";
@@ -56,7 +56,21 @@ export function proxyFetch(options: Options) {
 
                 return new Promise(resolve => {
                     delayRun(async () => {
-                        const res = response || realResponse
+                        let res: Response = response || realResponse
+                        
+                        const chunks = matchItem.chunks || []
+                        const isEventSource = !!chunks.length
+                        if (isEventSource) {
+                            res = new Response(new ReadableStream({
+                                async start(controller) {
+                                    for await (const value of asyncGenerator(chunks, matchItem.chunkSpeed)) {
+                                        controller.enqueue(new TextEncoder().encode(value));
+                                    }
+                                    controller.close();
+                                },
+                            }))
+                        }
+
                         resolve(res)
                         if (loggable) {
                             const body = await res.clone().json()

@@ -22,28 +22,25 @@ Imagine that it is obviously to verify a very simple thing, but the precondition
 
 How to solve the above problems? If you can intercept and modify the data before the client receives it, you can achieve the goal. Easy Interceptor makes use of the above ideas. It can intercept http requests in XMLHttpRequest and fetch data requests, and modify data by overwriting the response and responseText fields. As a chrome extension, it is naturally integrated in the user test environment, so the mental burden on users is minimal.
 
-- xhr: a fake XMLHttpRequest is implemented
-
-- fetch: a fake fetch is implemented
-
 > Notice: 
 > 
-> The extension is only valid for content type: json type. Please close the extension when do not use
+> 1. The extension is only valid for content type: json type. Please close the extension when do not use. Alse setting whitelist to avoid impacting other sites
 >
-> If you are skilled and have a perfect agent environment, you don't need to use it
+> 2. If you are skilled and have a perfect agent environment, you don't need to use it
 > 
-> If you use the cdn version, make sure you can access https://unpkg.com. The first load will be slow. Or use the local version directly
+> 3. If you use the cdn version, make sure you can access https://unpkg.com. The first load will be slow. Or use the local version directly
 
 ## 🎉 Feature
 
-- Free advertising free promotion, better user interaction, and dark mode
-- Provide monitoring of current requests (omit the trouble of manual filling)
+- 🧡Free advertising free promotion, better user interaction, and dark mode
+- ⏺Provide monitoring of current requests (omit the trouble of manual filling)
 - Import/export, project serialization - has certain js programming ability, can dynamically process data, and can print and output information
-- Integrated monaco editor for more convenient text editing and processing
+- Integrated `monaco editor` for more convenient text editing and processing
 - Use cdn to greatly reduce the installation package (only cdn version)
-- Support modifying response headers, actively sending requests, and modifying request parameters (params, headers, body)
+- 🔃Support modifying response headers, actively sending requests, and modifying request parameters (`params, headers, body`)
 - Fake mode, which is used to adapt to different scenarios (it is closed by default and may fail in some scenarios)
-- Support multiple workspaces
+- Support multiple workspaces, website white list
+- ✨Support event-source (need to set `chunks` field and 'fake' mode must be enabled when using 'XHR' requests)
 
 
 ## 📑 Usage
@@ -72,17 +69,17 @@ How to solve the above problems? If you can intercept and modify the data before
 ## Status Bar
 - \[Setting\]: Setting
 - [Work Space]: Switch work space
-- [Run At]: four options can be choose. start (js injected will be work)，end (DOMContentLoaded)，delay (delay some times)，trigger (match a url)，override (window.XMLHttpRequest or window.fetch was override)
+- [Run At]: four options can be choose. start (js injected will be work), end (DOMContentLoaded), delay (delay some times), trigger (match a url), override (window.XMLHttpRequest or window.fetch was override). It usually works by default, but you can try other modes if some pages don't work
 - \[Ban Type\]: Ban type, xhr or fetch
 - \[Quota\]: Percent of quota
 
 
-### 设置
+### Settings
 - \[All frames\]: The default only takes effect for top-level pages, iframe does not take effect, and this option is turned on if needed
 - \[Switch Theme\]: Switch theme (light or dark)
 - \[Print Boot Log\]: Print boot log
 - \[Print Faked Log\]: Print log in faked mode
-- \[Site White List\]: Match which sites can take effect, the default is * * , that is, all sites
+- \[Site White List\]: Match which sites can take effect, the default is `**` , that is, all sites
 
 ### Config Panel
 
@@ -103,6 +100,8 @@ How to solve the above problems? If you can intercept and modify the data before
 |responseHeaders|Record<string, string>||
 |redirectUrl|string|cannot be the same as the url, will cause a loop|
 |groupId|string|the same group can be used a workspace|
+|chunks|string[]|set event-source data source，response、responseText would be overrided|
+|chunkSpeed|number|set the interval of chunk，default 1_000|
 
 ### Code Panel
 call hooks function to modify data, support there hooks

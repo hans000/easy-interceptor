@@ -50,6 +50,8 @@ export interface MatchRule {
     responseHeaders?: Record<string, string>
     code?: string
     redirectUrl?: string
+    chunks?: string[]
+    chunkSpeed?: number
 }
 
 if (!process.env.VITE_LOCAL) {
@@ -60,7 +62,25 @@ if (!process.env.VITE_LOCAL) {
     })
 }
 
-const fields = ['url', 'redirectUrl', 'test', 'groupId', 'description', 'type', 'method', 'status', 'delay', 'params', 'requestHeaders', 'responseHeaders', 'body', 'response', 'responseText']
+const fields = [
+    'url',
+    'redirectUrl',
+    'test',
+    'groupId',
+    'description',
+    'type',
+    'method',
+    'status',
+    'delay',
+    'params',
+    'requestHeaders',
+    'responseHeaders',
+    'body',
+    'response',
+    'responseText',
+    'chunks',
+    'chunkSpeed',
+]
 
 const isDarkTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
 
