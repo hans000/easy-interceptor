@@ -149,7 +149,7 @@ function responseStartedIntercept(details: chrome.webRequest.WebResponseCacheDet
     const url = trimUrlParams(details.url)
     for (const rule of __rules) {
         if (rule.enable && matchPath(rule.test, url)) {
-            const fn = createRunFunc(rule.code, 'onRequestHeaders')
+            const fn = createRunFunc(rule.code, 'onResponseHeaders')
             const newHeaders = fn(details.responseHeaders)
             if (newHeaders) {
                 return {
