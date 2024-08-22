@@ -2,7 +2,7 @@
  * The AGPL License (AGPL)
  * Copyright (c) 2022 hans000
  */
-import { asyncGenerator, delayRun, tryToProxyUrl } from "../../tools";
+import { asyncGenerator, delayRun, formatChunk, tryToProxyUrl } from "../../tools";
 import { log } from "../../tools/log";
 import { parseUrl } from "../../tools";
 import { Options, __global__ } from "./globalVar";
@@ -21,7 +21,7 @@ export function proxyFetch(options: Options) {
 
     const proxyFetch = new Proxy(__global__.NativeFetch, {
         async apply(target, thisArg, args) {
-            const [input, init] = args
+            const [input, init] = args as [Request | URL | string, RequestInit]
             const isRequest = input instanceof Request
             const req = isRequest ? input.clone() : new Request(input.toString(), init)
             const url = isRequest
@@ -35,6 +35,19 @@ export function proxyFetch(options: Options) {
                 type: 'fetch',
                 params: [...url.searchParams.entries()],
             })
+
+            if (matchItem?.requestHeaders) {
+                Object.entries(matchItem.requestHeaders).forEach(([key, value]) => {
+                    if (init.headers instanceof Headers) {
+                        init.headers.append(key, value)
+                    } else if (Array.isArray(init.headers)) {
+                        init.headers.push([key, value])
+                    } else if (typeof init.headers === 'object') {
+                        init.headers[key] = value
+                    }
+                })
+            }
+
             const realFetch = __global__.PageFetch || target
             const proxyUrl = tryToProxyUrl(input, __global__.options.proxy)
             const proxyInput = isRequest ? new Request(proxyUrl, init) : proxyUrl
@@ -49,8 +62,11 @@ export function proxyFetch(options: Options) {
                         ...init,
                     })
                 }
-                const realResponse = options.faked 
-                    ? new Response(new Blob(['null'])) 
+
+                const chunks = matchItem.chunks || []
+                const isEventSource = !!chunks.length
+                const realResponse = (options.faked || isEventSource)
+                    ? new Response(new Blob(['null']), init) 
                     : await realFetch.call(thisArg, proxyInput, init)
                 const response = await onFetchIntercept(matchItem)(realResponse)
 
@@ -58,17 +74,16 @@ export function proxyFetch(options: Options) {
                     delayRun(async () => {
                         let res: Response = response || realResponse
                         
-                        const chunks = matchItem.chunks || []
-                        const isEventSource = !!chunks.length
                         if (isEventSource) {
                             res = new Response(new ReadableStream({
                                 async start(controller) {
-                                    for await (const value of asyncGenerator(chunks, matchItem.chunkSpeed)) {
-                                        controller.enqueue(new TextEncoder().encode(value));
+                                    for await (const value of asyncGenerator(chunks, matchItem.chunkInterval)) {
+                                        const str = formatChunk(value, matchItem.chunkTemplate)
+                                        controller.enqueue(new TextEncoder().encode(str));
                                     }
                                     controller.close();
                                 },
-                            }))
+                            }), init)
                         }
 
                         resolve(res)

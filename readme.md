@@ -101,7 +101,8 @@ How to solve the above problems? If you can intercept and modify the data before
 |redirectUrl|string|cannot be the same as the url, will cause a loop|
 |groupId|string|the same group can be used a workspace|
 |chunks|string[]|set event-source data source，response、responseText would be overrided|
-|chunkSpeed|number|set the interval of chunk，default 1_000|
+|chunkInterval|number|set the interval of chunk，default 1_000|
+|chunkTemplate|number|set the chunk format，default `data: $1\n\n`|
 
 ### Code Panel
 call hooks function to modify data, support there hooks

@@ -51,7 +51,8 @@ export interface MatchRule {
     code?: string
     redirectUrl?: string
     chunks?: string[]
-    chunkSpeed?: number
+    chunkInterval?: number
+    chunkTemplate?: string
 }
 
 if (!process.env.VITE_LOCAL) {
@@ -79,7 +80,8 @@ const fields = [
     'response',
     'responseText',
     'chunks',
-    'chunkSpeed',
+    'chunkInterval',
+    'chunkTemplate',
 ]
 
 const isDarkTheme = window.matchMedia("(prefers-color-scheme: dark)").matches

@@ -98,7 +98,8 @@
 |redirectUrl|string|重定向链接，不能和url一样，会死循环|
 |groupId|string|分组id，相同的id会被分配到相同的工作空间|
 |chunks|string[]|设置event-source数据源，response、responseText会失效|
-|chunkSpeed|number|设置数据吐出的间隔，默认1_000|
+|chunkInterval|number|设置数据吐出的间隔，默认1_000|
+|chunkTemplate|number|设置数据的格式，默认`data: $1\n\n`|
 
 ### code面板
 通过指定的hooks来动态的修改数据，支持的hooks有

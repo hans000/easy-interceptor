@@ -4,7 +4,7 @@
  */
 
 import { MatchRule } from "../../App"
-import { asyncGenerator, delayRun, modifyXhrProto, modifyXhrProtoProps, toTitleCase, tryToProxyUrl } from "../../tools"
+import { asyncGenerator, delayRun, formatChunk, modifyXhrProto, modifyXhrProtoProps, toTitleCase, tryToProxyUrl } from "../../tools"
 import { log } from "../../tools/log"
 import { parseUrl, parseXML, stringifyHeaders } from "../../tools"
 import { HttpStatusCodes } from "./constants"
@@ -203,9 +203,10 @@ export function proxyFakeXhrInstance(inst: ProxyXMLHttpRequest, options: Options
             if (isEventSource) {
                 // @ts-ignore inst field has been proxy
                 inst.responseText = ''
-                for await (const item of asyncGenerator(inst._matchItem.chunks, inst._matchItem.chunkSpeed)) {
+                for await (const item of asyncGenerator(inst._matchItem.chunks, inst._matchItem.chunkInterval)) {
+                    const str = formatChunk(item, matchItem.chunkTemplate)
                     // @ts-ignore inst field has been proxy
-                    inst.responseText += item
+                    inst.responseText += str
                     handleStateChange.call(inst, XMLHttpRequest.LOADING)
                 }
             }

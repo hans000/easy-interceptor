@@ -6,8 +6,13 @@ export function createSymbol(attr: string) {
     return Symbol.for(attr)
 }
 
-export async function* asyncGenerator(data: string[], delay = 1000) {
-    for (const item of data) {
+export function formatChunk(chunk: string, tpl = 'data: $1\n\n') {
+    return tpl.replace('$1', chunk)
+}
+
+export async function* asyncGenerator(data: unknown[], delay = 1000) {
+    const list = data.map(item => typeof item !== 'string' ? JSON.stringify(item) : item)
+    for (const item of list) {
         await new Promise(resolve => setTimeout(resolve, delay))
         yield item
     }
@@ -235,10 +240,13 @@ export function toTitleCase(str = '') {
     return str.replace(/\b[a-z]/g, c => c.toUpperCase())
 }
 
-export function tryToProxyUrl(url: string | URL, proxy: Record<string, string | {
+export function tryToProxyUrl(url: string | URL | Request, proxy: Record<string, string | {
     target: string
     rewrite?: string
 }> = {}) {
+    if (url instanceof Request) {
+        return url.url
+    }
     const urlObj = url instanceof URL ? url : parseUrl(url)
     for (const [name, value] of Object.entries(proxy)) {
         try {

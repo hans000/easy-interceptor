@@ -93,12 +93,12 @@ export const ConfigSchema: JSONSchema7 = {
         },
         chunks: {
             type: 'array',
-            items: {
-                type: 'string'
-            }
         },
-        chunkSpeed: {
+        chunkInterval: {
             type: 'number'
+        },
+        chunkTemplate: {
+            type: 'string'
         }
     },
 }
@@ -179,29 +179,29 @@ export const SettingSchema: JSONSchema7 = {
         dark: {
             type: 'boolean'
         },
-        proxy: {
-            type: 'object',
-            patternProperties: {
-                ".+": {
-                    oneOf: [
-                        {
-                            type: 'string'
-                        },
-                        {
-                            type: 'object',
-                            required: ['target'],
-                            properties: {
-                                target: {
-                                    type: 'string'
-                                },
-                                rewrite: {
-                                    type: 'string'
-                                }
-                            }
-                        }
-                    ]
-                }
-            }
-        }
+        // proxy: {
+        //     type: 'object',
+        //     patternProperties: {
+        //         ".+": {
+        //             oneOf: [
+        //                 {
+        //                     type: 'string'
+        //                 },
+        //                 {
+        //                     type: 'object',
+        //                     required: ['target'],
+        //                     properties: {
+        //                         target: {
+        //                             type: 'string'
+        //                         },
+        //                         rewrite: {
+        //                             type: 'string'
+        //                         }
+        //                     }
+        //                 }
+        //             ]
+        //         }
+        //     }
+        // }
     }
 }
