@@ -15,7 +15,7 @@ export async function runCode(data: MatchRule, index: number) {
             throw '`url` option must be required.'
         }
 
-        const fn = createRunFunc(code, 'onResponding')
+        const fn = createRunFunc(code!, 'onResponding')
         const inst = await sendRequest(data, index)
         const msg = await fn(restData, inst)
 

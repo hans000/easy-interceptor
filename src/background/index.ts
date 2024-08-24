@@ -3,11 +3,11 @@
  * Copyright (c) 2022 hans000
  */
 import { ConfigInfoType, MatchRule } from "../App"
-import { matchPath } from "../tools"
+import { matchPath, normalizeHeaders } from "../tools"
 import { ActiveGroupId, BackgroundMsgKey, ConfigInfoFieldKey, PopupMsgKey, RulesFieldKey, WatchFilterKey } from "../tools/constants"
 import { CustomEventProps, sendMessageToContent } from "../tools/message"
 import updateIcon from "../tools/updateIcon"
-import { arrayBufferToString, createRunFunc, objectToHttpHeaders, randID, trimUrlParams } from "../tools"
+import { arrayBufferToString, createRunFunc, randID, trimUrlParams } from "../tools"
 
 let __result = new Map<string, any>()
 let __rules: MatchRule[] = []
@@ -45,7 +45,7 @@ chrome.runtime.onMessage.addListener((msg: CustomEventProps) => {
 })
 
 chrome.storage.local.get([RulesFieldKey, ActiveGroupId], (result) => {
-    __rules = (result[RulesFieldKey] || []).filter(rule => (rule.groupId || 'default') === result[ActiveGroupId])
+    __rules = (result[RulesFieldKey] || []).filter((rule: MatchRule) => (rule.groupId || 'default') === result[ActiveGroupId])
 })
 
 // 获取body数据
@@ -54,7 +54,7 @@ chrome.webRequest.onBeforeRequest.addListener(
         const url = trimUrlParams(details.url)
 
         // run at -> trigger 通知injected.js
-        if (__configInfo.runAt === 'trigger' && matchPath(__configInfo.runAtTrigger, url)) {
+        if (__configInfo.runAt === 'trigger' && matchPath(__configInfo.runAtTrigger!, url)) {
             sendMessageToContent({
                 from: BackgroundMsgKey,
                 type: 'trigger',
@@ -65,7 +65,7 @@ chrome.webRequest.onBeforeRequest.addListener(
         if (__configInfo.action === 'watch') {
             return beforeRequestWatch(details, url)
         }
-        if (__configInfo.action === 'intercept') {
+        if (['intercept', 'proxy'].includes(__configInfo.action!)) {
             return beforeRequestIntercept(details, url)
         }
     },
@@ -81,8 +81,8 @@ chrome.webRequest.onBeforeSendHeaders.addListener(
     (details) => {
         if (__configInfo.action === 'close') return
 
-        const objectHeaders: Record<string, string> = Object.fromEntries(details.requestHeaders.map(({ name, value }) => [name, value]))
-        if (__configInfo.action === 'intercept') {
+        const objectHeaders: Record<string, string> = Object.fromEntries(details.requestHeaders!.map(({ name, value }) => [name, value!]))
+        if (['intercept', 'proxy'].includes(__configInfo.action!)) {
             return beforeSendHeadersIntercept(details, objectHeaders)
         }
 
@@ -96,15 +96,25 @@ chrome.webRequest.onBeforeSendHeaders.addListener(
     },
     ['blocking', 'extraHeaders', 'requestHeaders']
 )
+// 修改responseHeaders
+chrome.webRequest.onHeadersReceived.addListener(
+    details => {
+        if (['intercept', 'proxy'].includes(__configInfo.action!)) {
+            return responseStartedIntercept(details);
+        }
+    },
+    {
+        urls: ['<all_urls>'],
+        types: ['xmlhttprequest']
+    },
+    ['blocking', 'extraHeaders', 'responseHeaders']
+)
 
 // 获取responseHeaders
 chrome.webRequest.onResponseStarted.addListener(
     details => {
         if (__configInfo.action === 'watch') {
             return responseStartedWatch(details);
-        }
-        if (__configInfo.action === 'intercept') {
-            return responseStartedIntercept(details);
         }
     },
     {
@@ -120,40 +130,45 @@ function beforeSendHeadersWatch(details: chrome.webRequest.WebRequestHeadersDeta
 }
 
 function beforeSendHeadersIntercept(details: chrome.webRequest.WebRequestHeadersDetails, objectHeaders: Record<string, string>) {
+    // mark sendRequest index
     const index = +objectHeaders.Index
 
     if (index > -1) {
         const { requestHeaders: h } = __rules[index]
         const { Index, ...o } = objectHeaders
-        const newHeaders = { ...o, ...h }
+        const newHeadersMap = { ...o, ...h }
+        const requestHeaders = normalizeHeaders(details.requestHeaders, newHeadersMap)
+
         return {
-            requestHeaders: objectToHttpHeaders(newHeaders)
+            requestHeaders
         }
     }
 
     const url = trimUrlParams(details.url)
     for (const rule of __rules) {
         if (rule.enable && matchPath(rule.test, url)) {
-            const fn = createRunFunc(rule.code, 'onRequestHeaders')
-            const newHeaders = fn(objectHeaders)
-            if (newHeaders) {
+            const fn = createRunFunc(rule.code!, 'onRequestHeaders')
+            const newHeadersMap = { ...rule.requestHeaders, ...fn(objectHeaders) }
+            if (Object.keys(newHeadersMap).length) {
+                const requestHeaders = normalizeHeaders(details.requestHeaders, newHeadersMap)
                 return {
-                    requestHeaders: objectToHttpHeaders(newHeaders)
+                    requestHeaders
                 }
             }
         }
     }
 }
 
-function responseStartedIntercept(details: chrome.webRequest.WebResponseCacheDetails) {
+function responseStartedIntercept(details: chrome.webRequest.WebResponseHeadersDetails) {
     const url = trimUrlParams(details.url)
     for (const rule of __rules) {
         if (rule.enable && matchPath(rule.test, url)) {
-            const fn = createRunFunc(rule.code, 'onResponseHeaders')
-            const newHeaders = fn(details.responseHeaders)
-            if (newHeaders) {
+            const fn = createRunFunc(rule.code!, 'onResponseHeaders')
+            const newHeadersMap = { ...rule.responseHeaders, ...fn(details.responseHeaders) }
+            if (Object.keys(newHeadersMap).length) {
+                const responseHeaders = normalizeHeaders(details.responseHeaders, newHeadersMap)
                 return {
-                    responseHeaders: objectToHttpHeaders(newHeaders)
+                    responseHeaders
                 }
             }
         }
@@ -164,11 +179,11 @@ function responseStartedWatch(details: chrome.webRequest.WebResponseCacheDetails
     if (! __result.has(details.requestId)) return
 
         const responseHeaders = Object.create(null)
-        for (const { name, value } of details.responseHeaders) {
+        for (const { name, value } of details.responseHeaders!) {
             const lower = name.toLowerCase()
             // 过滤非json
             if (lower === 'content-type') {
-                if (! value.includes('json')) {
+                if (! value!.includes('json')) {
                     __result.delete(details.requestId)
                     return
                 }
@@ -214,16 +229,30 @@ function responseStartedWatch(details: chrome.webRequest.WebResponseCacheDetails
 function beforeRequestIntercept(details: chrome.webRequest.WebRequestBodyDetails, url: string) {
     for (const rule of __rules) {
         if (rule.enable && matchPath(rule.test, url)) {
-            // 处理重定向优先级
-            // code面板 > rule.redirectUrl
-            const fn = createRunFunc(rule.code, 'onRedirect')
-            const redirectUrl = fn({
-                ...rule,
-                url: details.url,
-            }) || rule.redirectUrl
-            if (redirectUrl) {
-                return {
-                    redirectUrl
+            {
+                const fn = createRunFunc(rule.code!, 'onBlocking')
+                const blocked = fn({
+                    ...rule,
+                    url: details.url,
+                }) || rule.blocked
+                if (blocked) {
+                    return {
+                        cancel: true
+                    }
+                }
+            }
+            {
+                // 处理重定向优先级
+                // code面板 > rule.redirectUrl
+                const fn = createRunFunc(rule.code!, 'onRedirect')
+                const redirectUrl = fn({
+                    ...rule,
+                    url: details.url,
+                }) || rule.redirectUrl
+                if (redirectUrl) {
+                    return {
+                        redirectUrl
+                    }
                 }
             }
         }
@@ -241,17 +270,19 @@ function beforeRequestWatch(details: chrome.webRequest.WebRequestBodyDetails, ur
         details.requestBody = { formData: {} }
     }
 
-    let body
+    let body: any
     if (details.requestBody.raw) {
         try {
-            body = JSON.parse(arrayBufferToString(details.requestBody.raw[0].bytes))
+            body = JSON.parse(arrayBufferToString(details.requestBody.raw[0].bytes!))
         } catch (error) {
             console.error(error)
             return
         }
     } else {
         const formData = details.requestBody.formData
-        body = Object.fromEntries(Object.entries(formData).map(([k, v]) => [k, v[0]]))
+        if (formData) {
+            body = Object.fromEntries(Object.entries(formData).map(([k, v]) => [k, v[0]]))
+        }
     }
 
     chrome.storage.local.get([WatchFilterKey], (result) => {

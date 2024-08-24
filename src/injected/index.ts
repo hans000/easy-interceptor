@@ -3,13 +3,14 @@
  * Copyright (c) 2022 hans000
  */
 import { ConfigInfoType, MatchRule } from '../App'
-import { debounce, noop, parseUrl } from '../tools'
+import { debounce, delayAsync, noop, normalizeHeaders, parseUrl } from '../tools'
 import { proxyRequest, unproxyRequest } from './proxy'
 import { PageScriptEventName, PageScriptMsgKey } from '../tools/constants'
 import { HttpStatusCodes } from './proxy/constants'
 import { CustomEventProps, dispatchPageScriptEvent } from '../tools/message'
 import { matching } from "../tools/match"
 import { handleCode } from '../tools/sendRequest'
+import { ProxyXMLHttpRequest } from './proxy/handle'
 
 const originXhr = window.XMLHttpRequest
 const originFetch = window.fetch
@@ -22,8 +23,8 @@ dispatchPageScriptEvent({
 })
 
 // run at logic
-window.addEventListener(PageScriptEventName, (event: CustomEvent<CustomEventProps>) => {
-    const data = event.detail
+window.addEventListener(PageScriptEventName, (event) => {
+    const data = (event as CustomEvent<CustomEventProps>).detail
 
     if (data.type === 'configInfo') {
         const value = data.payload
@@ -36,7 +37,7 @@ window.addEventListener(PageScriptEventName, (event: CustomEvent<CustomEventProp
                 handle(data.type, data.payload)
             })
         } else if (value.runAt === 'delay') {
-            setTimeout(() => {
+            delayAsync(() => {
                 updateData()
                 handle(data.type, data.payload)
             }, value.runAtDelay)
@@ -94,12 +95,11 @@ interface FetcherType {
 const app = {
     trigger: false,
     configInfo: {} as ConfigInfoType,
-    rules: [],
+    rules: [] as MatchRule[],
     intercept(fetcher?: FetcherType) {
-        const { faked, fakedLog, banType, proxy } = app.configInfo
+        const { fakedLog, banType, proxy } = app.configInfo
         proxyRequest({
             ...fetcher,
-            faked,
             fakedLog,
             banType,
             proxy,
@@ -141,18 +141,25 @@ const app = {
                 }
             },
             onXhrIntercept(data: MatchRule | undefined) {
-                return async function(xhr: XMLHttpRequest) {
+                return async function(this: ProxyXMLHttpRequest, xhr: ProxyXMLHttpRequest) {
                     if (data) {
-                        if (this.readyState === 4) {
-                            const result = await handleCode(data, xhr)
-
+                        if (this.readyState === 3) {
                             dispatchPageScriptEvent({
                                 from: PageScriptMsgKey,
                                 type: 'count',
                                 payload: data.id
                             })
 
-                            return result
+                            if (this._async === false) {
+                                const codeResult = handleCode(data, xhr)
+                                if (codeResult instanceof Promise) {
+                                    console.error('`async` false is not use promise')
+                                    return 
+                                }
+                                return codeResult
+                            }
+                            
+                            return handleCode(data, xhr)
                         }
                     } else {
                         if (app.configInfo.action === 'watch') {
@@ -181,6 +188,7 @@ const app = {
         const action = app.configInfo.action
         switch (action) {
             case 'close':
+            case 'proxy':
                 return app.restore()
             case 'watch':
             case 'intercept':
@@ -192,6 +200,7 @@ const app = {
 }
 
 function handle(key: string, value: any, fetcher?: any) {
+    // @ts-ignore
     app[key] = value
     if (app.configInfo.runAt !== 'trigger') {
         run(fetcher)
@@ -204,12 +213,12 @@ function handle(key: string, value: any, fetcher?: any) {
 
 function updateData() {
     // register event
-    window.addEventListener(PageScriptEventName, (event: CustomEvent<CustomEventProps>) => {
-        const data = event.detail
+    window.addEventListener(PageScriptEventName, (event) => {
+        const data = (event as CustomEvent<CustomEventProps>).detail
         if (data.type === 'rules' || data.type === 'configInfo') {
             handle(data.type, data.payload)
         }
     })
-    // @ts-ignore 覆盖原函数，达到只加载一次的目的
+    // @ts-ignore override origin function
     updateData = noop
 }

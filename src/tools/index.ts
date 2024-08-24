@@ -18,7 +18,7 @@ export async function* asyncGenerator(data: unknown[], delay = 1000) {
     }
 }
 
-export function modifyXhrProtoProps(props: {
+export function modifyXhrProtoProps(this: XMLHttpRequest, props: {
     response?: string
     responseText?: string
     status?: number
@@ -29,7 +29,7 @@ export function modifyXhrProtoProps(props: {
         const key = createSymbol(attr)
         Object.defineProperty(this, attr, {
             get() {
-                return this[key] || props[attr]
+                return this[key] || props[attr as keyof typeof props]
             },
             set(val) {
                 this[key] = val
@@ -46,19 +46,22 @@ export function modifyXhrProto(xhr: XMLHttpRequest) {
         Object.defineProperty(xhr, attr, {
             get() {
                 if (cacheMap.has(xhr) && cacheMap.get(xhr)[key]) {
+                    // @ts-ignore
                     return xhr[key]
                 }
                 cacheMap.set(xhr, { [key]: true })
+                // @ts-ignore
                 return xhr[key] ?? xhr[attr]
             },
             set(val) {
+                // @ts-ignore
                 xhr[key] = val
             }
         })
     })
 }
 
-export function equal(obj1, obj2) {
+export function equal(obj1: any, obj2: any) {
     return JSON.stringify(obj1) === JSON.stringify(obj2)
 }
 
@@ -106,12 +109,12 @@ export function stringifyParams(data: [string, string][] = [], url = '') {
     return search
 }
 
-export function parseHeaders(str: string): Record<string, string> {
+export function parseHeaders(str: string = ''): Record<string, string> {
     return str.split('\n').filter(Boolean).reduce((acc, line) => {
-        const [key, value] = line.trim().split(': ')
-        acc[key] = value
+        const [key, value] = line.trim().split(':')
+        acc[toTitleCase(key)] = value.trim()
         return acc
-    }, {})
+    }, {} as any)
 }
 
 export function stringifyHeaders(headers: HeadersInit) {
@@ -133,21 +136,21 @@ export function stringifyHeaders(headers: HeadersInit) {
 /** do nothing */
 export function noop(): any { }
 
-export type TransformMethodType = 'onResponding' | 'onMatching' | 'onRedirect' | 'onRequestHeaders' | 'onResponseHeaders'
+export type TransformMethodType = 'onResponding' | 'onMatching' | 'onRedirect' | 'onRequestHeaders' | 'onResponseHeaders' | 'onBlocking'
 
 export function createRunFunc(code: string, kind: TransformMethodType) {
     return new Function('c', `let r;${`const ${kind}=fn=>r=fn(c)`};try{${code};return r}catch{return null}`)
 }
 
 export function debounce(func: Function, immediate = false, delay = 300, thisArg = null) {
-    let timer, first = immediate
-    return (...args) => {
+    let timer: number, first = immediate
+    return (...args: any[]) => {
         clearTimeout(timer)
         if (first) {
             func.call(thisArg, ...args)
             first = false
         }
-        timer = setTimeout(() => {
+        timer = window.setTimeout(() => {
             func.call(thisArg, ...args)
         }, delay)
     }
@@ -206,16 +209,53 @@ export function createScript(path: string) {
     }))
 }
 
-export function objectToHttpHeaders(obj: object) {
-    return Object.keys(obj).map(key => ({ name: key, value: obj[key] }))
+export function parseHeaderKey(name: string): {
+    header: string
+    tag: 'remove' | 'override' | null
+} {
+    return {
+        header: toTitleCase(name.replace(/^[-!]/, '')),
+        tag: (
+            name[0] === '-'
+                ? 'remove'
+                : name[0] === '!'
+                ? 'override'
+                : null
+        ),
+    }
+}
+
+export function normalizeHeaders(currentHeaders: chrome.webRequest.HttpHeader[] | undefined, modifyHeader: Record<string, string> | undefined) {
+    let headers = currentHeaders || []
+    Object.entries(modifyHeader || {}).forEach(([name, value]) => {
+        const { header, tag } = parseHeaderKey(name)
+        if (tag === 'remove') {
+            headers = headers.filter(h => h.name.toLowerCase() !== header)
+        } else if (tag === 'override') {
+            headers = headers.filter(h => h.name.toLowerCase() !== header)
+            headers.push({ name, value })
+        } else {
+            headers.push({ name, value })
+        }
+    })
+
+    return headers
+}
+
+export function objectToHttpHeaders(obj: Record<string, string>) {
+    return Object.keys(obj).map(key => ({ name: toTitleCase(key), value: obj[key] }))
 }
 
 export function trimUrlParams(url: string) {
     return url.replace(/\?(.*)/, '')
 }
 
-export function delayRun(fn: Function, delay: number | undefined) {
-    delay ? setTimeout(() => fn(), delay) : fn()
+export function delayAsync<T extends (...args: any[]) => any>(fn: T, delay: number | undefined) {
+    return new Promise<Awaited<ReturnType<T>>>(resolve => {
+        setTimeout(() => {
+            resolve(fn())
+        }, delay)
+    })
 }
 
 export function download(filename: string, data: string) {

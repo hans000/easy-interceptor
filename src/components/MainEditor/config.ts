@@ -4,15 +4,16 @@
  */
 import { JSONSchema7 } from 'json-schema';
 import { MutableRefObject } from 'react';
-import { MatchRule } from '../../App';
+import type { MatchRule } from '../../App';
 import { runCode } from '../../tools/runCode';
 import { sendRequestLog } from '../../tools/sendRequest';
 import { ConfigSchema, removeRequiredField } from './validator';
+import type { Monaco } from '@monaco-editor/react';
 
 interface CustomEditorContext {
     editor: any
     monaco: any
-    rawdataRef?: MutableRefObject<Record<FileType, string>>
+    rawdataRef?: MutableRefObject<Record<FileType, string> | undefined>
     rule?: MatchRule
     index?: number
 }
@@ -23,7 +24,7 @@ interface EditorProps {
     value?: string
     readonly?: boolean
     schema?: JSONSchema7 | false
-    beforeMount?: (monaco) => void
+    beforeMount?: (monaco: Monaco) => void
     onMount?: (context: CustomEditorContext) => void
 }
 
@@ -40,15 +41,15 @@ function createAction(id: string, label: string, handle: Function) {
 
 function createRequestAction(context: CustomEditorContext) {
     return createAction('send request', 'Send Request', () => {
-        sendRequestLog(context.rule, context.index)
+        sendRequestLog(context.rule!, context.index!)
     })
 }
 
 function createRunCodeAction(context: CustomEditorContext) {
     return createAction('run code', 'Run Code', () => {
-        const rawdata = context.rawdataRef.current
+        const rawdata = context.rawdataRef!.current!
         const config = JSON.parse(rawdata.config) as any
-        runCode({ ...context.rule, ...config, code: rawdata.code }, context.index)
+        runCode({ ...context.rule, ...config, code: rawdata.code }, context.index!)
     })
 }
 
@@ -103,6 +104,7 @@ declare function onResponseHeaders(fn: (headers: Record<string, string>) => Reco
 declare function onRequestHeaders(fn: (headers: Record<string, string>) => Record<string, string> | void): void
 declare function onRedirect(fn: (rule: Rule) => string | void): void
 declare function onMatching(fn: (rule: Rule) => MatchingRule | void): void
+declare function onBlocking(fn: (rule: Rule) => boolean): void
 declare function onResponding(fn: (context: Context) => ResponseRule | void): void
 
 interface ResponseRule {

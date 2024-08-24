@@ -18,7 +18,7 @@ export interface CustomRequestInfo {
 export function matching(rules: MatchRule[], req: CustomRequestInfo): MatchRule | undefined {
     for (let rule of rules) {
         const { code, id, enable, count, ...restRule } = rule
-        const fn = createRunFunc(code, 'onMatching')
+        const fn = createRunFunc(code!, 'onMatching')
         const result = fn(restRule)
         if (result) {
             return {

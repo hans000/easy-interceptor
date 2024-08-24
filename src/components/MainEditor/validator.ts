@@ -7,12 +7,12 @@ import { JSONSchema7 } from "json-schema";
 export function removeRequiredField(schema: JSONSchema7) {
     return {
         ...schema,
-        properties: Object.keys(schema.properties).reduce((s, k) => {
-            const v = schema.properties[k] as JSONSchema7
+        properties: Object.keys(schema.properties as any).reduce((s, k) => {
+            const v = (schema.properties as any)[k] as JSONSchema7
             const { required, ...rest } = v
             s[k] = rest
             return s
-        }, {})
+        }, {} as any)
     }
 }
 
@@ -99,7 +99,13 @@ export const ConfigSchema: JSONSchema7 = {
         },
         chunkTemplate: {
             type: 'string'
-        }
+        },
+        faked: {
+            type: 'boolean'
+        },
+        blocked: {
+            type: 'boolean'
+        },
     },
 }
 
@@ -119,7 +125,7 @@ export const MatchTokenSchema: JSONSchema7 = {
 export const ExportSchema: JSONSchema7 = {
     type: "object",
     additionalProperties: false,
-    required: [...ConfigSchema.required, "id"],
+    required: [...ConfigSchema.required!, "id"],
     properties: {
         ...MatchTokenSchema.properties,
         id: {
@@ -144,11 +150,8 @@ export const SettingSchema: JSONSchema7 = {
     "$schema": "http://json-schema.org/draft-07/schema#",
     type: 'object',
     additionalProperties: false,
-    required: ["faked", "fakedLog"],
+    required: ["fakedLog"],
     properties: {
-        faked: {
-            type: 'boolean'
-        },
         fakedLog: {
             type: 'boolean'
         },

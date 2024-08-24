@@ -7,20 +7,23 @@ import { MatchRule } from "../App"
 import { RulesFieldKey } from "../tools/constants"
 
 type RGBA = [number, number, number, number]
-const FAKED_COLOR: RGBA = [43, 44, 45, 255]
 const INTERCEPT: RGBA = [136, 20, 127, 255]
 const WATCH: RGBA = [241, 89, 43, 255]
 const CLOSE: RGBA = [200, 200, 200, 255]
+const PROXY: RGBA = [22, 119, 255, 255]
 
-function setBadgeText(rules: MatchRule[], action: ActionType, faked: boolean) {
+function setBadgeText(rules: MatchRule[], action: ActionType) {
     let count = 0
     let color: RGBA = INTERCEPT
     if (action === 'intercept') {
         count = rules.filter(item => item.enable).length
-        color = faked ? FAKED_COLOR : INTERCEPT
+        color = INTERCEPT
     } else if (action === 'watch') {
         count = rules.length
         color = WATCH
+    } else if (action === 'proxy') {
+        count = rules.filter(item => item.enable).length
+        color = PROXY
     } else {
         count = rules.length
         color = CLOSE
@@ -30,13 +33,13 @@ function setBadgeText(rules: MatchRule[], action: ActionType, faked: boolean) {
     chrome.browserAction.setBadgeBackgroundColor({ color })
 }
 
-function setIcon(action: ActionType, faked: boolean) {
+function setIcon(action: ActionType) {
     const suffix = action === 'watch'
         ? '-red'
         : action === 'close'
         ? '-gray'
-        : faked
-        ? '-black'
+        : action === 'proxy'
+        ? '-blue'
         : ''
     chrome.browserAction.setIcon({
         path: {
@@ -52,13 +55,12 @@ export default function updateIcon() {
     chrome.storage.local.get([ConfigInfoFieldKey, RulesFieldKey, ActiveGroupId], (result) => {
         const configInfo = result[ConfigInfoFieldKey] || {}
         if (result.hasOwnProperty(ConfigInfoFieldKey)) {
-            setIcon(configInfo.action, configInfo.faked)
+            setIcon(configInfo.action)
         }
         if (result.hasOwnProperty(RulesFieldKey)) {
             setBadgeText(
-                result[RulesFieldKey].filter(rule => rule.groupId === result[ActiveGroupId]),
+                result[RulesFieldKey].filter((rule: MatchRule) => rule.groupId === result[ActiveGroupId]),
                 configInfo.action,
-                configInfo.faked
             )
         }
     })

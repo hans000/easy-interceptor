@@ -3,7 +3,7 @@
         "message": "Easy Interceptor——一款集成了模拟和拦截请求并拥有一定编程能力的谷歌浏览器插件，前端开发者的好帮手"
     },
     "placeholder_watch_filter": {
-        "message": "监听过滤规则"
+        "message": "录制时的过滤规则"
     },
     "select_workspace": {
         "message": "选择工作空间"
@@ -32,9 +32,6 @@
     "action_theme": {
         "message": "切换主题"
     },
-    "action_mode": {
-        "message": "fake模式"
-    },
     "action_reset": {
         "message": "重置"
     },
@@ -60,7 +57,10 @@
         "message": "启用拦截"
     },
     "watch": {
-        "message": "启用监听"
+        "message": "启用录制"
+    },
+    "proxy": {
+        "message": "启用代理"
     },
     "close": {
         "message": "关闭"
@@ -84,7 +84,13 @@
         "message": "大小"
     },
     "tip_debug_count": {
-        "message": "调试 • 拦截次数"
+        "message": "Faked模式 • 发送请求 • 拦截次数"
+    },
+    "tip_faked": {
+        "message": "Faked模式"
+    },
+    "tip_send_fetch": {
+        "message": "发送请求"
     },
     "tip_tag": {
         "message": "请求类型 • 发送"

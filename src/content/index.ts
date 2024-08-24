@@ -15,7 +15,7 @@ chrome.storage.local.get([ConfigInfoFieldKey], result => {
     const workingStatusList = ['watch', 'intercept']
     const whiteList = (configInfo.whiteList || '**').split(';')
 
-    if (workingStatusList.includes(configInfo.action)) {
+    if (workingStatusList.includes(configInfo.action!)) {
         const canInjected = configInfo.allFrames ? true : (window.self === window.top)
         if (! canInjected) {
             log('subiframe not working, please open the allIframe', 'warn')
@@ -59,8 +59,8 @@ chrome.storage.local.get([ConfigInfoFieldKey], result => {
     })
 
     // 接收pagescript传来的信息
-    window.addEventListener(PageScriptEventName, (event: CustomEvent<CustomEventProps>) => {
-        const data = event.detail
+    window.addEventListener(PageScriptEventName, (event) => {
+        const data = (event as CustomEvent<CustomEventProps>).detail
         
         // 页面加载时初始化数据
         if (data.type === 'syncData') {
@@ -80,7 +80,7 @@ chrome.storage.local.get([ConfigInfoFieldKey], result => {
         return
     }
 
-    if (workingStatusList.includes(configInfo.action)) {
+    if (workingStatusList.includes(configInfo.action!)) {
         injectedScript(configInfo)
     }
 

@@ -7,12 +7,12 @@ import MonacoEditor from '@monaco-editor/react'
 import { Menu, message } from 'antd'
 import React, { useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import { useDebounce } from '../../hooks/useDebounce'
-import useStorage from '../../hooks/useStorage'
-import getStorage from '../../tools/getStorage'
 import { equal } from '../../tools'
 import config, { FileType } from './config'
 import jsonschema from 'json-schema'
 import { MatchRule } from '../../App'
+import useStorage from '../../hooks/useStorage'
+import getStorage from '../../tools/getStorage'
 import { PathFieldKey } from '../../tools/constants'
 
 //#region loadConfig
@@ -35,18 +35,18 @@ const MainEditor = React.forwardRef(function (props: {
     onFileNameChange?: (fileName: FileType) => void
 }, ref) {
     const [data, setData] = useState<Record<FileType, string>>(defaultData)
-    const [fileName, setFileName] = useState<FileType>(props.fileName)
+    const [fileName, setFileName] = useState<FileType | undefined>(props.fileName)
     const dataRef = useRef<Record<FileType, string>>()
     const msgRef = useRef('')
 
-    const info = React.useMemo(() => config.find((info => info.name === fileName)), [fileName])
+    const info = React.useMemo(() => config.find((info => info.name === fileName)), [fileName])!
     const sendMsg = () => message.error(msgRef.current)
 
     const handle = useDebounce(() => {
         if (info.language === 'json' && info.schema !== false) {
             try {
-                const json = JSON.parse(data[fileName])
-                const validateResult = jsonschema.validate(json, info.schema)
+                const json = JSON.parse(data[fileName!])
+                const validateResult = jsonschema.validate(json, info.schema!)
                 if (validateResult.errors.length) {
                     const { property: p, message: m } = validateResult.errors[0]
                     throw `\`${p}\` ${m}`
@@ -54,7 +54,7 @@ const MainEditor = React.forwardRef(function (props: {
                 props.onChange?.(data, false)
             } catch (error) {
                 msgRef.current = error + ''
-                props.onChange?.(props.value, true)
+                props.onChange?.(props.value!, true)
             }
         } else {
             props.onChange?.(data, false)
@@ -91,7 +91,7 @@ const MainEditor = React.forwardRef(function (props: {
             <Menu style={{ userSelect: 'none' }} mode='horizontal' selectable={false} activeKey={fileName} onClick={(currInfo) => {
                 if (info.name === 'config') {
                     try {
-                        const json = JSON.parse(data[fileName])
+                        const json = JSON.parse(data[fileName!])
                         const { schema } = info
                         if (schema) {
                             const validateResult = jsonschema.validate(json, schema)
@@ -105,7 +105,7 @@ const MainEditor = React.forwardRef(function (props: {
                     } catch (error) {
                         sendMsg()
                         msgRef.current = error + ''
-                        props.onChange?.(props.value, true)
+                        props.onChange?.(props.value!, true)
                         return
                     }
                 }
@@ -158,7 +158,7 @@ const MainEditor = React.forwardRef(function (props: {
                                     }}
                                     onChange={value => {
                                         setData(data => {
-                                            const result = { ...data, [fileName]: value }
+                                            const result = { ...data, [fileName as FileType]: value }
                                             dataRef.current = result
                                             return result
                                         })

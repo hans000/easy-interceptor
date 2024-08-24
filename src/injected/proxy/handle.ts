@@ -4,28 +4,34 @@
  */
 
 import { MatchRule } from "../../App"
-import { asyncGenerator, delayRun, formatChunk, modifyXhrProto, modifyXhrProtoProps, toTitleCase, tryToProxyUrl } from "../../tools"
+import { asyncGenerator, createRunFunc, delayAsync, formatChunk, modifyXhrProto, modifyXhrProtoProps, parseHeaderKey, parseHeaders, toTitleCase, tryToProxyUrl } from "../../tools"
 import { log } from "../../tools/log"
-import { parseUrl, parseXML, stringifyHeaders } from "../../tools"
+import { parseUrl, stringifyHeaders } from "../../tools"
 import { HttpStatusCodes } from "./constants"
-import { Options, __global__ } from "./globalVar"
+import { Options, __global__, getPageXhr } from "./globalVar"
 
 export interface ProxyXMLHttpRequest extends XMLHttpRequest {
     _async: boolean
     _url: string | URL
     _method: string
     _forceMimeType: string
-    _matchItem: MatchRule
+    _matchItem: MatchRule | undefined
     _requestData: any
     _requestHeaders: Record<string, string>
     _responseHeaders: Record<string, string>
+    readyState: number
+    status: number
+    statusText: string
+    responseHeaders: any
+    responseText: string
+    response: any
 }
 
-export function isTextType() {
+function isTextType(this: ProxyXMLHttpRequest) {
     return this.responseType === '' || this.responseType === 'text'
 }
 
-export function formatResponse(response: unknown) {
+function formatResponse(this: ProxyXMLHttpRequest, response: unknown) {
     if (isTextType.call(this)) {
         return response 
             ? typeof response === 'string'
@@ -36,7 +42,7 @@ export function formatResponse(response: unknown) {
     return response
 }
 
-export function formatResponseText(response: unknown) {
+function formatResponseText(response: unknown) {
     return response 
         ? typeof response === 'string'
         ? response
@@ -44,251 +50,203 @@ export function formatResponseText(response: unknown) {
         : ''
 }
 
-export function handleReadyStateChange() {
-    if (this.readyState === XMLHttpRequest.OPENED) {
-        const { onMatch } = __global__.options
-        const urlObj: URL = this._url instanceof URL ? this._url : parseUrl(this._url)
-        this._matchItem = onMatch({
+function setResponseHeaders(this: ProxyXMLHttpRequest, headers: Record<string, string> | undefined) {
+    this._responseHeaders = Object.fromEntries(
+        Object.entries(headers || {}).map(([key, value]) => [toTitleCase(key), value])
+    )
+    if (this._forceMimeType) {
+        this._responseHeaders['Content-Type'] = this._forceMimeType
+    }
+}
+
+function handleStateChange(this: ProxyXMLHttpRequest, state: number) {
+    this.readyState = state
+    this.dispatchEvent(new Event('readystatechange'))
+}
+
+function dispatchCustomEvent(this: ProxyXMLHttpRequest, type: string) {
+    this.dispatchEvent(new Event(type))
+}
+
+export function proxyFakeXhrInstance(this: ProxyXMLHttpRequest, options: Options) {
+    const originOpen = this.open
+    const originSend = this.send
+    const originSetRequestHeader = this.setRequestHeader
+    const originGetResponseHeader = this.getResponseHeader
+    const originGetAllResponseHeaders = this.getAllResponseHeaders
+    const originOverrideMimeType = this.overrideMimeType
+
+    this.open = (method: string, url: string | URL, async: boolean = true) => {
+        this._async = async
+        this._url = url
+        this._method = method
+        const urlObj = this._url instanceof URL ? this._url : parseUrl(this._url)
+        this._matchItem = options.onMatch!({
             method: this._method,
             requestUrl: urlObj.origin + urlObj.pathname,
             type: 'xhr',
             params: [...urlObj.searchParams.entries()]
         })
-    } else if (this.readyState === XMLHttpRequest.DONE) {
-        const { onXhrIntercept } = __global__.options
-        if (this._matchItem) {
-            const { status = 200, response, responseText } = this._matchItem
-            const mergedResponse = response === undefined
-                ? this.response
-                : response === null
-                ? null
-                : response
-            const formatResponseResult = formatResponse.call(this, mergedResponse)
-            modifyXhrProtoProps.call(this, {
-                response: formatResponseResult,
-                responseText: responseText === undefined ? formatResponseText(formatResponseResult) : responseText,
-                status,
-                statusText: HttpStatusCodes[status],
+        if (! this._matchItem) {
+            originOpen.call(this, method, url, async)
+        } else {
+            modifyXhrProto(this)
+            handleStateChange.call(this, XMLHttpRequest.UNSENT)
+            handleStateChange.call(this, XMLHttpRequest.OPENED)
+        }
+    }
+    this.send = (body) => {
+        if (! this._matchItem) {
+            originSend.call(this, body)
+            return
+        }
+
+        const chunks = this._matchItem.chunks || []
+        const isEventSource = !!chunks.length
+        const matchItem = this._matchItem
+        let prerequest: Promise<XMLHttpRequest | undefined> | undefined
+        let syncInnerXhr: XMLHttpRequest | undefined
+
+        const PageXhr = getPageXhr()!
+        if (this._async === false) {
+            syncInnerXhr = new PageXhr()
+            syncInnerXhr.open(this._method, this._url, this._async)
+            syncInnerXhr.send(body)
+        } else {
+            prerequest = new Promise<XMLHttpRequest | undefined>((resolve, reject) => {
+                if (this._matchItem!.faked || isEventSource) {
+                    const fn = createRunFunc(matchItem.code!, 'onBlocking')
+                    const blocked = fn({
+                        ...matchItem,
+                        url: this._url,
+                    }) || matchItem.blocked
+                    if (blocked) {
+                        reject(new Error('net::ERR_BLOCKED_BY_CLIENT'))
+                    } else {
+                        delayAsync(resolve, matchItem.delay)
+                    }
+                } else {
+                    const innerXhr = new PageXhr()
+                    innerXhr.open(this._method, this._url, this._async)
+                    delayAsync(() => innerXhr.send(body), matchItem.delay)
+                    innerXhr.onload = () => resolve(innerXhr)
+                    innerXhr.onerror = () => reject()
+                }
             })
         }
 
-        onXhrIntercept(this._matchItem).call(this, this)
-    }
-}
-
-export function setResponseHeaders(headers) {
-    this._responseHeaders = {}
-    for (const header in headers) {
-        if (headers.hasOwnProperty(header)) {
-            this._responseHeaders[header] = headers[header]
-        }
-    }
-    if (this._forceMimeType) {
-        this._responseHeaders['Content-Type'] = this._forceMimeType
-    }
-    if (this._async) {
-        handleStateChange.call(this, XMLHttpRequest.HEADERS_RECEIVED)
-    } else {
-        this.readyState = XMLHttpRequest.HEADERS_RECEIVED
-    }
-}
-
-export function setResponseBody(body = '') {
-    this.response = this.responseText = body
-    const type = this.getResponseHeader("content-type")
-
-    if (this.responseText && (!type || /(text\/xml)|(application\/xml)|(\+xml)/.test(type))) {
-        try {
-            this.responseXML = parseXML(this.responseText)
-        }
-        catch (e) {}
-    }
-
-    if (this._async) {
-        handleStateChange.call(this, XMLHttpRequest.DONE)
-    } else {
-        this.readyState = XMLHttpRequest.DONE
-    }
-}
-
-export function handleStateChange(state) {
-    this.readyState = state
-    dispatchCustomEvent.call(this, 'readystatechange')
-
-    if (this.readyState == XMLHttpRequest.DONE) {
-        dispatchCustomEvent.call(this, 'load')
-        dispatchCustomEvent.call(this, 'loadend')
-    }
-}
-
-export function dispatchCustomEvent(type: string) {
-    this.dispatchEvent(new Event(type))
-    // const handle = this['on' + type]
-    // handle && handle()
-}
-
-export function proxyXhrInstance(inst: ProxyXMLHttpRequest) {
-    const originOpen = inst.open
-    const originSend = inst.send
-    inst.open = (method: string, url: string | URL, async?: boolean) => {
-        const proxyUrl = tryToProxyUrl(url, __global__.options.proxy)
-        inst._async = async
-        inst._url = proxyUrl
-        inst._method = method
-        originOpen.call(inst, method, proxyUrl, async)
-    }
-    inst.send = (data) => {
-        const delay = inst._matchItem ? inst._matchItem.delay : undefined
-        delayRun(() => {
-            inst._requestData = data;
-            originSend.call(inst, data);
-        }, delay);
-    }
-}
-
-export function proxyFakeXhrInstance(inst: ProxyXMLHttpRequest, options: Options) {
-    const originOpen = inst.open
-    const originSend = inst.send
-    const originSetRequestHeader = inst.setRequestHeader
-    const originGetResponseHeader = inst.getResponseHeader
-    const originGetAllResponseHeaders = inst.getAllResponseHeaders
-    const originOverrideMimeType = inst.overrideMimeType
-
-    inst.open = (method: string, url: string | URL, async = true) => {
-        inst._async = async
-        inst._url = url
-        inst._method = method
-        const urlObj = inst._url instanceof URL ? inst._url : parseUrl(inst._url)
-        inst._matchItem = options.onMatch({
-            method: inst._method,
-            requestUrl: urlObj.origin + urlObj.pathname,
-            type: 'xhr',
-            params: [...urlObj.searchParams.entries()]
-        })
-        if (inst._matchItem) {
-            modifyXhrProto.call(inst, inst)
-            handleStateChange.call(inst, XMLHttpRequest.UNSENT)
-            handleStateChange.call(inst, XMLHttpRequest.OPENED)
-        } else {
-            originOpen.call(inst, method, url, async)
-        }
-    }
-    inst.send = (data) => {
-        if (! inst._matchItem) {
-            originSend.call(inst, data)
-            return
-        }
-        const loggable = options.faked && options.fakedLog
-
+        const loggable = matchItem.faked && options.fakedLog
+        
         if (loggable) {
             log({
                 type: 'xhr:request',
-                url: inst._url,
-                method: inst._method,
-                headers: inst._requestHeaders,
-                body: data,
+                url: this._url,
+                method: this._method,
+                headers: this._requestHeaders,
+                body,
             })
         }
-        const matchItem = inst._matchItem
-        dispatchCustomEvent.call(inst, 'loadstart')
 
-        delayRun(async () => {
-            const { status = 200, responseHeaders, response, responseText } = matchItem
-            setResponseHeaders.call(inst, responseHeaders)
-            handleStateChange.call(inst, XMLHttpRequest.LOADING)
+        dispatchCustomEvent.call(this, 'loadstart')
 
-            const chunks = inst._matchItem.chunks || []
-            const isEventSource = !!chunks.length
+        const handleResult = (result: MatchRule | undefined) => {
+            const { status = 200, responseHeaders, response, responseText } = { ...matchItem, ...result } as MatchRule
 
-            if (isEventSource) {
-                // @ts-ignore inst field has been proxy
-                inst.responseText = ''
-                for await (const item of asyncGenerator(inst._matchItem.chunks, inst._matchItem.chunkInterval)) {
-                    const str = formatChunk(item, matchItem.chunkTemplate)
-                    // @ts-ignore inst field has been proxy
-                    inst.responseText += str
-                    handleStateChange.call(inst, XMLHttpRequest.LOADING)
-                }
+            this.status = status
+            this.statusText = HttpStatusCodes[this.status]
+            this.responseHeaders = responseHeaders
+
+            if (! isEventSource) {
+                const mergedResponse = formatResponse.call(this, response)
+                const mergedResponseText = responseText === undefined ? formatResponseText(mergedResponse) : responseText
+                this.responseText = mergedResponseText
+                this.response = mergedResponse
             }
 
-            // @ts-ignore inst field has been proxy
-            inst.readyState = XMLHttpRequest.DONE
-            {
-                const result = await options.onXhrIntercept(matchItem).call(inst, inst)
-                const { status = 200, responseHeaders, response, responseText } = { ...matchItem, ...result } as MatchRule
-
-                // @ts-ignore inst field has been proxy
-                inst.status = status
-                // @ts-ignore inst field has been proxy
-                inst.statusText = HttpStatusCodes[inst.status]
-                // @ts-ignore inst field has been proxy
-                inst.responseHeaders = responseHeaders
-
-                if (!isEventSource) {
-                    const mergedResponse = formatResponse.call(inst, response)
-                    const mergedResponseText = responseText === undefined ? formatResponseText(mergedResponse) : responseText
-                    // @ts-ignore inst field has been proxy
-                    inst.responseText = mergedResponseText
-                    // @ts-ignore inst field has been proxy
-                    inst.response = mergedResponse
-                }
-            }
-            
-            handleStateChange.call(inst, XMLHttpRequest.DONE)
+            handleStateChange.call(this, XMLHttpRequest.DONE)
+            dispatchCustomEvent.call(this, 'load')
+            dispatchCustomEvent.call(this, 'loadend')
 
             if (loggable) {
                 log({
                     type: 'xhr:response',
-                    url: inst._url,
-                    method: inst._method,
+                    url: this._url,
+                    method: this._method,
                     status,
                     headers: responseHeaders,
                     response,
                     responseText,
                 })
             }
-        }, matchItem.delay)
+        }
+        
+        // async mode
+        prerequest?.then(async (innerXhr) => {
+            const originHeaders = parseHeaders(innerXhr?.getAllResponseHeaders())
+            const mergedResponseReaders = { ...originHeaders, ...matchItem.responseHeaders }
+            setResponseHeaders.call(this, mergedResponseReaders)
+
+            handleStateChange.call(this, XMLHttpRequest.HEADERS_RECEIVED)
+            handleStateChange.call(this, XMLHttpRequest.LOADING)
+
+            // event source stream
+            if (isEventSource) {
+                this.responseText = ''
+                for await (const item of asyncGenerator(matchItem.chunks!, matchItem.chunkInterval)) {
+                    const str = formatChunk(item, matchItem.chunkTemplate)
+                    this.responseText += str
+                    handleStateChange.call(this, XMLHttpRequest.LOADING)
+                }
+            }
+            
+            const result = await options.onXhrIntercept!(matchItem).call(this, this) as MatchRule | undefined
+            handleResult(result)
+        })
+
+        // sync mode
+        if (syncInnerXhr) {
+            const result = options.onXhrIntercept!(matchItem).call(this, this) as MatchRule | undefined
+            setResponseHeaders.call(this, result?.responseHeaders)
+
+            handleResult(result)
+        }
     }
-    inst.setRequestHeader = (name: string, value: string) => {
-        const header = toTitleCase(name)
-        if (! inst._matchItem) {
-            originSetRequestHeader.call(inst, header, value)
+    this.setRequestHeader = (name: string, value: string) => {
+        const { header } = parseHeaderKey(name)
+        if (! this._matchItem) {
+            originSetRequestHeader.call(this, header, value)
             return
         }
 
-        inst._requestHeaders = inst._requestHeaders || {};
-        inst._requestHeaders[header] = value
+        this._requestHeaders = this._requestHeaders || {};
+        this._requestHeaders[header] = value
     }
-    inst.getResponseHeader = (name: string) => {
+    this.getResponseHeader = (name: string) => {
         const header = toTitleCase(name)
-        if (! inst._matchItem) {
-            return originGetResponseHeader.call(inst, header)
+        if (! this._matchItem) {
+            return originGetResponseHeader.call(this, header)
         }
 
-        if (inst.readyState < XMLHttpRequest.HEADERS_RECEIVED) {
+        if (this.readyState < XMLHttpRequest.HEADERS_RECEIVED) {
             return null
         }
 
-        if (/^Set-Cookie2?$/i.test(header)) {
-            return null
+        return this._responseHeaders?.[header]
+    }
+    this.getAllResponseHeaders = () => {
+        if (! this._matchItem) {
+            return originGetAllResponseHeaders.call(this)
         }
 
-        return inst._responseHeaders[header]
+        return stringifyHeaders(this._responseHeaders)
     }
-    inst.getAllResponseHeaders = () => {
-        if (! inst._matchItem) {
-            return originGetAllResponseHeaders.call(inst)
-        }
-
-        return stringifyHeaders(inst._responseHeaders)
-    }
-    inst.overrideMimeType = (mimeType: string) => {
-        if (! inst._matchItem) {
-            originOverrideMimeType.call(inst, mimeType)
+    this.overrideMimeType = (mimeType: string) => {
+        if (! this._matchItem) {
+            originOverrideMimeType.call(this, mimeType)
             return
         }
-        inst._forceMimeType = toTitleCase(mimeType)
+        this._forceMimeType = toTitleCase(mimeType)
     }
 
-    return inst
+    return this
 }

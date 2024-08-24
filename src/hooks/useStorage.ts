@@ -13,7 +13,7 @@ export default function useStorage<T>(key: string, value: T): [T, React.Dispatch
     const [val, setVal] = useState(value)
     const name = key
 
-    const wrapSetVal = (val) => {
+    const wrapSetVal = (val: any) => {
         map[name] = true
         localStorage.setItem(mapKey, JSON.stringify(map))
         if (__DEV__) {

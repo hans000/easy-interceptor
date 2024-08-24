@@ -8,13 +8,13 @@ export default async function getStorage(keys: string[]): Promise<Record<string,
         return Promise.resolve(keys.reduce(
             (acc, key) => {
                 try {
-                    acc[key] = JSON.parse(localStorage.getItem(key))
+                    acc[key] = JSON.parse(localStorage.getItem(key)!)
                 } catch (error) {
                     acc[key] = localStorage.getItem(key)
                 }
                 return acc
             },
-            {}
+            {} as any
         ))
     } else {
         return new Promise(resolve => chrome.storage.local.get(keys, result => resolve(result)))

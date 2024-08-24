@@ -2,8 +2,8 @@
 * The AGPL License (AGPL)
 * Copyright (c) 2022 hans000
 */
-import { Options, __global__ } from "./globalVar"
-import { ProxyXMLHttpRequest, handleReadyStateChange, proxyFakeXhrInstance, proxyXhrInstance } from "./handle"
+import { Options, __global__, getPageXhr } from "./globalVar"
+import { ProxyXMLHttpRequest, proxyFakeXhrInstance } from "./handle"
 
 let unproxied = true
 
@@ -15,15 +15,10 @@ export function proxyXhr(options: Options) {
     __global__.options = options
     __global__.NativeXhr = options.NativeXhr || __global__.NativeXhr
     
-    const ProxyXhr = new Proxy(__global__.NativeXhr, {
+    const ProxyXhr = new Proxy(__global__.NativeXhr!, {
         construct(target) {
             const inst = new target() as ProxyXMLHttpRequest
-            if (options.faked) {
-                return proxyFakeXhrInstance(inst, options)
-            } else {
-                proxyXhrInstance(inst)
-            }
-            inst.addEventListener("readystatechange", handleReadyStateChange.bind(inst, options.faked))
+            proxyFakeXhrInstance.call(inst, options)
             return inst
         }
     })
@@ -48,7 +43,7 @@ export function unproxyXhr() {
         Object.defineProperties(window, {
             XMLHttpRequest: {
                 get() {
-                    return __global__.PageXhr || __global__.NativeXhr
+                    return getPageXhr()
                 }
             }
         })

@@ -41,15 +41,18 @@ How to solve the above problems? If you can intercept and modify the data before
 - Fake mode, which is used to adapt to different scenarios (it is closed by default and may fail in some scenarios)
 - Support multiple workspaces, website white list
 - ✨Support event-source (need to set `chunks` field and 'fake' mode must be enabled when using 'XHR' requests)
+- ✨Support proxy mode, blue icon
 
 
 ## 📑 Usage
 
 ### Icon Status
-- gray: Closed（The number corner shows how many pieces of data are in the current list）
-- orange: Watching（The number corner shows how many pieces of data are in the current list）
-- purple: Intercepting（The digital corner shows how many pieces of data are intercepted in the current list）
-- black: Intercepting-Fake Mode（The digital corner shows how many pieces of data are intercepted in the current list）
+- gray: Closed (The number corner shows how many pieces of data are in the current list)
+- orange: Watching (The number corner shows how many pieces of data are in the current list)
+- purple: Intercepting (The digital corner shows how many pieces of data are intercepted in the current list)
+- ~~black: Intercepting-Fake Mode (The digital corner shows how many pieces of data are intercepted in the current list)~~
+- blue: Proxying (The digital corner shows how many pieces of data are proxy in the current list)
+
 
 ### Left Top Tools
 - [Add]: add a datum
@@ -57,14 +60,15 @@ How to solve the above problems? If you can intercept and modify the data before
 - [Export, Import]: serialize project
 - [Refresh]: refresh, will reset `count` field 
 - [Switch Theme]: light | dark
-- [Fake Mode]: turn on fake mode, default turn off, Only intercept requests, relying on back-end services; When enabled, a simulated object will be used, which can be independent of back-end services
+- ~~[Fake Mode]: turn on fake mode, default turn off, Only intercept requests, relying on back-end services; When enabled, a simulated object will be used, which can be independent of back-end services~~ (support in rule)
 
 
 
 ### Right Top Menu
 - [Close]: close this extension
-- [Watching]: watching fetch（just work on Content-Type is json）
-- [Intercepting]: custome responseText
+- [Recording]: recording the fetch to add a rule quickly（just work on Content-Type is json）
+- [Intercepting]: custome responseText, delay fetch etc.
+- [Proxying]: support redirect url, modify request headers and response headers, blocked url etc.
 
 ## Status Bar
 - \[Setting\]: Setting
@@ -103,6 +107,8 @@ How to solve the above problems? If you can intercept and modify the data before
 |chunks|string[]|set event-source data source，response、responseText would be overrided|
 |chunkInterval|number|set the interval of chunk，default 1_000|
 |chunkTemplate|number|set the chunk format，default `data: $1\n\n`|
+|faked|boolean|faked mode. turn on fake mode, default turn off, Only intercept requests, relying on back-end services; When enabled, a simulated object will be used, which can be independent of back-end services|
+|blocked|boolean|blocked current fetch|
 
 ### Code Panel
 call hooks function to modify data, support there hooks
@@ -171,13 +177,21 @@ interface MatchingRule extends ResponseRule {
 
 ## ⭐ Usage Scenarios
 
-### Watching
+### Recording
 
 It can help you quickly fill in the interface information to be intercepted, and then re request the interface
 
 ### Intercepting
 
 Select the interception mode, tick the interface to be intercepted, and then re request the interface
+
+### Redirect
+
+set `redirect` field can be redirect the url
+
+### Blocked
+
+set `blocked` field can be blocked the url
 
 ### Test back-end api
 

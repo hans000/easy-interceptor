@@ -39,7 +39,7 @@ export function sendMessageToBackgound(action: CustomEventProps) {
 export function sendMessageToContent(action: CustomEventProps) {
     chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
         if (tab) {
-            chrome.tabs.sendMessage(tab.id, action)
+            chrome.tabs.sendMessage(tab.id!, action)
         }
     })
 }

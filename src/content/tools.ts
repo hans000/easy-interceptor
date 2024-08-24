@@ -28,7 +28,7 @@ export function syncData() {
         dispatchPageScriptEvent({
             from: ContentMsgKey,
             type: 'rules',
-            payload: result[RulesFieldKey].filter(rule => rule.groupId === result[ActiveGroupId]),
+            payload: result[RulesFieldKey].filter((rule: MatchRule) => rule.groupId === result[ActiveGroupId]),
         })
         // TODO ? 重置trigger
         dispatchPageScriptEvent({
@@ -44,7 +44,7 @@ export function handleTask(queue: Set<CustomEventProps>, timer: number) {
         const rules: MatchRule[] = result[RulesFieldKey]
         // 取出队列中的数据
         for (const item of queue) {
-            // 监听时 拼接数据
+            // 录制时 拼接数据
             if (item.type === 'response') {
                 for (let i = rules.length - 1; i >= 0; i--) {
                     const rule = rules[i]

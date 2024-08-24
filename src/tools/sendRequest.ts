@@ -4,11 +4,12 @@
  */
 import { MatchRule } from "../App"
 import { createRunFunc, stringifyParams } from "."
-import { sendLog } from './log'
+import { log, sendLog } from './log'
+import { ProxyXMLHttpRequest } from "../injected/proxy/handle"
 
 export async function sendRequest(rule: MatchRule, index: number) {
     if (rule.type === 'fetch') {
-        const needBody = ! /(get|option)/.test(rule.method)
+        const needBody = ! /(get|option)/.test(rule.method!)
         return await fetch(stringifyParams(rule.params, rule.url), {
             headers: {
                 ...rule.requestHeaders,
@@ -21,9 +22,11 @@ export async function sendRequest(rule: MatchRule, index: number) {
         })
     } else if (rule.type === 'xhr') {
         const xhr = new XMLHttpRequest()
-        xhr.open(rule.method || 'get', rule.url)
+        xhr.open(rule.method || 'get', rule.url!)
         xhr.setRequestHeader('Index', index + '')
-        rule.requestHeaders && Object.keys(rule.requestHeaders).forEach(key => xhr.setRequestHeader(key, rule.requestHeaders[key]))
+        if (rule.requestHeaders) {
+            Object.keys(rule.requestHeaders).forEach(key => xhr.setRequestHeader(key, rule.requestHeaders![key]))
+        }
         xhr.send()
 
         return await new Promise<XMLHttpRequest>(resolve => {
@@ -48,13 +51,15 @@ export function sendRequestLog(rule: MatchRule, index: number) {
             } catch (error) {
                 return inst.responseText
             }
-        } else {
+        } else if (inst instanceof Response) {
             return inst.json()
+        } else {
+            log('unknown error', 'error')
         }
     }).then(sendLog)
 }
 
-export async function handleCode(matchRule: MatchRule, inst: XMLHttpRequest | Response) {
+export async function handleCode(matchRule: MatchRule, inst: ProxyXMLHttpRequest | Response) {
     let { id, count, enable, code, ...restRule } = matchRule
 
     const isResponse = inst instanceof Response

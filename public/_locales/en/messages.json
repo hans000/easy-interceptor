@@ -32,9 +32,6 @@
     "action_theme": {
         "message": "Switch Theme"
     },
-    "action_mode": {
-        "message": "Fake Mode"
-    },
     "action_reset": {
         "message": "Reset"
     },
@@ -60,7 +57,10 @@
         "message": "Intercepting"
     },
     "watch": {
-        "message": "Watching"
+        "message": "Recording"
+    },
+    "proxy": {
+        "message": "Proxying"
     },
     "close": {
         "message": "Close"
@@ -84,7 +84,13 @@
         "message": "Size"
     },
     "tip_debug_count": {
-        "message": "Debug • Intercept Count"
+        "message": "Faked Mode • Send fetch • Intercept Count"
+    },
+    "tip_faked": {
+        "message": "Faked Mode"
+    },
+    "tip_send_fetch": {
+        "message": "Send fetch"
     },
     "tip_tag": {
         "message": "Fetch Type • Request"

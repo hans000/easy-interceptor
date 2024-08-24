@@ -2,10 +2,10 @@
  * The AGPL License (AGPL)
  * Copyright (c) 2022 hans000
  */
-import { asyncGenerator, delayRun, formatChunk, tryToProxyUrl } from "../../tools";
+import { asyncGenerator, createRunFunc, delayAsync, formatChunk, parseHeaderKey, tryToProxyUrl } from "../../tools";
 import { log } from "../../tools/log";
 import { parseUrl } from "../../tools";
-import { Options, __global__ } from "./globalVar";
+import { Options, __global__, getPageFetch } from "./globalVar";
 
 let unproxied = true
 
@@ -19,7 +19,7 @@ export function proxyFetch(options: Options) {
     const { onMatch, onFetchIntercept } = options
     __global__.NativeFetch = options.NativeFetch || __global__.NativeFetch
 
-    const proxyFetch = new Proxy(__global__.NativeFetch, {
+    const proxyFetch = new Proxy(__global__.NativeFetch!, {
         async apply(target, thisArg, args) {
             const [input, init] = args as [Request | URL | string, RequestInit]
             const isRequest = input instanceof Request
@@ -29,7 +29,7 @@ export function proxyFetch(options: Options) {
                 : input instanceof URL
                 ? input
                 : parseUrl(input)
-            const matchItem = onMatch({
+            const matchItem = onMatch!({
                 method: req.method,
                 requestUrl: url.origin + url.pathname,
                 type: 'fetch',
@@ -37,23 +37,24 @@ export function proxyFetch(options: Options) {
             })
 
             if (matchItem?.requestHeaders) {
-                Object.entries(matchItem.requestHeaders).forEach(([key, value]) => {
+                Object.entries(matchItem.requestHeaders).forEach(([name, value]) => {
+                    const { header } = parseHeaderKey(name)
                     if (init.headers instanceof Headers) {
-                        init.headers.append(key, value)
+                        init.headers.append(header, value)
                     } else if (Array.isArray(init.headers)) {
-                        init.headers.push([key, value])
+                        init.headers.push([header, value])
                     } else if (typeof init.headers === 'object') {
-                        init.headers[key] = value
+                        init.headers[header] = value
                     }
                 })
             }
 
             const realFetch = __global__.PageFetch || target
-            const proxyUrl = tryToProxyUrl(input, __global__.options.proxy)
+            const proxyUrl = tryToProxyUrl(input, __global__.options!.proxy)
             const proxyInput = isRequest ? new Request(proxyUrl, init) : proxyUrl
 
             if (matchItem) {
-                const loggable = options.faked && options.fakedLog
+                const loggable = matchItem.faked && options.fakedLog
 
                 if (loggable) {
                     log({
@@ -63,42 +64,52 @@ export function proxyFetch(options: Options) {
                     })
                 }
 
+                if (matchItem.faked) {
+                    const fn = createRunFunc(matchItem.code!, 'onBlocking')
+                    const blocked = fn({
+                        ...matchItem,
+                        url: url.origin + url.pathname,
+                    }) || matchItem.blocked
+                    if (blocked) {
+                        throw new Error('net::ERR_BLOCKED_BY_CLIENT')
+                    }
+                }
+
                 const chunks = matchItem.chunks || []
                 const isEventSource = !!chunks.length
-                const realResponse = (options.faked || isEventSource)
+                const realResponse = (matchItem.faked || isEventSource)
                     ? new Response(new Blob(['null']), init) 
                     : await realFetch.call(thisArg, proxyInput, init)
-                const response = await onFetchIntercept(matchItem)(realResponse)
+                const response = await onFetchIntercept!(matchItem)(realResponse)
 
-                return new Promise(resolve => {
-                    delayRun(async () => {
-                        let res: Response = response || realResponse
-                        
-                        if (isEventSource) {
-                            res = new Response(new ReadableStream({
-                                async start(controller) {
-                                    for await (const value of asyncGenerator(chunks, matchItem.chunkInterval)) {
-                                        const str = formatChunk(value, matchItem.chunkTemplate)
-                                        controller.enqueue(new TextEncoder().encode(str));
-                                    }
-                                    controller.close();
-                                },
-                            }), init)
-                        }
+                return delayAsync(async () => {
+                    let res: Response = response || realResponse
+                    
+                    if (isEventSource) {
+                        res = new Response(new ReadableStream({
+                            async start(controller) {
+                                for await (const value of asyncGenerator(chunks, matchItem.chunkInterval)) {
+                                    const str = formatChunk(value, matchItem.chunkTemplate)
+                                    controller.enqueue(new TextEncoder().encode(str));
+                                }
+                                controller.close();
+                            },
+                        }), init)
+                    }
 
-                        resolve(res)
-                        if (loggable) {
-                            const body = await res.clone().json()
-                            log({
-                                type: 'fetch:response',
-                                input,
-                                body,
-                                status: res.status,
-                                headers: res.headers,
-                            })
-                        }
-                    }, matchItem ? matchItem.delay : undefined)
-                })
+                    if (loggable) {
+                        const body = await res.clone().json()
+                        log({
+                            type: 'fetch:response',
+                            input,
+                            body,
+                            status: res.status,
+                            headers: res.headers,
+                        })
+                    }
+
+                    return res
+                }, matchItem.delay)
             }
 
             if (__global__.PageFetch) {
@@ -128,7 +139,7 @@ export function unproxyFetch() {
         Object.defineProperties(window, {
             fetch: {
                 get() {
-                    return __global__.PageFetch || __global__.NativeFetch
+                    return getPageFetch()
                 }
             }
         })

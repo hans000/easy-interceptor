@@ -22,19 +22,12 @@ export default defineConfig({
   build: {
     outDir: path.join('dist', dist),
     target: 'esnext',
-    // rollupOptions: {
-    //   output: {
-    //     ...(isLocal && {
-    //       manualChunks(id) {
-    //         if (id.includes("node_modules")) {
-    //           // 让每个插件都打包成独立的文件
-    //           console.log(id)
-    //           return id.toString().split("node_modules/")[2].split("/")[0].toString(); 
-    //         }
-    //       }
-    //     })
-    //   }
-    // }
+    rollupOptions: {
+      external: [
+        'react',
+        'react-dom'
+      ]
+    }
   },
   plugins: [
     react(),

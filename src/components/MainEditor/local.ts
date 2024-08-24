@@ -13,7 +13,7 @@ import tsWorker from "monaco-editor/esm/vs/language/typescript/ts.worker?worker"
 
 export function loadLocalMocano() {
     self.MonacoEnvironment = {
-        getWorker(_, label) {
+        getWorker(_: any, label: string) {
             if (label === "json") {
                 return new jsonWorker()
             }

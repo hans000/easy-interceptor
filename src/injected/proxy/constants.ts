@@ -3,7 +3,7 @@
  * Copyright (c) 2022 hans000
  */
 /** xhr states */
-export const XhrStates = {
+export const XhrStates: Record<string, number> = {
     UNSENT: 0,
     OPENED: 1,
     HEADERS_RECEIVED: 2,
@@ -37,7 +37,7 @@ export const UnsafeHeaders = [
 ]
 
 /** http status codes */
-export const HttpStatusCodes = {
+export const HttpStatusCodes: Record<number, string> = {
     100: 'Continue',
     101: 'Switching Protocols',
     200: 'OK',

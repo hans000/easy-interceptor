@@ -53,6 +53,8 @@ export interface MatchRule {
     chunks?: string[]
     chunkInterval?: number
     chunkTemplate?: string
+    faked?: boolean
+    blocked?: boolean
 }
 
 if (!process.env.VITE_LOCAL) {
@@ -67,6 +69,8 @@ const fields = [
     'url',
     'redirectUrl',
     'test',
+    'blocked',
+    'faked',
     'groupId',
     'description',
     'type',
@@ -89,7 +93,6 @@ const isDarkTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
 export type BanType = 'xhr' | 'fetch' | 'none' | 'all'
 
 export interface ConfigInfoType {
-    faked: boolean
     fakedLog: boolean
     runAt: string
     runAtDelay: number
@@ -107,7 +110,6 @@ export interface ConfigInfoType {
 }
 
 const defaultConfigInfo: ConfigInfoType = {
-    faked: false,
     fakedLog: true,
     runAt: 'start',
     runAtDelay: 0,
@@ -125,13 +127,11 @@ export default function App() {
     const [watchFilter, setWatchFilter] = useStorage(WatchFilterKey, '')
     const [rules, setRules] = useStorage<MatchRule[]>(RulesFieldKey, [])
     const [openEditor, setOpenEditor] = useStorage(OpenEditorKey, false)
-    const [selectedRowKeys, setSelectedRowKeys] = useStorage(SelectedRowFieldKeys, [])
+    const [selectedRowKeys, setSelectedRowKeys] = useStorage<string[]>(SelectedRowFieldKeys, [])
     const [loading, setLoading] = useState(false)
-    const [activeId, setActiveId] = useStorage<string>(ActiveIdFieldKey, null)
+    const [activeId, setActiveId] = useStorage<string | null>(ActiveIdFieldKey, null)
     const [invalid, setInvalid] = useState(false)
-    const [visible, setVisible] = useState(false)
     const [fileName, setFileName] = useStorage<FileType>(PathFieldKey, 'config')
-    const [hiddenFields, setHiddenFields] = useStorage<string[]>(HiddenFieldsFieldKey, [])
     const [percent, setPercent] = useState(0)
     const originRef = useRef('')
     const editorRef = useRef()
@@ -155,7 +155,6 @@ export default function App() {
             [OpenEditorKey]: setOpenEditor,
             [SelectedRowFieldKeys]: setSelectedRowKeys,
             [ActiveIdFieldKey]: setActiveId,
-            [HiddenFieldsFieldKey]: setHiddenFields,
             [WatchFilterKey]: setWatchFilter,
             [ActiveGroupId]: setActiveGroupId,
         }
@@ -166,7 +165,7 @@ export default function App() {
         Object.entries(map).forEach(([key, fn]) => fn(result[key]))
         if (clean) {
             setSelectedRowKeys([])
-            setRules(result[RulesFieldKey].map(item => ({ ...item, count: 0 })))
+            setRules(result[RulesFieldKey].map((item: MatchRule) => ({ ...item, count: 0 })))
             setActiveId(null)
         }
     }
@@ -176,7 +175,7 @@ export default function App() {
             chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
                 if (tab) {
                     try {
-                        const [, a, b] = tab.url.match(/^(https?:\/\/)?(.+?)(\/|$)/)
+                        const [, a, b] = tab.url!.match(/^(https?:\/\/)?(.+?)(\/|$)/) || []
                         const origin = a + b
                         originRef.current = origin
                     } catch (error) { }
@@ -197,10 +196,10 @@ export default function App() {
                 groupId: 'default',
                 ...Object.keys(result[index]).reduce((acc, k) => {
                     if (!fields.includes(k)) {
-                        acc[k] = result[index][k]
+                        acc[k] = result[index][k as keyof MatchRule]
                     }
                     return acc
-                }, {}),
+                }, {} as any),
                 ...config,
                 code: value.code
             }
@@ -222,7 +221,7 @@ export default function App() {
     const workspaces = React.useMemo(
         () => {
             const result = new Set<string>(['default'])
-            rules.forEach(rule => result.add(rule.groupId))
+            rules.forEach(rule => result.add(rule.groupId!))
             return [...result].filter(Boolean)
         },
         [rules]
@@ -246,34 +245,7 @@ export default function App() {
             },
         },
         {
-            title: (
-                <Dropdown open={visible} onOpenChange={setVisible}
-                    menu={{
-                        items: fields.map(field => {
-                            const disabled = (ConfigSchema.properties[field] as any).required
-                            return {
-                                key: field,
-                                label: (
-                                    <Checkbox disabled={disabled} key={field} defaultChecked={!hiddenFields.includes(field)} onChange={(e) => {
-                                        const checked = e.target.checked
-                                        setHiddenFields(fields => {
-                                            if (checked) {
-                                                return fields.filter(item => item !== field)
-                                            } else {
-                                                return [...fields, field]
-                                            }
-                                        })
-                                    }}>{field}</Checkbox>
-                                ),
-                            }
-                        })
-                    }}>
-                    <span>
-                        <span>{t('row_rule')}</span>
-                        <FilterOutlined style={{ marginLeft: 8, padding: 4, color: '#bfbfbf' }} />
-                    </span>
-                </Dropdown>
-            ),
+            title: t('row_rule'),
             dataIndex: 'test', key: 'test', ellipsis: true,
             filterIcon: filtered => <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />,
             filterDropdown: ({ setSelectedKeys, selectedKeys, confirm }) => (
@@ -296,11 +268,11 @@ export default function App() {
                         }} />
                 </div>
             ),
-            onFilter(value: string, record) {
-                const [k, e] = value.split('\n')
+            onFilter(value, record) {
+                const [k, e] = (value as string).split('\n')
                 const include = record.test.includes(k) || record.description?.includes(k)
                 const exclude = e ? e.split(',').some(pattern => pathMatch(pattern, record.test)) : false
-                return value ? (include && !exclude) : true
+                return value ? (!!include && !exclude) : true
             },
             render: (value, record) => {
                 const index = rules.findIndex(rule => rule.id === record.id)
@@ -383,12 +355,23 @@ export default function App() {
             dataIndex: 'count', key: 'count', width: 80, align: 'center',
             title: <Tooltip title={t('tip_debug_count')}><BugOutlined /></Tooltip>,
             render: (value, record) => (
-                <>
-                    {!!record.code ? <CodeOutlined onClick={() => {
-                        runCode(record, activeIndex)
-                    }} /> : null}
-                    <span style={{ paddingLeft: 4 }}>{value ? value : null}</span>
-                </>
+                <Space>
+                    {
+                        record.faked && <Tooltip title={t('tip_faked')}><BugOutlined /></Tooltip>
+                    }
+                    {
+                        !!record.code
+                            ? (
+                                <Tooltip title={t('tip_send_fetch')}>
+                                    <CodeOutlined onClick={() => {
+                                        runCode(record, activeIndex)
+                                    }} />
+                                </Tooltip>
+                            )
+                            : null
+                    }
+                    <span>{value ? value : null}</span>
+                </Space>
             )
         },
         {
@@ -454,7 +437,7 @@ export default function App() {
                 setting: JSON.stringify(configInfo, null, 4),
             }
         }
-        const data = Object.fromEntries(fields.filter(field => !hiddenFields.includes(field)).map(k => [k, record[k]]))
+        const data = Object.fromEntries(fields.map(k => [k, record[k as keyof MatchRule]]))
         return {
             code: record.code,
             config: JSON.stringify(data, null, 4),
@@ -481,7 +464,7 @@ export default function App() {
                 })
             }
 
-            const html = document.querySelector('html')
+            const html = document.querySelector('html')!
             const cls = 'theme--dark'
             if (configInfo.dark && !html.classList.contains(cls)) {
                 html.classList.add(cls)
@@ -641,11 +624,6 @@ export default function App() {
                                     setActiveId(null)
                                 }} />
                             </Tooltip>
-                            <Tooltip title={t('action_mode')}>
-                                <Button disabled={editable} type={configInfo.faked ? 'primary' : 'default'} icon={<BugOutlined />} onClick={() => {
-                                    setConfigInfo(info => ({ ...info, faked: !info.faked }))
-                                }} />
-                            </Tooltip>
                             {
                                 editable && (
                                     <Tooltip title={t('action_back')}>
@@ -690,8 +668,9 @@ export default function App() {
                                     }
                                 }}>
                                 <Select.Option key={'close'}><Badge status='default' text={t('close')}></Badge></Select.Option>
-                                <Select.Option key={'watch'}><Badge color={'orange'} status='default' text={t('watch')}></Badge></Select.Option>
-                                <Select.Option key={'intercept'}><Badge color={'purple'} status='default' text={t('intercept')}></Badge></Select.Option>
+                                <Select.Option key={'watch'}><Badge color={'orange'} text={t('watch')}></Badge></Select.Option>
+                                <Select.Option key={'intercept'}><Badge color={'purple'} text={t('intercept')}></Badge></Select.Option>
+                                <Select.Option key={'proxy'}><Badge color={'blue'} text={t('proxy')}></Badge></Select.Option>
                             </Select>
                         </div>
                     </div>
@@ -709,7 +688,7 @@ export default function App() {
                             rowSelection={{
                                 selectedRowKeys,
                                 onChange: (keys) => {
-                                    setSelectedRowKeys(keys)
+                                    setSelectedRowKeys(keys as string[])
                                 },
                             }}
                         />
@@ -761,10 +740,10 @@ export default function App() {
                         <div className='app__bar-item'>
                             <Popover trigger={['click']} placement='top' showArrow={false} content={(
                                 <>
-                                    <Segmented value={configInfo.runAt} onChange={(runAt: string) => {
+                                    <Segmented value={configInfo.runAt} onChange={(runAt) => {
                                         setConfigInfo(info => ({
                                             ...info,
-                                            runAt,
+                                            runAt: runAt as string,
                                             action: (runAt === 'override' && info.action === 'close') ? 'intercept' : info.action,
                                         }))
                                     }} options={[
@@ -793,7 +772,7 @@ export default function App() {
                                         margin: '8px 0'
                                     }}>
                                         {
-                                            configInfo.runAt === 'delay' && <InputNumber value={configInfo.runAtDelay} onChange={(value) => setConfigInfo(info => ({ ...info, runAtDelay: value }))} style={{ width: '100%' }} defaultValue={300} min={0} step={1} precision={0} />
+                                            configInfo.runAt === 'delay' && <InputNumber value={configInfo.runAtDelay} onChange={(value) => setConfigInfo(info => ({ ...info, runAtDelay: value! }))} style={{ width: '100%' }} defaultValue={300} min={0} step={1} precision={0} />
                                         }
                                         {
                                             configInfo.runAt === 'trigger' && <Input value={configInfo.runAtTrigger} onChange={e => setConfigInfo(info => ({ ...info, runAtTrigger: e.target.value }))} style={{ width: '100%' }} defaultValue={'*'} />
@@ -816,8 +795,8 @@ export default function App() {
                         <div className='app__bar-item'>
                             <Popover trigger={['click']} placement='top' showArrow={false} content={(
                                 <>
-                                    <Segmented value={configInfo.banType} onChange={(ban: 'xhr' | 'fetch' | 'none') => {
-                                        setConfigInfo(info => ({ ...info, banType: ban }))
+                                    <Segmented value={configInfo.banType} onChange={(ban) => {
+                                        setConfigInfo(info => ({ ...info, banType: ban as 'xhr' | 'fetch' | 'none' }))
                                     }} options={[
                                         { label: t('ban_none'), value: 'none' },
                                         { label: t('ban_xhr'), value: 'xhr' },
@@ -855,7 +834,7 @@ export default function App() {
                                     ref={editorRef}
                                     index={activeIndex}
                                     rule={rules[activeIndex]}
-                                    value={formatResult(rules[activeIndex])}
+                                    value={formatResult(rules[activeIndex]) as any}
                                     onFileNameChange={fileName => {
                                         setFileName(fileName)
                                     }}

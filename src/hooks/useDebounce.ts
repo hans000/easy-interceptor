@@ -5,7 +5,7 @@
 import { useRef, useEffect, useCallback } from "react"
 
 export function useDebounce(fn: any, delay = 300, dep = []) {
-    const { current } = useRef({ fn, timer: null })
+    const { current } = useRef({ fn, timer: 0 })
     
     useEffect(
         () => {
@@ -14,12 +14,12 @@ export function useDebounce(fn: any, delay = 300, dep = []) {
         [fn]
     )
 
-    return useCallback(function f(...args) {
+    return useCallback(function f(...args: any[]) {
         if (current.timer) {
             clearTimeout(current.timer)
         }
-        current.timer = setTimeout(() => {
-            current.fn.call(this, ...args)
+        current.timer = window.setTimeout(() => {
+            current.fn(...args)
         }, delay)
     }, dep)
 }
