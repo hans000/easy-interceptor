@@ -23,10 +23,9 @@ export default defineConfig({
     outDir: path.join('dist', dist),
     target: 'esnext',
     rollupOptions: {
-      external: [
-        'react',
-        'react-dom'
-      ]
+      external: isLocal
+        ? [] 
+        : [ 'react', 'react-dom' ]
     }
   },
   plugins: [
