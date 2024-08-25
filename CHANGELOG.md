@@ -2,6 +2,8 @@
 - 重构了xhr逻辑
 - 移除了fake模式，支持规则内配置，粒度更小了，使用`faked`字段
 - 添加新的模式，代理模式
+- 新增blocked字段
+- 新增onBlocking hook
 
 ## v1.17.0
 - 支持whiteList配置
