@@ -117,6 +117,7 @@ call hooks function to modify data, support there hooks
 - onResponseHeaders
 - onRequestHeaders
 - onRedirect
+- onBlocking
 ```
 onRedirect((rule: Rule) => {
     return Math.random() > 0.5 ? 'http://foo.com' : 'http://bar.com'
@@ -135,6 +136,11 @@ onResponding((context: Context) => {
         status: 504
     }
 })
+
+onBlocking(rule => {
+    return rule.url.includes('foo')
+})
+
 
 declare interface Rule {
     count?: number

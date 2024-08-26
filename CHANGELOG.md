@@ -2,8 +2,9 @@
 - 重构了xhr逻辑
 - 移除了fake模式，支持规则内配置，粒度更小了，使用`faked`字段
 - 添加新的模式，代理模式
-- 新增blocked字段
+- 规则中新增blocked、faked字段
 - 新增onBlocking hook
+- 新增支持event-source-stream，配套的字段（chunks, chunkInterval, chunkTemplate）
 
 ## v1.17.0
 - 支持whiteList配置
