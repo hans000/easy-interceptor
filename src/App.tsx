@@ -683,7 +683,7 @@ export default function App() {
                             size='small'
                             pagination={false}
                             columns={columns}
-                            scroll={{ y: 492 }}
+                            scroll={{ y: 498 }}
                             dataSource={workspaceRules}
                             rowSelection={{
                                 selectedRowKeys,
