@@ -44,38 +44,42 @@ window.addEventListener(PageScriptEventName, (event) => {
         } else if (value.runAt === 'trigger') {
             updateData()
         } else if (value.runAt === 'override') {
-            Object.defineProperty(window, 'fetch', {
-                set(value) {
-                    window._fetch = value;
-                    updateData()
-                    handle(data.type, data.payload, {
-                        NativeFetch: window._fetch,
-                        NativeXhr: window._XMLHttpRequest,
-                    })
-                },
-                get() {
-                    if (window._fetch) {
-                        return window._fetch
+            if (! window._fetch) {
+                Object.defineProperty(window, 'fetch', {
+                    set(value) {
+                        window._fetch = value;
+                        updateData()
+                        handle(data.type, data.payload, {
+                            NativeFetch: window._fetch,
+                            NativeXhr: window._XMLHttpRequest,
+                        })
+                    },
+                    get() {
+                        if (window._fetch) {
+                            return window._fetch
+                        }
+                        return originFetch;
                     }
-                    return originFetch;
-                }
-            });
-            Object.defineProperty(window, 'XMLHttpRequest', {
-                set(value) {
-                    window._XMLHttpRequest = value;
-                    updateData()
-                    handle(data.type, data.payload, {
-                        NativeFetch: window._fetch,
-                        NativeXhr: window._XMLHttpRequest,
-                    })
-                },
-                get() {
-                    if (window._XMLHttpRequest) {
-                        return window._XMLHttpRequest
+                });
+            }
+            if (! window._XMLHttpRequest) {
+                Object.defineProperty(window, 'XMLHttpRequest', {
+                    set(value) {
+                        window._XMLHttpRequest = value;
+                        updateData()
+                        handle(data.type, data.payload, {
+                            NativeFetch: window._fetch,
+                            NativeXhr: window._XMLHttpRequest,
+                        })
+                    },
+                    get() {
+                        if (window._XMLHttpRequest) {
+                            return window._XMLHttpRequest
+                        }
+                        return originXhr;
                     }
-                    return originXhr;
-                }
-            });
+                });
+            }
         } else {
             updateData()
             handle(data.type, data.payload)

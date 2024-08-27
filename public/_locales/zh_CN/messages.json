@@ -12,7 +12,7 @@
         "message": "快速填充当前域名"
     },
     "action_add": {
-        "message": "关闭"
+        "message": "添加"
     },
     "action_remove": {
         "message": "删除"
