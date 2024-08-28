@@ -2,7 +2,7 @@
  * The AGPL License (AGPL)
  * Copyright (c) 2022 hans000
  */
-import { asyncGenerator, createRunFunc, delayAsync, formatChunk, parseHeaderKey, tryToProxyUrl } from "../../tools";
+import { asyncGenerator, createRunFunc, delayAsync, formatChunk, parseHeaderKey } from "../../tools";
 import { log } from "../../tools/log";
 import { parseUrl } from "../../tools";
 import { Options, __global__, getPageFetch } from "./globalVar";
@@ -23,14 +23,13 @@ export function proxyFetch(options: Options) {
         async apply(target, thisArg, args) {
             const [input, init] = args as [Request | URL | string, RequestInit]
             const isRequest = input instanceof Request
-            const req = isRequest ? input.clone() : new Request(input.toString(), init)
             const url = isRequest
                 ? parseUrl(input.url)
                 : input instanceof URL
                 ? input
                 : parseUrl(input)
             const matchItem = onMatch!({
-                method: req.method,
+                method: init.method || 'get',
                 requestUrl: url.origin + url.pathname,
                 type: 'fetch',
                 params: [...url.searchParams.entries()],
@@ -50,8 +49,6 @@ export function proxyFetch(options: Options) {
             }
 
             const realFetch = __global__.PageFetch || target
-            const proxyUrl = tryToProxyUrl(input, __global__.options!.proxy)
-            const proxyInput = isRequest ? new Request(proxyUrl, init) : proxyUrl
 
             if (matchItem) {
                 const loggable = matchItem.faked && options.fakedLog
@@ -79,7 +76,7 @@ export function proxyFetch(options: Options) {
                 const isEventSource = !!chunks.length
                 const realResponse = (matchItem.faked || isEventSource)
                     ? new Response(new Blob(['null']), init) 
-                    : await realFetch.call(thisArg, proxyInput, init)
+                    : await realFetch.call(thisArg, input, init)
                 const response = await onFetchIntercept!(matchItem)(realResponse)
 
                 return delayAsync(async () => {
@@ -113,9 +110,9 @@ export function proxyFetch(options: Options) {
             }
 
             if (__global__.PageFetch) {
-                return __global__.PageFetch.call(thisArg, proxyInput, init)
+                return __global__.PageFetch.call(thisArg, input, init)
             }
-            return target.call(thisArg, proxyInput, init)
+            return target.call(thisArg, input, init)
         },
     })
 

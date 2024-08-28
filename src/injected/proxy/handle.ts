@@ -4,7 +4,7 @@
  */
 
 import { MatchRule } from "../../App"
-import { asyncGenerator, createRunFunc, delayAsync, formatChunk, modifyXhrProto, modifyXhrProtoProps, parseHeaderKey, parseHeaders, toTitleCase, tryToProxyUrl } from "../../tools"
+import { asyncGenerator, createRunFunc, delayAsync, formatChunk, modifyXhrProto, parseHeaderKey, parseHeaders, toTitleCase } from "../../tools"
 import { log } from "../../tools/log"
 import { parseUrl, stringifyHeaders } from "../../tools"
 import { HttpStatusCodes } from "./constants"

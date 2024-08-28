@@ -3,7 +3,7 @@
  * Copyright (c) 2022 hans000
  */
 import { ConfigInfoType, MatchRule } from "../App"
-import { matchPath, normalizeHeaders } from "../tools"
+import { matchPath, normalizeHeaders, replaceUrl } from "../tools"
 import { ActiveGroupId, BackgroundMsgKey, ConfigInfoFieldKey, PopupMsgKey, RulesFieldKey, WatchFilterKey } from "../tools/constants"
 import { CustomEventProps, sendMessageToContent } from "../tools/message"
 import updateIcon from "../tools/updateIcon"
@@ -48,6 +48,8 @@ chrome.storage.local.get([RulesFieldKey, ActiveGroupId], (result) => {
     __rules = (result[RulesFieldKey] || []).filter((rule: MatchRule) => (rule.groupId || 'default') === result[ActiveGroupId])
 })
 
+const filterTypes: chrome.webRequest.ResourceType[] = ['main_frame', 'sub_frame', 'stylesheet', 'script', 'image', 'font', 'object', 'xmlhttprequest', 'media', 'websocket', 'other']
+
 // 获取body数据
 chrome.webRequest.onBeforeRequest.addListener(
     details => {
@@ -71,7 +73,7 @@ chrome.webRequest.onBeforeRequest.addListener(
     },
     {
         urls: ['<all_urls>'],
-        types: ['xmlhttprequest', 'stylesheet', 'script', 'main_frame', 'sub_frame', 'font']
+        types: filterTypes
     },
     ['requestBody', 'blocking']
 )
@@ -92,7 +94,7 @@ chrome.webRequest.onBeforeSendHeaders.addListener(
     },
     {
       urls: ['<all_urls>'],
-      types: ['xmlhttprequest']
+      types: filterTypes
     },
     ['blocking', 'extraHeaders', 'requestHeaders']
 )
@@ -105,7 +107,7 @@ chrome.webRequest.onHeadersReceived.addListener(
     },
     {
         urls: ['<all_urls>'],
-        types: ['xmlhttprequest']
+        types: filterTypes
     },
     ['blocking', 'extraHeaders', 'responseHeaders']
 )
@@ -248,7 +250,7 @@ function beforeRequestIntercept(details: chrome.webRequest.WebRequestBodyDetails
                 const redirectUrl = fn({
                     ...rule,
                     url: details.url,
-                }) || rule.redirectUrl
+                }) || replaceUrl(rule.test, rule.redirectUrl!)
                 if (redirectUrl) {
                     return {
                         redirectUrl

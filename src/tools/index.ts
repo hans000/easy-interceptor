@@ -272,8 +272,48 @@ export function sizeof(object: Record<string, any> = {}) {
     return JSON.stringify(object).length
 }
 
+export const enum PatternKind {
+    RegExp = 1,
+    PatchMatcher = 2,
+    String = 3
+}
+
+export function getMatchType(pattern: string) {
+    if (/^\^|\$$/.test(pattern)) {
+        return PatternKind.RegExp
+    }
+    if (/[?*]/.test(pattern)) {
+        return PatternKind.PatchMatcher
+    }
+    return PatternKind.String
+}
+
+export function replaceUrl(pattern: string, url: string) {
+    if (getMatchType(pattern) === PatternKind.RegExp) {
+        try {
+            url.replace(new RegExp(pattern), url)
+        } catch (error) {
+            return url
+        }
+    }
+    return url
+}
+
 export function matchPath(pattern: string, path: string) {
-    return /[?*]/.test(pattern) ? pathMatch(pattern, path) : path.includes(pattern)
+    const type = getMatchType(pattern)
+    switch (type) {
+        case PatternKind.RegExp:
+            try {
+                const reg = new RegExp(pattern, 'i')
+                return reg.test(path)
+            } catch (error) {
+                return false
+            }
+        case PatternKind.PatchMatcher:
+            return pathMatch(pattern, path);
+        default:
+            return path.includes(pattern);
+    }
 }
 
 export function toTitleCase(str = '') {
