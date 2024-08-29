@@ -230,10 +230,10 @@ export function normalizeHeaders(currentHeaders: chrome.webRequest.HttpHeader[] 
     Object.entries(modifyHeader || {}).forEach(([name, value]) => {
         const { header, tag } = parseHeaderKey(name)
         if (tag === 'remove') {
-            headers = headers.filter(h => h.name.toLowerCase() !== header)
+            headers = headers.filter(h => toTitleCase(h.name) !== header)
         } else if (tag === 'override') {
-            headers = headers.filter(h => h.name.toLowerCase() !== header)
-            headers.push({ name, value })
+            headers = headers.filter(h => toTitleCase(h.name) !== header)
+            headers.push({ name: header, value })
         } else {
             headers.push({ name, value })
         }
