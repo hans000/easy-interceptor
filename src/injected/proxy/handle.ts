@@ -9,6 +9,8 @@ import { log } from "../../tools/log"
 import { parseUrl, stringifyHeaders } from "../../tools"
 import { HttpStatusCodes } from "./constants"
 import { Options, __global__, getPageXhr } from "./globalVar"
+import { ExtensionName } from "../../tools/constants"
+import { createBlockException } from "../../tools/exception"
 
 export interface ProxyXMLHttpRequest extends XMLHttpRequest {
     _async: boolean
@@ -71,10 +73,13 @@ function dispatchCustomEvent(this: ProxyXMLHttpRequest, type: string) {
 export function proxyFakeXhrInstance(this: ProxyXMLHttpRequest, options: Options) {
     const originOpen = this.open
     const originSend = this.send
+    const originAbort = this.abort
     const originSetRequestHeader = this.setRequestHeader
     const originGetResponseHeader = this.getResponseHeader
     const originGetAllResponseHeaders = this.getAllResponseHeaders
     const originOverrideMimeType = this.overrideMimeType
+
+    const controller = new AbortController()
 
     this.open = (method: string, url: string | URL, async: boolean = true) => {
         this._async = async
@@ -124,16 +129,16 @@ export function proxyFakeXhrInstance(this: ProxyXMLHttpRequest, options: Options
                         url: this._url,
                     }) || matchItem.blocked
                     if (blocked) {
-                        reject(new Error('net::ERR_BLOCKED_BY_CLIENT'))
+                        reject(createBlockException())
                     } else {
-                        delayAsync(resolve, matchItem.delay)
+                        delayAsync(() => resolve(undefined), matchItem.delay, controller.signal)
                     }
                 } else {
                     const innerXhr = new PageXhr()
                     innerXhr.open(this._method, this._url, this._async)
-                    delayAsync(() => innerXhr.send(body), matchItem.delay)
+                    delayAsync(() => innerXhr.send(body), matchItem.delay, controller.signal)
                     innerXhr.onload = () => resolve(innerXhr)
-                    innerXhr.onerror = () => reject()
+                    innerXhr.onerror = reject
                 }
             })
         }
@@ -249,6 +254,15 @@ export function proxyFakeXhrInstance(this: ProxyXMLHttpRequest, options: Options
             return
         }
         this._forceMimeType = toTitleCase(mimeType)
+    }
+    this.abort = () => {
+        if (! this._matchItem) {
+            originAbort.call(this)
+            return 
+        }
+        if (this._async !== false) {
+            controller.abort()
+        }
     }
 
     return this

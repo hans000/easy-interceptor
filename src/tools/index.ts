@@ -10,7 +10,7 @@ export function formatChunk(chunk: string, tpl = 'data: $1\n\n') {
     return tpl.replace('$1', chunk)
 }
 
-export async function* asyncGenerator(data: unknown[], delay = 1000) {
+export async function* asyncGenerator(data: unknown[], delay = 1000, signal?: AbortSignal) {
     const list = data.map(item => typeof item !== 'string' ? JSON.stringify(item) : item)
     for (const item of list) {
         await new Promise(resolve => setTimeout(resolve, delay))
@@ -250,10 +250,20 @@ export function trimUrlParams(url: string) {
     return url.replace(/\?(.*)/, '')
 }
 
-export function delayAsync<T extends (...args: any[]) => any>(fn: T, delay: number | undefined) {
-    return new Promise<Awaited<ReturnType<T>>>(resolve => {
+export function delayAsync<T extends (signal: AbortSignal) => any>(fn: T, delay: number | undefined, signal?: AbortSignal) {
+    const controller = new AbortController()
+    const mergedSignal = signal || controller.signal
+    return new Promise<Awaited<ReturnType<T>>>((resolve, reject) => {
+        mergedSignal.addEventListener('abort', (event: any) => {
+            reject(event.target.reason)
+            return
+        })
+
         setTimeout(() => {
-            resolve(fn())
+            if (mergedSignal.aborted) {
+                return
+            }
+            resolve(fn(mergedSignal))
         }, delay)
     })
 }

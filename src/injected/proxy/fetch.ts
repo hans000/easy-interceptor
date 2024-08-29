@@ -6,6 +6,7 @@ import { asyncGenerator, createRunFunc, delayAsync, formatChunk, parseHeaderKey 
 import { log } from "../../tools/log";
 import { parseUrl } from "../../tools";
 import { Options, __global__, getPageFetch } from "./globalVar";
+import { createBlockException } from "../../tools/exception";
 
 let unproxied = true
 
@@ -68,7 +69,7 @@ export function proxyFetch(options: Options) {
                         url: url.origin + url.pathname,
                     }) || matchItem.blocked
                     if (blocked) {
-                        throw new Error('net::ERR_BLOCKED_BY_CLIENT')
+                        throw createBlockException()
                     }
                 }
 
@@ -79,12 +80,21 @@ export function proxyFetch(options: Options) {
                     : await realFetch.call(thisArg, input, init)
                 const response = await onFetchIntercept!(matchItem)(realResponse)
 
+                const abortController = new AbortController()
+
+                init.signal?.addEventListener('abort', () => {
+                    abortController.abort()
+                    return
+                })
+
                 return delayAsync(async () => {
                     let res: Response = response || realResponse
                     
                     if (isEventSource) {
+                        let outterController: ReadableStreamDefaultController
                         res = new Response(new ReadableStream({
                             async start(controller) {
+                                outterController = controller
                                 for await (const value of asyncGenerator(chunks, matchItem.chunkInterval)) {
                                     const str = formatChunk(value, matchItem.chunkTemplate)
                                     controller.enqueue(new TextEncoder().encode(str));
@@ -92,6 +102,10 @@ export function proxyFetch(options: Options) {
                                 controller.close();
                             },
                         }), init)
+                        init.signal?.addEventListener('abort', (event: any) => {
+                            outterController.close()
+                            throw new Error(event.target.reason)
+                        })
                     }
 
                     if (loggable) {
@@ -106,7 +120,7 @@ export function proxyFetch(options: Options) {
                     }
 
                     return res
-                }, matchItem.delay)
+                }, matchItem.delay, abortController.signal)
             }
 
             const response = __global__.PageFetch
