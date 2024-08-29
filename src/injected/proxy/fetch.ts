@@ -109,10 +109,11 @@ export function proxyFetch(options: Options) {
                 }, matchItem.delay)
             }
 
-            if (__global__.PageFetch) {
-                return __global__.PageFetch.call(thisArg, input, init)
-            }
-            return target.call(thisArg, input, init)
+            const response = __global__.PageFetch
+                ? __global__.PageFetch.call(thisArg, input, init)
+                : target.call(thisArg, input, init)
+            onFetchIntercept!(null)((await response).clone())
+            return response
         },
     })
 

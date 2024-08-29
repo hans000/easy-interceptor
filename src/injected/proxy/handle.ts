@@ -98,6 +98,9 @@ export function proxyFakeXhrInstance(this: ProxyXMLHttpRequest, options: Options
     this.send = (body) => {
         if (! this._matchItem) {
             originSend.call(this, body)
+            this.addEventListener('load', () => {
+                options.onXhrIntercept!(null).call(this, this)
+            })
             return
         }
 
