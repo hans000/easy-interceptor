@@ -5,6 +5,7 @@
 - 规则中新增blocked、faked字段
 - 新增onBlocking hook
 - 新增支持event-source-stream，配套的字段（chunks, chunkInterval, chunkTemplate）
+- 支持更细粒度的修改headers
 
 ## v1.17.0
 - 支持whiteList配置

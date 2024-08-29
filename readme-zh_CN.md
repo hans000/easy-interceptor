@@ -176,6 +176,73 @@ interface MatchingRule extends ResponseRule {
 }
 ```
 
+### 修改请求、响应头
+
+插件允许做删除，覆盖或追加操作，规则如下：
+- `-` 删除该字段
+- `!` 覆盖该字段
+
+假如现在的header是
+```
+X-Foo: 1
+X-Foo: 2
+Date: Thu, 29 Aug 2024 13:23:40 GMT
+Content-Type: application/json; charset=utf-8
+Content-Length: 46
+ETag: W/"2e-bNcy1ttaqgyUqTX/jcUOknvqYio"
+```
+
+追加：
+```
+{
+    "responseHeaders": {
+        "X-Foo": 3
+    }
+}
+
+>>>
+X-Foo: 1
+X-Foo: 2
+X-Foo: 3
+Date: Thu, 29 Aug 2024 13:23:40 GMT
+Content-Type: application/json; charset=utf-8
+Content-Length: 46
+ETag: W/"2e-bNcy1ttaqgyUqTX/jcUOknvqYio"
+
+```
+
+覆盖：
+```
+{
+    "responseHeaders": {
+        "!X-Foo": 3
+    }
+}
+
+>>>
+X-Foo: 3
+Date: Thu, 29 Aug 2024 13:23:40 GMT
+Content-Type: application/json; charset=utf-8
+Content-Length: 46
+ETag: W/"2e-bNcy1ttaqgyUqTX/jcUOknvqYio"
+
+```
+
+删除：
+```
+{
+    "responseHeaders": {
+        "-X-Foo": 3
+    }
+}
+
+>>>
+Date: Thu, 29 Aug 2024 13:23:40 GMT
+Content-Type: application/json; charset=utf-8
+Content-Length: 46
+ETag: W/"2e-bNcy1ttaqgyUqTX/jcUOknvqYio"
+
+```
 
 ## ⭐ 使用场景
 

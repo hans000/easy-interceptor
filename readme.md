@@ -180,6 +180,74 @@ interface MatchingRule extends ResponseRule {
 }
 ```
 
+### Modify Headers
+
+To modify headers, the rules as
+- `-` Remote field
+- `!` Override field
+
+Origin current headers
+```
+X-Foo: 1
+X-Foo: 2
+Date: Thu, 29 Aug 2024 13:23:40 GMT
+Content-Type: application/json; charset=utf-8
+Content-Length: 46
+ETag: W/"2e-bNcy1ttaqgyUqTX/jcUOknvqYio"
+```
+
+Append headers
+```
+{
+    "responseHeaders": {
+        "X-Foo": 3
+    }
+}
+
+>>>
+X-Foo: 1
+X-Foo: 2
+X-Foo: 3
+Date: Thu, 29 Aug 2024 13:23:40 GMT
+Content-Type: application/json; charset=utf-8
+Content-Length: 46
+ETag: W/"2e-bNcy1ttaqgyUqTX/jcUOknvqYio"
+
+```
+
+Override headers
+```
+{
+    "responseHeaders": {
+        "!X-Foo": 3
+    }
+}
+
+>>>
+X-Foo: 3
+Date: Thu, 29 Aug 2024 13:23:40 GMT
+Content-Type: application/json; charset=utf-8
+Content-Length: 46
+ETag: W/"2e-bNcy1ttaqgyUqTX/jcUOknvqYio"
+
+```
+
+Remote headers
+```
+{
+    "responseHeaders": {
+        "-X-Foo": 3
+    }
+}
+
+>>>
+Date: Thu, 29 Aug 2024 13:23:40 GMT
+Content-Type: application/json; charset=utf-8
+Content-Length: 46
+ETag: W/"2e-bNcy1ttaqgyUqTX/jcUOknvqYio"
+
+```
+
 
 ## ⭐ Usage Scenarios
 
