@@ -12,7 +12,14 @@ export function formatChunk(chunk: string, tpl = 'data: $1\n\n') {
 
 export async function* asyncGenerator(data: unknown[], delay = 1000, signal?: AbortSignal) {
     const list = data.map(item => typeof item !== 'string' ? JSON.stringify(item) : item)
+    let rejectReason
+    signal?.addEventListener('abort', (event: any) => {
+        rejectReason = event.target.reason
+    })
     for (const item of list) {
+        if (rejectReason) {
+            throw new Error(rejectReason)
+        }
         await new Promise(resolve => setTimeout(resolve, delay))
         yield item
     }

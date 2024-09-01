@@ -200,7 +200,7 @@ export function proxyFakeXhrInstance(this: ProxyXMLHttpRequest, options: Options
             // event source stream
             if (isEventSource) {
                 this.responseText = ''
-                for await (const item of asyncGenerator(matchItem.chunks!, matchItem.chunkInterval)) {
+                for await (const item of asyncGenerator(matchItem.chunks!, matchItem.chunkInterval, controller.signal)) {
                     const str = formatChunk(item, matchItem.chunkTemplate)
                     this.responseText += str
                     handleStateChange.call(this, XMLHttpRequest.LOADING)
