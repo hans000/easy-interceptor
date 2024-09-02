@@ -90,7 +90,7 @@ How to solve the above problems? If you can intercept and modify the data before
 |field|type|description|
 |---|---|---|
 |url|string|request url|
-|test|string|required, match request url, ant-path-matcher rule or string match, cannot set query|
+|test|string|required, match request url. the rule can be regexp, path matcher rule or string match, cannot set query|
 |type|xhr\|fetch|request type|
 |description|string|note|
 |response|object\|array\|null\boolean\|number||
@@ -109,6 +109,19 @@ How to solve the above problems? If you can intercept and modify the data before
 |chunkTemplate|number|set the chunk format，default `data: $1\n\n`|
 |faked|boolean|faked mode. turn on fake mode, default turn off, Only intercept requests, relying on back-end services; When enabled, a simulated object will be used, which can be independent of back-end services|
 |blocked|boolean|blocked current fetch|
+
+### Test Match Rule
+
+- exist `^` `$`, regexp pattern
+- exist `*` `?`，path matcher
+- otherwise, string match
+
+For example:
+
+- **/api/foo match `https://api/foo` or `https://v1/api/foo` not match `https://api/foo/bar`
+- /api/foo match `https://api/foo` `https://v1/api/foo` `https://api/foo/bar`
+- /api/foo$ match `https://api/foo` `https://v1/api/foo` not match `https://api/foo/bar`
+
 
 ### Code Panel
 call hooks function to modify data, support there hooks

@@ -85,7 +85,7 @@
 |属性|类型|说明|
 |---|---|---|
 |url|string|请求地址|
-|test|string|必选，匹配的请求地址，ant-path-matcher规则或字符串匹配，不允许写query参数|
+|test|string|必选，匹配的请求地址。规则参考下面，注意不允许写query参数|
 |type|xhr\|fetch|请求类型|
 |description|string|描述字段，做备注使用|
 |response|object\|array\|null\boolean\|number|响应数据|
@@ -104,6 +104,20 @@
 |chunkTemplate|number|设置数据的格式，默认`data: $1\n\n`|
 |faked|boolean|是否启用faked模式，是否启用fake，默认关闭，仅对请求进行拦截，依赖后端服务；开启后会使用一个模拟的对象，可以不依赖后端服务|
 |blocked|boolean|是否阻止当前请求|
+
+
+### test匹配规则
+
+- 当出现`^` `$`时规则为正则匹配；
+- 当出现`*`或者`?`时，使用path matcher规则，
+- 否则就使用字符串匹配
+
+举例：
+
+- **/api/foo 可以匹配到 https://api/foo 或者 https://v1/api/foo 但是匹配不到 https://api/foo/bar
+- /api/foo 可以匹配到 https://api/foo https://v1/api/foo https://api/foo/bar
+- /api/foo$ 可以匹配到 https://api/foo https://v1/api/foo 但是匹配不到 https://api/foo/bar
+
 
 ### code面板
 通过指定的hooks来动态的修改数据，支持的hooks有
