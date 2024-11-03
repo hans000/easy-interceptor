@@ -72,8 +72,11 @@ export function equal(obj1: any, obj2: any) {
     return JSON.stringify(obj1) === JSON.stringify(obj2)
 }
 
-export function randID() {
-    return Math.random().toString(36).slice(2)
+export function guid() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8)
+        return v.toString(16)
+    })
 }
 
 export function renderSize(value: number) {

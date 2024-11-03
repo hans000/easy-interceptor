@@ -36,3 +36,5 @@ export const ContentMsgKey = '__ei_content__'
 export const ExtensionName = 'Easy Interceptor'
 
 export const PageScriptEventName = 'ei_pagescript'
+
+export const MockServerKey = '<mock_server>'

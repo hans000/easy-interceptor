@@ -4,16 +4,22 @@
  */
 import { ConfigInfoType, MatchRule } from "../App"
 import { matchPath, normalizeHeaders, replaceUrl } from "../tools"
-import { ActiveGroupId, BackgroundMsgKey, ConfigInfoFieldKey, PopupMsgKey, RulesFieldKey, WatchFilterKey } from "../tools/constants"
+import { ActiveGroupId, BackgroundMsgKey, ConfigInfoFieldKey, MockServerKey, PopupMsgKey, RulesFieldKey, WatchFilterKey } from "../tools/constants"
 import { CustomEventProps, sendMessageToContent } from "../tools/message"
 import updateIcon from "../tools/updateIcon"
-import { arrayBufferToString, createRunFunc, randID, trimUrlParams } from "../tools"
+import { arrayBufferToString, createRunFunc, guid, trimUrlParams } from "../tools"
+import { getData } from "../content/tools"
 
 let __result = new Map<string, any>()
 let __rules: MatchRule[] = []
 let __configInfo: Partial<ConfigInfoType> = {}
 
 updateIcon()
+
+getData().then((res) => {
+    __rules = res.rules
+    __configInfo = res.configInfo
+})
 
 function update() {
     __result.clear()
@@ -209,7 +215,7 @@ function responseStartedWatch(details: chrome.webRequest.WebResponseCacheDetails
                 [RulesFieldKey]: [
                     ...result[RulesFieldKey],
                     {
-                        id: randID(),
+                        id: guid(),
                         count: 0,
                         groupId: result[ActiveGroupId],
                         url: urlObj.origin + urlObj.pathname,
@@ -252,6 +258,48 @@ function beforeRequestIntercept(details: chrome.webRequest.WebRequestBodyDetails
                     url: details.url,
                 }) || replaceUrl(rule.test, rule.redirectUrl!)
                 if (redirectUrl) {
+
+                    // 处理mock server 情况
+                    if (MockServerKey === redirectUrl) {
+                        if (__configInfo.action !== 'proxy') {
+                            sendMessageToContent({ 
+                                type: 'log', 
+                                from: BackgroundMsgKey, 
+                                payload: {
+                                    message: `action must be proxy when replaceUrl set ${MockServerKey}`
+                                } 
+                            })
+                            return
+                        }
+                        if (!__configInfo.mockServer) {
+                            sendMessageToContent({ 
+                                type: 'log', 
+                                from: BackgroundMsgKey, 
+                                payload: {
+                                    message: `mockServer required when replaceUrl set ${MockServerKey}`
+                                } 
+                            })
+                            return
+                        }
+                        const uuid = guid()
+                        // send request
+                        fetch(`${__configInfo.mockServer}/apimock/data`, {
+                            method: 'post',
+                            headers: {
+                                'content-type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                ...rule,
+                                uuid,
+                            })
+                        })
+                        return {
+                            redirectUrl: details.url
+                                .replace(/^https?:\/\/[\w.:]+/, `${__configInfo.mockServer}/apimock/${rule.chunks ? 'stream' : 'normal'}`)
+                                .replace(/\/(\w+)$/, `/${uuid}/@$1`)
+                        }
+                    }
+
                     return {
                         redirectUrl
                     }

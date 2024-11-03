@@ -47,6 +47,9 @@
     "action_white_list": {
         "message": "Site White List"
     },
+    "action_mock_server": {
+        "message": "Mock Server"
+    },
     "placeholder_white_list": {
         "message": "Multiple rules can be joined with ;"
     },

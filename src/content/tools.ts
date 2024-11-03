@@ -5,7 +5,7 @@
 import { ConfigInfoType, MatchRule } from "../App";
 import { ConfigInfoFieldKey, RulesFieldKey, ActiveGroupId, ContentMsgKey, UpdateMsgKey } from "../tools/constants";
 import { log } from "../tools/log";
-import { CustomEventProps, SyncFields, dispatchPageScriptEvent } from "../tools/message";
+import { CustomEventProps, dispatchPageScriptEvent } from "../tools/message";
 import { createScript, noop } from "../tools";
 
 export function injectedScript(configInfo: Partial<ConfigInfoType>) {
@@ -18,17 +18,31 @@ export function injectedScript(configInfo: Partial<ConfigInfoType>) {
     })
 }
 
+export function getData() {
+    return new Promise<{
+        configInfo: ConfigInfoType,
+        rules: MatchRule[]
+    }>(resolve => {
+        chrome.storage.local.get([ConfigInfoFieldKey, RulesFieldKey, ActiveGroupId], (result) => {
+            resolve({
+                configInfo: result[ConfigInfoFieldKey] || {},
+                rules: (result[RulesFieldKey] || []).filter((rule: MatchRule) => rule.groupId === result[ActiveGroupId]),
+            })
+        })
+    })
+}
+
 export function syncData() {
-    chrome.storage.local.get([ConfigInfoFieldKey, RulesFieldKey, ActiveGroupId], (result) => {
+    getData().then(res => {
         dispatchPageScriptEvent({
             from: ContentMsgKey,
             type: 'configInfo',
-            payload: result[ConfigInfoFieldKey],
+            payload: res.configInfo,
         })
         dispatchPageScriptEvent({
             from: ContentMsgKey,
             type: 'rules',
-            payload: result[RulesFieldKey].filter((rule: MatchRule) => rule.groupId === result[ActiveGroupId]),
+            payload: res.rules,
         })
         // TODO ? 重置trigger
         dispatchPageScriptEvent({

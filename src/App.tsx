@@ -3,16 +3,16 @@
  * Copyright (c) 2022 hans000
  */
 import './App.less'
-import { Badge, Checkbox, BadgeProps, Button, Dropdown, Input, message, Modal, Spin, Table, Tag, Tooltip, Upload, Switch, Space, Divider, Select, Popover, Segmented, InputNumber } from 'antd'
+import { Badge, Checkbox, BadgeProps, Button, Dropdown, Input, message, Modal, Spin, Table, Tag, Tooltip, Upload, Space, Select, Popover, Segmented, InputNumber } from 'antd'
 import React, { useEffect, useRef, useState } from 'react'
-import { TagOutlined, ControlOutlined, CodeOutlined, DeleteOutlined, PlusOutlined, SearchOutlined, VerticalAlignBottomOutlined, UploadOutlined, SyncOutlined, RollbackOutlined, BugOutlined, FilterOutlined, FormOutlined, SettingOutlined, AppstoreOutlined, FieldTimeOutlined, StopOutlined, DashboardOutlined, GithubFilled } from '@ant-design/icons'
+import { TagOutlined, ControlOutlined, CodeOutlined, DeleteOutlined, PlusOutlined, SearchOutlined, VerticalAlignBottomOutlined, UploadOutlined, SyncOutlined, RollbackOutlined, BugOutlined, FormOutlined, SettingOutlined, AppstoreOutlined, FieldTimeOutlined, StopOutlined, DashboardOutlined, GithubFilled } from '@ant-design/icons'
 import { ColumnsType } from 'antd/lib/table'
-import { pathMatch, randID, renderSize } from './tools'
+import { pathMatch, guid, renderSize } from './tools'
 import { getMethodColor } from './tools/mappings'
 import { sizeof } from "./tools"
 import { download } from "./tools"
 import jsonschema from 'json-schema'
-import { ConfigSchema, TransformResultSchema } from './components/MainEditor/validator'
+import { TransformResultSchema } from './components/MainEditor/validator'
 import useStorage from './hooks/useStorage'
 import MainEditor from './components/MainEditor'
 import { FileType } from './components/MainEditor/config'
@@ -20,7 +20,7 @@ import Quota, { getPercent } from './components/Quota'
 import { runCode } from './tools/runCode'
 import { loader } from "@monaco-editor/react";
 import { sendRequestLog } from './tools/sendRequest'
-import { ActiveGroupId, HiddenFieldsFieldKey, ActiveIdFieldKey, RulesFieldKey, SelectedRowFieldKeys, UpdateMsgKey, WatchFilterKey, ConfigInfoFieldKey, PopupMsgKey, OpenEditorKey, PathFieldKey } from './tools/constants'
+import { ActiveGroupId, ActiveIdFieldKey, RulesFieldKey, SelectedRowFieldKeys, UpdateMsgKey, WatchFilterKey, ConfigInfoFieldKey, PopupMsgKey, OpenEditorKey, PathFieldKey } from './tools/constants'
 import useTranslate from './hooks/useTranslate'
 import getStorage from './tools/getStorage'
 import { ConfigProvider, theme } from 'antd'
@@ -55,6 +55,7 @@ export interface MatchRule {
     chunkTemplate?: string
     faked?: boolean
     blocked?: boolean
+    mockServer?: string
 }
 
 if (!process.env.VITE_LOCAL) {
@@ -107,6 +108,7 @@ export interface ConfigInfoType {
         rewrite?: string
     }>
     whiteList?: string
+    mockServer?: string
 }
 
 const defaultConfigInfo: ConfigInfoType = {
@@ -119,6 +121,7 @@ const defaultConfigInfo: ConfigInfoType = {
     bootLog: true,
     allFrames: false,
     dark: isDarkTheme,
+    mockServer: 'http://localhost:3000'
 }
 
 export default function App() {
@@ -286,7 +289,7 @@ export default function App() {
                                 onClick: () => {
                                     setRules(r => {
                                         const rules = [...r]
-                                        const rule = { ...rules[index], id: randID(), count: 0, enable: false }
+                                        const rule = { ...rules[index], id: guid(), count: 0, enable: false }
                                         rule.description = t('menu_copy') + (rule.description || '')
                                         rules.splice(index + 1, 0, rule)
                                         return rules
@@ -415,9 +418,6 @@ export default function App() {
             ),
             render: (value, record) => (
                 <Checkbox checked={value} onChange={(e) => {
-                    if (!value) {
-                        setConfigInfo(info => ({ ...info, action: 'intercept' }))
-                    }
                     setRules(data => {
                         const result = [...data]
                         const index = rules.findIndex(rule => rule.id === record.id)
@@ -521,7 +521,7 @@ export default function App() {
                                 <Button disabled={editable} icon={<PlusOutlined />} onClick={() => {
                                     setRules(rule => {
                                         const result = [...rule, {
-                                            id: randID(),
+                                            id: guid(),
                                             count: 0,
                                             groupId: activeGroupId,
                                             test: '/api-' + rule.length,
@@ -701,12 +701,17 @@ export default function App() {
                             }}/> */}
                             <Popover trigger={['click']} placement='topLeft' showArrow={false} content={(
                                 <>
-                                    <Settings value={configInfo} onChange={(value) => {
-                                        setConfigInfo(info => ({
-                                            ...info,
-                                            ...value,
-                                        }))
-                                    }} />
+                                    <Settings
+                                        value={configInfo}
+                                        onReset={() => {
+                                            setConfigInfo(defaultConfigInfo)
+                                        }}
+                                        onChange={(value) => {
+                                            setConfigInfo(info => ({
+                                                ...info,
+                                                ...value,
+                                            }))
+                                        }} />
                                 </>
                             )}>
                                 <SettingOutlined />
